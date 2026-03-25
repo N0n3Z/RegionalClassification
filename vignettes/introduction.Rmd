@@ -1,0 +1,237 @@
+---
+title: "Introduction to RegionalClassification"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to RegionalClassification}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+The `RegionalClassification` package provides tools to convert Belgian geographic codes between classification systems and across time.
+
+Belgian administrative data can reference geography in many ways — NIS commune codes, NUTS regions, postal codes, internal arrondissement codes — and these change over time as communes merge or district borders shift. This package unifies all of them.
+
+## Loading the package
+
+```{r load}
+source("main.R")
+# master_data is now available — it contains all lookup tables
+```
+
+On load, the package reads all source files from `data/raw/` and builds a unified master table. You'll see messages like:
+
+```
+Master table built: 583 communes NIS 2019, 567 communes NIS 2025
+  Postal codes NIS 2019: 1149, NIS 2025: 1148
+  NIS changes 2019->2025: 30 entries
+  NIS BEFORE_2019: 589 communes
+```
+
+---
+
+## 1. Basic conversions
+
+The main function is `convert_codes()`:
+
+```{r}
+convert_codes(codes, from, to, master_data)
+```
+
+### NIS communes → NUTS3
+
+```{r}
+result <- convert_codes(
+  c(21004L, 11002L, 44021L, 62063L),
+  from = "NIS_COMMUNE_2019",
+  to   = "NUTS3_2021",
+  master_data
+)
+# code_from  code_to
+#     21004   BE100     (Bruxelles-Capitale)
+#     11002   BE211     (Antwerpen)
+#     44021   BE234     (Arr. Gent)
+#     62063   BE332     (Arr. Liège)
+```
+
+### Postal codes → NIS communes
+
+```{r}
+convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
+```
+
+### NIS commune → all geographic levels
+
+```{r}
+commune <- 11002L  # Antwerpen
+
+convert_codes(commune, "NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NIS_PROVINCE_2019",       master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NIS_REGION_2019",         master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NUTS3_2021",              master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NUTS2_2021",              master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", master_data)
+```
+
+---
+
+## 2. NIS versions
+
+Belgian communes are periodically reorganized. Three versions are supported:
+
+```
+BEFORE_2019  ──►  2019  ──►  2025
+  591 comm.       583         567
+```
+
+### Converting across NIS versions
+
+```{r}
+# NIS 2019 → NIS 2025 (handles fusions)
+convert_codes(c(71002L, 71011L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+
+# NIS 2025 → NIS 2019 (fused commune returns multiple rows)
+convert_codes(71072L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data)
+
+# NIS BEFORE_2019 → NIS 2019
+convert_codes(c(55022L, 56011L), "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019", master_data)
+```
+
+### Historical NUTS assignments
+
+BEFORE_2019 communes are assigned their NUTS codes as of 31 December 2018:
+
+```{r}
+# Get NUTS3 (2021) for a pre-2019 commune
+convert_codes(55022L, "NIS_COMMUNE_BEFORE_2019", "NUTS3_2021", master_data)
+
+# Get NUTS3 (2027) for a pre-2019 commune
+convert_codes(55022L, "NIS_COMMUNE_BEFORE_2019", "NUTS3_2027", master_data)
+```
+
+---
+
+## 3. NUTS 2027
+
+NUTS 2027 codes are derived from NUTS 2021 per EU regulation 2026/195. The main changes for Belgium affect Antwerpen and the Flemish provinces.
+
+```{r}
+# NIS 2019 communes → NUTS 2027
+convert_codes(
+  c(21004L, 11002L, 44021L),
+  "NIS_COMMUNE_2019", "NUTS3_2027",
+  master_data
+)
+# 21004 → BE100  (Brussels, unchanged)
+# 11002 → BE261  (Antwerpen: BE211 → BE261)
+# 44021 → BE274  (Gent: BE234 → BE274)
+```
+
+### NUTS 2021 ↔ NUTS 2027 roundtrip
+
+```{r}
+nuts_2021 <- c("BE211", "BE223", "BE231", "BE335")
+
+result_2027 <- convert_codes(nuts_2021, "NUTS3_2021", "NUTS3_2027", master_data)
+# BE211 → BE261, BE223 → BE226, BE231 → BE271, BE335 → BE335 (unchanged)
+
+result_back <- convert_codes(result_2027$code_to, "NUTS3_2027", "NUTS3_2021", master_data)
+# BE261 → BE211, BE226 → BE223, BE271 → BE231, BE335 → BE335
+```
+
+---
+
+## 4. Ambiguous conversions
+
+Some conversions are inherently M:N. The arrondissement of Verviers (63000) spans two NUTS3 regions: BE335 (francophone) and BE336 (germanophone).
+
+```{r}
+# Will raise an error by default
+convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+# Error: Conversion from '...' to '...' is NOT a simple (direct) conversion.
+
+# Force all possible mappings
+result <- convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+                        master_data, allow_ambiguous = TRUE)
+# code_from  code_to
+#     63000   BE335
+#     63000   BE336
+```
+
+### Checking a path before converting
+
+```{r}
+check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+# $is_simple    FALSE
+# $explanation  "... ambiguous steps (Verviers) ..."
+
+check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
+# $is_simple    TRUE
+# $path         "NIS_COMMUNE_2019 -> NUTS_LAU_2021 -> NUTS3_2021"
+```
+
+---
+
+## 5. Fuzzy name matching
+
+Match approximate or misspelled names to official codes:
+
+```{r}
+fuzzy_match_names(
+  names    = c("Bruxeles", "Antwerpn", "Liege", "Vervirs"),
+  target   = "NIS_COMMUNE_2019",
+  master_data,
+  max_dist = 0.3,
+  language = "both"   # "fr", "nl", or "both"
+)
+#   input_name  matched_name  matched_code  distance  is_confident
+#   Bruxeles    Bruxelles        21004       0.037      TRUE
+#   Antwerpn    Antwerpen        11002       0.037      TRUE
+#   Liege       Liège            62063       0.150      TRUE
+#   Vervirs     Verviers         63079       0.042      TRUE
+```
+
+---
+
+## 6. Available conversions
+
+```{r}
+# List all supported conversion routes
+list_available_conversions()
+
+# Print full path info for a specific conversion
+print_conversion_check("POSTAL", "NUTS3_2021")
+```
+
+---
+
+## 7. Classification identifiers
+
+The `from` and `to` arguments accept several aliases:
+
+| Standard | Aliases |
+|---|---|
+| `NIS_COMMUNE_2019` | `NIS_COM_2019`, `COMMUNE_2019` |
+| `NIS_COMMUNE_2025` | `NIS_COM_2025`, `COMMUNE_2025` |
+| `NIS_COMMUNE_BEFORE_2019` | `NIS_COM_BEFORE_2019` |
+| `NUTS3_2021` | `NUTS_2021` |
+| `NUTS3_2027` | `NUTS_2027` |
+| `INTERNAL_ARRONDISSEMENT` | `INTERNAL`, `INTERNAL_ARR`, `INTERNE` |
+| `POSTAL` | `CODE_POSTAL`, `CP` |
+
+---
+
+## 8. Pending features
+
+The following features are ready in the code but require additional data files not yet available:
+
+| Feature | Waiting for |
+|---|---|
+| `NIS_COMMUNE_2025` → `NUTS3_2027` | `CONVERSION_NIS2025_NUTS2027.xlsx` |
+
+Once the file is placed in `data/raw/` and the package reloaded, the conversion will work automatically.
