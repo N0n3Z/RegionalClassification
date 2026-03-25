@@ -747,19 +747,23 @@ diagnose_classification <- function(
     duplicate_dt[, n_occurrences := dup_n]
   }
 
+  parsed <- .parse_classification_id(norm)
+
   result <- list(
-    mode            = "check",
-    classification  = norm,
-    n_reference     = n_ref,
-    n_in_dataset    = n_match,
-    n_missing       = n_miss,
-    n_unknown       = n_unk,
-    n_duplicates    = n_dup,
-    coverage_rate   = cov,
-    status          = status,
-    missing_codes   = missing_dt,
-    unknown_codes   = unknown_dt,
-    duplicate_codes = duplicate_dt
+    mode                = "check",
+    classification      = norm,
+    classification_type = parsed$type,
+    version             = parsed$version,
+    n_reference         = n_ref,
+    n_in_dataset        = n_match,
+    n_missing           = n_miss,
+    n_unknown           = n_unk,
+    n_duplicates        = n_dup,
+    coverage_rate       = cov,
+    status              = status,
+    missing_codes       = missing_dt,
+    unknown_codes       = unknown_dt,
+    duplicate_codes     = duplicate_dt
   )
 
   if (verbose) .print_check(result, code_col, nrow(dt))
@@ -781,6 +785,7 @@ diagnose_classification <- function(
     ref <- .get_reference_codes(cls, master_data)
     if (is.null(ref)) return(NULL)
 
+    parsed    <- .parse_classification_id(cls)
     ref_codes <- as.character(ref$code)
     n_ref     <- length(ref_codes)
     n_match   <- length(intersect(dataset_codes, ref_codes))
@@ -791,29 +796,34 @@ diagnose_classification <- function(
     unk_pct   <- if (length(dataset_codes) > 0) n_unk / length(dataset_codes) else 0
 
     data.table(
-      classification = cls,
-      n_reference    = n_ref,
-      n_matched      = n_match,
-      n_missing      = n_miss,
-      n_unknown      = n_unk,
-      match_pct      = round(match_pct * 100, 1),
-      coverage_pct   = round(cov_pct   * 100, 1),
-      unknown_pct    = round(unk_pct   * 100, 1)
+      classification      = cls,
+      classification_type = parsed$type,
+      version             = parsed$version,
+      n_reference         = n_ref,
+      n_matched           = n_match,
+      n_missing           = n_miss,
+      n_unknown           = n_unk,
+      match_pct           = round(match_pct * 100, 1),
+      coverage_pct        = round(cov_pct   * 100, 1),
+      unknown_pct         = round(unk_pct   * 100, 1)
     )
   }))
 
   # Rank: primary = match_pct (desc), secondary = unknown_pct (asc)
   setorder(rows, -match_pct, unknown_pct)
 
-  best     <- rows[1, classification]
-  best_det <- diagnose_classification(dt, code_col, master_data,
-                                       classification = best, verbose = FALSE)
+  best        <- rows[1, classification]
+  best_parsed <- .parse_classification_id(best)
+  best_det    <- diagnose_classification(dt, code_col, master_data,
+                                          classification = best, verbose = FALSE)
 
   result <- list(
-    mode           = "detect",
-    recommendation = best,
-    candidates     = rows,
-    detail         = best_det
+    mode                = "detect",
+    recommendation      = best,
+    classification_type = best_parsed$type,
+    version             = best_parsed$version,
+    candidates          = rows,
+    detail              = best_det
   )
 
   if (verbose) .print_detect(result, code_col, nrow(dt))
@@ -934,11 +944,14 @@ diagnose_classification <- function(
 
 .print_check <- function(res, code_col, n_rows) {
   bar <- strrep("=", 64)
+  ver_str <- if (!is.na(res$version)) res$version else "—"
   cat(sprintf("\n%s\n", bar))
   cat("  CLASSIFICATION DIAGNOSTIC\n")
   cat(sprintf("%s\n", bar))
-  cat(sprintf("  Dataset    : %d rows  |  column '%s'\n", n_rows, code_col))
-  cat(sprintf("  Reference  : %s  (%d codes)\n", res$classification, res$n_reference))
+  cat(sprintf("  Dataset        : %d rows  |  column '%s'\n", n_rows, code_col))
+  cat(sprintf("  Classification : %s\n", res$classification_type))
+  cat(sprintf("  Version        : %s\n", ver_str))
+  cat(sprintf("  Reference      : %s  (%d codes)\n", res$classification, res$n_reference))
   cat(sprintf("%s\n", bar))
 
   # Coverage bar
@@ -991,40 +1004,48 @@ diagnose_classification <- function(
 }
 
 .print_detect <- function(res, code_col, n_rows) {
-  bar <- strrep("=", 64)
+  bar     <- strrep("=", 64)
+  ver_str <- if (!is.na(res$version)) res$version else "—"
+
   cat(sprintf("\n%s\n", bar))
   cat("  CLASSIFICATION AUTO-DETECTION\n")
   cat(sprintf("%s\n", bar))
   cat(sprintf("  Dataset : %d rows  |  column '%s'\n\n", n_rows, code_col))
 
-  # Candidates table (top 5)
+  # Candidates table
   top <- head(res$candidates, 8)
-  cat(sprintf("  %-30s  %7s  %8s  %8s\n",
-              "Classification", "Match%", "Cover%", "Unknown%"))
-  cat(sprintf("  %s\n", strrep("-", 58)))
+  cat(sprintf("  %-24s  %-12s  %7s  %8s  %8s\n",
+              "Classification", "Version", "Match%", "Cover%", "Unknown%"))
+  cat(sprintf("  %s\n", strrep("-", 66)))
   for (i in seq_len(nrow(top))) {
-    marker <- if (i == 1) " <-- best" else ""
-    cat(sprintf("  %-30s  %6.1f%%  %7.1f%%  %7.1f%%%s\n",
-                top$classification[i],
+    marker  <- if (i == 1) " <-- best" else ""
+    ver_col <- if (!is.na(top$version[i])) top$version[i] else "—"
+    cat(sprintf("  %-24s  %-12s  %6.1f%%  %7.1f%%  %7.1f%%%s\n",
+                top$classification_type[i],
+                ver_col,
                 top$match_pct[i],
                 top$coverage_pct[i],
                 top$unknown_pct[i],
                 marker))
   }
 
-  cat(sprintf("\n  Recommendation: %s\n", res$recommendation))
-  cat(sprintf("  Coverage: %d / %d codes present (%.1f%%)\n",
+  cat(sprintf("\n%s\n", strrep("-", 64)))
+  cat(sprintf("  Recommendation\n"))
+  cat(sprintf("    Classification : %s\n", res$classification_type))
+  cat(sprintf("    Version        : %s\n", ver_str))
+  cat(sprintf("    Identifier     : %s\n", res$recommendation))
+  cat(sprintf("    Coverage       : %d / %d codes present (%.1f%%)\n",
               res$detail$n_in_dataset,
               res$detail$n_reference,
               res$detail$coverage_rate * 100))
 
   if (res$detail$n_missing > 0) {
-    n_show <- min(5L, res$detail$n_missing)
-    miss   <- res$detail$missing_codes
+    n_show        <- min(5L, res$detail$n_missing)
+    miss          <- res$detail$missing_codes
     codes_preview <- paste(head(miss$code, n_show), collapse = ", ")
-    suffix <- if (res$detail$n_missing > n_show)
+    suffix        <- if (res$detail$n_missing > n_show)
       sprintf(" ... (+%d more)", res$detail$n_missing - n_show) else ""
-    cat(sprintf("  Missing : %s%s\n", codes_preview, suffix))
+    cat(sprintf("    Missing codes  : %s%s\n", codes_preview, suffix))
   }
   cat(sprintf("%s\n\n", bar))
 }
@@ -1049,4 +1070,34 @@ diagnose_classification <- function(
   else if ( has_fr && !has_nl)             fr
   else if (!has_fr &&  has_nl)             nl
   else                                     ""
+}
+
+#' Parse a normalised classification identifier into type + version (internal)
+#'
+#' @return list(type, version) where version may be NA for timeless identifiers
+.parse_classification_id <- function(norm_id) {
+  mapping <- list(
+    NIS_COMMUNE_BEFORE_2019  = list(type = "NIS_COMMUNE",             version = "BEFORE_2019"),
+    NIS_COMMUNE_2019         = list(type = "NIS_COMMUNE",             version = "2019"),
+    NIS_COMMUNE_2025         = list(type = "NIS_COMMUNE",             version = "2025"),
+    NIS_ARRONDISSEMENT_2019  = list(type = "NIS_ARRONDISSEMENT",      version = "2019"),
+    NIS_ARRONDISSEMENT_2025  = list(type = "NIS_ARRONDISSEMENT",      version = "2025"),
+    NIS_PROVINCE_2019        = list(type = "NIS_PROVINCE",            version = "2019"),
+    NIS_PROVINCE_2025        = list(type = "NIS_PROVINCE",            version = "2025"),
+    NIS_REGION_2019          = list(type = "NIS_REGION",              version = "2019"),
+    NIS_REGION_2025          = list(type = "NIS_REGION",              version = "2025"),
+    NUTS3_2021               = list(type = "NUTS3",                   version = "2021"),
+    NUTS3_2027               = list(type = "NUTS3",                   version = "2027"),
+    NUTS2_2021               = list(type = "NUTS2",                   version = "2021"),
+    NUTS2_2027               = list(type = "NUTS2",                   version = "2027"),
+    NUTS1_2021               = list(type = "NUTS1",                   version = "2021"),
+    NUTS1_2027               = list(type = "NUTS1",                   version = "2027"),
+    NUTS_LAU_2021            = list(type = "NUTS_LAU",                version = "2021"),
+    POSTAL                   = list(type = "POSTAL",                  version = NA_character_),
+    INTERNAL_ARRONDISSEMENT  = list(type = "INTERNAL_ARRONDISSEMENT", version = NA_character_)
+  )
+
+  if (norm_id %in% names(mapping)) return(mapping[[norm_id]])
+
+  list(type = norm_id, version = NA_character_)
 }
