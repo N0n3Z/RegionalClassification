@@ -342,10 +342,34 @@ parse_nis_changes <- function(change_dt) {
 
   dt <- copy(change_dt)
 
-  setnames(dt, c("nis_version_old", "nis_version_new",
-                 "nuts_version_old", "nuts_version_new",
-                 "cd_refnis_old", "cd_refnis_new",
-                 "cd_nuts_old", "cd_nuts_new", "nature"))
+  # Rename by matching known source column names (case-insensitive).
+  # The file may contain a typo variant (NUT_VERSION_OLD vs NUTS_VERSION_OLD)
+  # and the order could change — so we rename by name, not by position.
+  required <- c(CD_REFNIS_OLD = "cd_refnis_old",
+                CD_REFNIS_NEW = "cd_refnis_new",
+                NATURE        = "nature")
+  optional <- c(NIS_VERSION_OLD  = "nis_version_old",
+                NIS_VERSION_NEW  = "nis_version_new",
+                NUTS_VERSION_OLD = "nuts_version_old",
+                NUT_VERSION_OLD  = "nuts_version_old",   # known typo variant
+                CD_NUTS_OLD      = "cd_nuts_old",
+                CD_NUTS_NEW      = "cd_nuts_new")
+
+  col_map <- c(required, optional)
+  cols_present <- names(dt)[toupper(names(dt)) %in% toupper(names(col_map))]
+  for (old in cols_present) {
+    new <- col_map[match(toupper(old), toupper(names(col_map)))]
+    if (!is.na(new) && old != new && !new %in% names(dt))
+      setnames(dt, old, new)
+  }
+
+  missing_req <- setdiff(unname(required), names(dt))
+  if (length(missing_req) > 0) {
+    stop(sprintf(
+      "REFNIS_CHANGE_2025: required column(s) not found: %s\nAvailable: %s",
+      paste(missing_req, collapse = ", "), paste(names(change_dt), collapse = ", ")
+    ))
+  }
 
   dt[, cd_refnis_old := as.integer(cd_refnis_old)]
   dt[, cd_refnis_new := as.integer(cd_refnis_new)]

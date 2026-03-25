@@ -4,6 +4,37 @@
 
 library(data.table)
 
+#' Extract and standardise a postal code mapping table (internal)
+#'
+#' Uses pattern-matching to find the four needed columns, with explicit
+#' error messages if a column cannot be found.
+#'
+#' @param dt   data.table from a postal conversion file
+#' @param label File name used in error messages
+#' @return data.table(cd_postal, cd_commune_nis, tx_postal_name_fr, tx_postal_name_nl)
+.extract_postal_map <- function(dt, label = "postal file") {
+  .find_col <- function(pattern, role) {
+    col <- grep(pattern, names(dt), value = TRUE, ignore.case = TRUE)[1]
+    if (is.na(col)) {
+      stop(sprintf(
+        "%s: cannot find column for '%s' (pattern: %s). Available columns: %s",
+        label, role, pattern, paste(names(dt), collapse = ", ")
+      ))
+    }
+    col
+  }
+  col_postal  <- .find_col("TERRITORIAL_CODE_POSTAL",        "postal code")
+  col_nis     <- .find_col("TERRITORIAL_CODE_NIS|TERRITORIAL_CODE_INS", "NIS commune code")
+  col_name_fr <- .find_col("NAME_FR",                        "French name")
+  col_name_nl <- .find_col("NAME_NL",                        "Dutch name")
+
+  result <- dt[, .SD, .SDcols = c(col_postal, col_nis, col_name_fr, col_name_nl)]
+  setnames(result, c("cd_postal", "cd_commune_nis", "tx_postal_name_fr", "tx_postal_name_nl"))
+  result[, cd_commune_nis := as.integer(cd_commune_nis)]
+  result[, cd_postal      := as.integer(cd_postal)]
+  result
+}
+
 #' Build the master classification table from all loaded data
 #'
 #' Creates a comprehensive table at commune level linking all classifications.
@@ -96,34 +127,12 @@ build_master_table <- function(raw_data) {
   }
 
   # --- 6. Add postal codes (NIS 2019) ---
-  postal_2019 <- raw_data$CONVERSION_POSTAL_NIS2019
-  postal_col_nis <- grep("TERRITORIAL_CODE_NIS|TERRITORIAL_CODE_INS",
-                          names(postal_2019), value = TRUE)[1]
-  postal_col_postal <- grep("TERRITORIAL_CODE_POSTAL",
-                             names(postal_2019), value = TRUE)[1]
-  postal_col_name_fr <- grep("NAME_FR", names(postal_2019), value = TRUE)[1]
-  postal_col_name_nl <- grep("NAME_NL", names(postal_2019), value = TRUE)[1]
-
-  postal_map_2019 <- postal_2019[, .SD, .SDcols = c(postal_col_postal, postal_col_nis,
-                                                      postal_col_name_fr, postal_col_name_nl)]
-  setnames(postal_map_2019, c("cd_postal", "cd_commune_nis", "tx_postal_name_fr", "tx_postal_name_nl"))
-  postal_map_2019[, cd_commune_nis := as.integer(cd_commune_nis)]
-  postal_map_2019[, cd_postal := as.integer(cd_postal)]
+  postal_2019    <- raw_data$CONVERSION_POSTAL_NIS2019
+  postal_map_2019 <- .extract_postal_map(postal_2019, label = "CONVERSION_POSTAL_NIS2019")
 
   # --- 7. Add postal codes (NIS 2025) ---
-  postal_2025 <- raw_data$CONVERSION_POSTAL_NIS2025
-  postal_col_nis_25 <- grep("TERRITORIAL_CODE_NIS|TERRITORIAL_CODE_INS",
-                             names(postal_2025), value = TRUE)[1]
-  postal_col_postal_25 <- grep("TERRITORIAL_CODE_POSTAL",
-                                names(postal_2025), value = TRUE)[1]
-  postal_col_name_fr_25 <- grep("NAME_FR", names(postal_2025), value = TRUE)[1]
-  postal_col_name_nl_25 <- grep("NAME_NL", names(postal_2025), value = TRUE)[1]
-
-  postal_map_2025 <- postal_2025[, .SD, .SDcols = c(postal_col_postal_25, postal_col_nis_25,
-                                                      postal_col_name_fr_25, postal_col_name_nl_25)]
-  setnames(postal_map_2025, c("cd_postal", "cd_commune_nis", "tx_postal_name_fr", "tx_postal_name_nl"))
-  postal_map_2025[, cd_commune_nis := as.integer(cd_commune_nis)]
-  postal_map_2025[, cd_postal := as.integer(cd_postal)]
+  postal_2025    <- raw_data$CONVERSION_POSTAL_NIS2025
+  postal_map_2025 <- .extract_postal_map(postal_2025, label = "CONVERSION_POSTAL_NIS2025")
 
   # --- 7b. Build NIS 2025 -> NUTS 2027 mapping (optional - requires file) ---
   comm2025_to_nuts2027 <- NULL

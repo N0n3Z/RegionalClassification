@@ -288,6 +288,97 @@ run_all_tests <- function(master_data) {
     results[["test_11"]] <<- list(status = "FAIL", error = e$message)
   })
 
+  # --- Test 12: diagnose_classification() check mode ---
+  test_count <- test_count + 1
+  cat("--- Test 12: diagnose_classification() - check mode ---\n")
+  tryCatch({
+    # Full NUTS3_2021 dataset -> COMPLETE
+    nuts3_full <- data.table(
+      nuts3 = master_data$nuts3_ref_2021$cd_nuts3,
+      val   = seq_len(nrow(master_data$nuts3_ref_2021))
+    )
+    r_full <- diagnose_classification(nuts3_full, "nuts3", master_data,
+                                       classification = "NUTS3_2021", verbose = FALSE)
+    stopifnot(r_full$status == "COMPLETE")
+    stopifnot(r_full$classification_type == "NUTS3")
+    stopifnot(r_full$version == "2021")
+    stopifnot(r_full$n_missing == 0L)
+    cat("  Full NUTS3_2021: COMPLETE, type=NUTS3, version=2021\n")
+
+    # Partial dataset -> INCOMPLETE, missing codes detected
+    nuts3_partial <- data.table(nuts3 = c("BE100", "BE211", "BE332"), val = 1:3)
+    r_part <- diagnose_classification(nuts3_partial, "nuts3", master_data,
+                                       classification = "NUTS3_2021", verbose = FALSE)
+    stopifnot(r_part$status == "INCOMPLETE")
+    stopifnot(r_part$n_missing == 44L - 3L)
+    stopifnot("BE211" %in% r_part$missing_codes$code == FALSE)  # BE211 IS in dataset
+    stopifnot(r_part$n_in_dataset == 3L)
+    cat(sprintf("  Partial (3/44): INCOMPLETE, %d missing codes\n", r_part$n_missing))
+
+    # Dataset with unknown code
+    nuts3_unk <- data.table(nuts3 = c("BE100", "BE999"), val = 1:2)
+    r_unk <- diagnose_classification(nuts3_unk, "nuts3", master_data,
+                                      classification = "NUTS3_2021", verbose = FALSE)
+    stopifnot(r_unk$n_unknown == 1L)
+    stopifnot("BE999" %in% r_unk$unknown_codes$code)
+    cat("  Unknown code BE999 correctly detected\n")
+
+    cat("  PASS\n\n")
+    pass_count <- pass_count + 1
+    results[["test_12"]] <- list(status = "PASS")
+  }, error = function(e) {
+    cat(sprintf("  FAIL: %s\n\n", e$message))
+    results[["test_12"]] <<- list(status = "FAIL", error = e$message)
+  })
+
+  # --- Test 13: diagnose_classification() detect mode + split_ambiguous() ---
+  test_count <- test_count + 1
+  cat("--- Test 13: detect mode + split_ambiguous() ---\n")
+  tryCatch({
+    # Detect mode on NIS_COMMUNE_2019 data
+    comm_dt <- data.table(code = master_data$communes_nis2019$cd_commune)
+    r_det <- diagnose_classification(comm_dt, "code", master_data, verbose = FALSE)
+    stopifnot(r_det$mode == "detect")
+    stopifnot(r_det$recommendation == "NIS_COMMUNE_2019")
+    stopifnot(r_det$classification_type == "NIS_COMMUNE")
+    stopifnot(r_det$version == "2019")
+    cat(sprintf("  Auto-detected: %s (v%s)\n",
+                r_det$classification_type, r_det$version))
+
+    # split_ambiguous: Verviers 63000 -> NUTS3_2021 with additive weights
+    arr_data <- data.table(
+      arr_code   = c(11000L, 62000L, 63000L),
+      total_wage = c(5e9, 3e9, 1e9),
+      avg_salary = c(2900, 2700, 2400)
+    )
+    wts <- data.table(
+      code_from = c(63000L, 63000L),
+      code_to   = c("BE335", "BE336"),
+      weight    = c(0.857, 0.143)
+    )
+    r_split <- split_ambiguous(arr_data, "arr_code",
+                               value_cols  = "total_wage",
+                               from        = "NIS_ARRONDISSEMENT_2019",
+                               to          = "NUTS3_2021",
+                               master_data = master_data,
+                               weights     = wts,
+                               value_type  = "additive",
+                               verbose     = FALSE)
+    stopifnot(nrow(r_split) == 4L)                          # 63000 split into 2
+    stopifnot(abs(sum(r_split$total_wage) - 9e9) < 1)       # totals preserved
+    verviers_rows <- r_split[cd_nuts3_2021 %in% c("BE335", "BE336")]
+    stopifnot(nrow(verviers_rows) == 2L)
+    stopifnot(abs(verviers_rows[cd_nuts3_2021 == "BE335", total_wage] - 857e6) < 1e3)
+    cat("  split_ambiguous: 3 rows -> 4, total preserved, BE335=857M, BE336=143M\n")
+
+    cat("  PASS\n\n")
+    pass_count <- pass_count + 1
+    results[["test_13"]] <- list(status = "PASS")
+  }, error = function(e) {
+    cat(sprintf("  FAIL: %s\n\n", e$message))
+    results[["test_13"]] <<- list(status = "FAIL", error = e$message)
+  })
+
   # --- Summary ---
   cat("================================================================\n")
   cat(sprintf("  RESULTS: %d/%d tests passed\n", pass_count, test_count))
