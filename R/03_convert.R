@@ -87,6 +87,11 @@ normalize_classification_id <- function(class_id) {
     "NUTS2_2021" = "NUTS2_2021",
     "NUTS1_2021" = "NUTS1_2021",
     "NUTS0" = "NUTS0",
+    "NUTS3_2027" = "NUTS3_2027",
+    "NUTS_2027" = "NUTS3_2027",
+    "NUTS2_2027" = "NUTS2_2027",
+    "NUTS1_2027" = "NUTS1_2027",
+    "NUTS_LAU_2027" = "NUTS_LAU_2027",
     "NUTS_LAU_2021" = "NUTS_LAU_2021",
     "LAU_2021" = "NUTS_LAU_2021",
     "POSTAL" = "POSTAL",
@@ -195,6 +200,15 @@ route_conversion <- function(input_dt, from, to, md) {
     if (to == "NUTS0") {
       return(data.table(code_from = input_dt$code_from, code_to = "BE"))
     }
+    if (to == "NUTS3_2027") {
+      return(convert_via_master(input_dt, master, "cd_commune", "cd_nuts3_2027"))
+    }
+    if (to == "NUTS2_2027") {
+      return(convert_via_master(input_dt, master, "cd_commune", "cd_nuts2_2027"))
+    }
+    if (to == "NUTS1_2027") {
+      return(convert_via_master(input_dt, master, "cd_commune", "cd_nuts1_2027"))
+    }
     if (to == "INTERNAL_ARRONDISSEMENT") {
       return(convert_via_master(input_dt, master, "cd_commune", "cd_arr_internal"))
     }
@@ -286,6 +300,57 @@ route_conversion <- function(input_dt, from, to, md) {
       return(convert_via_lookup(input_dt, md$nuts_to_internal,
                                 "cd_arr_internal", "cd_nuts3"))
     }
+    if (to == "NUTS3_2027") {
+      nuts3_2021 <- route_conversion(input_dt, "INTERNAL_ARRONDISSEMENT", "NUTS3_2021", md)
+      intermediate <- data.table(code_from = nuts3_2021$code_to)
+      nuts3_2027 <- route_conversion(intermediate, "NUTS3_2021", "NUTS3_2027", md)
+      return(data.table(
+        code_from = nuts3_2021$code_from,
+        code_to = nuts3_2027$code_to[match(nuts3_2021$code_to, nuts3_2027$code_from)]
+      ))
+    }
+  }
+
+  # --- NUTS 2021 <-> NUTS 2027 ---
+  if (from == "NUTS3_2021" && to == "NUTS3_2027") {
+    nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
+    result <- merge(input_dt, nuts3_map, by.x = "code_from", by.y = "nuts_2021", all.x = TRUE)
+    setnames(result, "nuts_2027", "code_to")
+    result[is.na(code_to), code_to := code_from]
+    return(result[, .(code_from, code_to)])
+  }
+
+  if (from == "NUTS3_2027" && to == "NUTS3_2021") {
+    nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
+    input_dt[, .row_order := .I]
+    result <- merge(input_dt, nuts3_map, by.x = "code_from", by.y = "nuts_2027", all.x = TRUE)
+    setnames(result, "nuts_2021", "code_to")
+    result[is.na(code_to), code_to := code_from]
+    setorder(result, .row_order)
+    result[, .row_order := NULL]
+    return(result[, .(code_from, code_to)])
+  }
+
+  if (from == "NUTS3_2027" && to == "INTERNAL_ARRONDISSEMENT") {
+    # NUTS3_2027 -> NUTS3_2021 -> INTERNAL
+    nuts3_2021 <- route_conversion(input_dt, "NUTS3_2027", "NUTS3_2021", md)
+    intermediate <- data.table(code_from = nuts3_2021$code_to)
+    internal <- route_conversion(intermediate, "NUTS3_2021", "INTERNAL_ARRONDISSEMENT", md)
+    return(data.table(
+      code_from = nuts3_2021$code_from,
+      code_to = internal$code_to[match(nuts3_2021$code_to, internal$code_from)]
+    ))
+  }
+
+  if (from == "NUTS3_2027" && to == "NUTS2_2027") {
+    nuts3_ref <- md$nuts3_ref_2027
+    return(convert_via_lookup(input_dt, nuts3_ref, "cd_nuts3_2027", "cd_nuts2_2027"))
+  }
+
+  if (from == "NUTS2_2027" && to == "NUTS1_2027") {
+    nuts3_ref <- md$nuts3_ref_2027
+    return(convert_via_lookup(input_dt, unique(nuts3_ref[, .(cd_nuts2_2027, cd_nuts1_2027)]),
+                              "cd_nuts2_2027", "cd_nuts1_2027"))
   }
 
   stop(sprintf("No conversion route implemented from '%s' to '%s'.\n%s",

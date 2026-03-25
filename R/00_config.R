@@ -195,7 +195,34 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = paste0(
          "Generally first 2 digits of NIS arrondissement = internal code, ",
          "EXCEPT for Verviers: NIS 63000 -> internal 65 (FR) + 66 (DE)."
-       ))
+       )),
+
+  # --- NUTS 2021 <-> NUTS 2027 ---
+  list(from = "NUTS3_2021", to = "NUTS3_2027",
+       relation = "1:1", via = "derived",
+       notes = paste0(
+         "Direct 1:1 remapping per EU regulation 2026/195. Changed: ",
+         "Antwerpen BE21x->BE26x, Oost-Vlaanderen BE23x->BE27x, ",
+         "Limburg BE223->BE226 and BE224->BE227."
+       )),
+  list(from = "NUTS3_2027", to = "NUTS2_2027",
+       relation = "N:1", via = "derived",
+       notes = "Hierarchical (first 4 chars of NUTS3 2027 code)"),
+  list(from = "NUTS2_2027", to = "NUTS1_2027",
+       relation = "N:1", via = "derived",
+       notes = "Hierarchical"),
+  list(from = "NUTS1_2027", to = "NUTS0",
+       relation = "N:1", via = "derived",
+       notes = "Hierarchical"),
+  list(from = "NIS_COMMUNE_2019", to = "NUTS3_2027",
+       relation = "1:1", via = "derived",
+       notes = "Via NUTS 2021: NIS_COMMUNE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+  list(from = "NUTS3_2027", to = "INTERNAL_ARRONDISSEMENT",
+       relation = "1:1", via = "derived",
+       notes = "Via NUTS 2021: NUTS3_2027 -> NUTS3_2021 -> INTERNAL_ARRONDISSEMENT"),
+  list(from = "POSTAL", to = "NUTS3_2027",
+       relation = "N:1", via = "derived",
+       notes = "Via POSTAL -> NIS_COMMUNE_2019 -> NUTS3_2027")
 )
 
 # --- Helper: get data directory path ---
@@ -212,3 +239,25 @@ get_processed_data_path <- function() {
   }
   return(file.path("data", "processed"))
 }
+
+# --- NUTS 2021 → NUTS 2027 mapping ---
+# Source: EU Regulation 2026/195 (JO L 27.1.2026), applicable from 1 January 2027.
+# Only changed codes are listed; all others remain identical between versions.
+NUTS2021_TO_NUTS2027 <- data.table::data.table(
+  nuts_2021 = c(
+    # NUTS2 changes
+    "BE21", "BE23",
+    # NUTS3: Antwerpen (BE21 -> BE26)
+    "BE211", "BE212", "BE213",
+    # NUTS3: Limburg (partial renumbering)
+    "BE223", "BE224",
+    # NUTS3: Oost-Vlaanderen (BE23 -> BE27)
+    "BE231", "BE232", "BE233", "BE234", "BE235", "BE236"
+  ),
+  nuts_2027 = c(
+    "BE26", "BE27",
+    "BE261", "BE262", "BE263",
+    "BE226", "BE227",
+    "BE271", "BE272", "BE273", "BE274", "BE275", "BE276"
+  )
+)

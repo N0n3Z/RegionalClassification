@@ -234,6 +234,60 @@ run_all_tests <- function(master_data) {
     results[["test_9"]] <<- list(status = "FAIL", error = e$message)
   })
 
+  # --- Test 10: NIS Commune 2019 -> NUTS3 2027 ---
+  test_count <- test_count + 1
+  cat("--- Test 10: NIS Commune 2019 -> NUTS3 2027 ---\n")
+  tryCatch({
+    # Antwerpen (11002 -> BE261), Gent (44021 -> BE274), Bruxelles (21004 -> BE100 unchanged)
+    sample_data <- data.table(
+      commune_code = c(21004L, 11002L, 44021L, 62063L, 63079L),
+      commune_name = c("Bruxelles", "Antwerpen", "Gent", "Liege", "Verviers")
+    )
+    result <- convert_codes(sample_data$commune_code, "NIS_COMMUNE_2019",
+                            "NUTS3_2027", master_data)
+    cat("  Input codes:", paste(sample_data$commune_code, collapse = ", "), "\n")
+    cat("  Output NUTS3 2027:", paste(result$code_to, collapse = ", "), "\n")
+    # Bruxelles -> BE100, Antwerpen -> BE261, Gent -> BE274, Liege -> BE332, Verviers -> BE335
+    stopifnot(result[code_from == 21004L]$code_to == "BE100")   # unchanged
+    stopifnot(result[code_from == 11002L]$code_to == "BE261")   # BE211 -> BE261
+    stopifnot(result[code_from == 44021L]$code_to == "BE274")   # BE234 -> BE274
+    cat("  PASS\n\n")
+    pass_count <- pass_count + 1
+    results[["test_10"]] <- list(status = "PASS", result = result)
+  }, error = function(e) {
+    cat(sprintf("  FAIL: %s\n\n", e$message))
+    results[["test_10"]] <<- list(status = "FAIL", error = e$message)
+  })
+
+  # --- Test 11: NUTS3 2021 <-> NUTS3 2027 roundtrip ---
+  test_count <- test_count + 1
+  cat("--- Test 11: NUTS3 2021 -> NUTS3 2027 -> NUTS3 2021 roundtrip ---\n")
+  tryCatch({
+    nuts3_2021 <- c("BE100", "BE211", "BE223", "BE224", "BE225", "BE231", "BE335")
+    result_2027 <- convert_codes(nuts3_2021, "NUTS3_2021", "NUTS3_2027", master_data)
+    cat("  NUTS3 2021:", paste(nuts3_2021, collapse = ", "), "\n")
+    cat("  NUTS3 2027:", paste(result_2027$code_to, collapse = ", "), "\n")
+    # Expected: BE100, BE261, BE226, BE227, BE225, BE271, BE335
+    stopifnot(result_2027[code_from == "BE211"]$code_to == "BE261")
+    stopifnot(result_2027[code_from == "BE223"]$code_to == "BE226")
+    stopifnot(result_2027[code_from == "BE225"]$code_to == "BE225")  # unchanged
+    stopifnot(result_2027[code_from == "BE231"]$code_to == "BE271")
+    stopifnot(result_2027[code_from == "BE335"]$code_to == "BE335")  # unchanged
+
+    # Reverse
+    result_back <- convert_codes(result_2027$code_to, "NUTS3_2027", "NUTS3_2021", master_data)
+    cat("  Back to 2021:", paste(result_back$code_to, collapse = ", "), "\n")
+    # Compare in original order (merge may reorder rows)
+    roundtrip <- result_back$code_to[match(result_2027$code_to, result_back$code_from)]
+    stopifnot(all(roundtrip == nuts3_2021))
+    cat("  PASS\n\n")
+    pass_count <- pass_count + 1
+    results[["test_11"]] <- list(status = "PASS", result = result_2027)
+  }, error = function(e) {
+    cat(sprintf("  FAIL: %s\n\n", e$message))
+    results[["test_11"]] <<- list(status = "FAIL", error = e$message)
+  })
+
   # --- Summary ---
   cat("================================================================\n")
   cat(sprintf("  RESULTS: %d/%d tests passed\n", pass_count, test_count))

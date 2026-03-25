@@ -53,6 +53,9 @@ build_master_table <- function(raw_data) {
   }
   master_2019 <- merge(master_2019, internal_map, by = "cd_nuts3", all.x = TRUE)
 
+  # --- 5b. Add NUTS 2027 codes (derived from NUTS 2021, EU regulation 2026/195) ---
+  master_2019 <- add_nuts2027_columns(master_2019)
+
   # --- 6. Add postal codes (NIS 2019) ---
   postal_2019 <- raw_data$CONVERSION_POSTAL_NIS2019
   postal_col_nis <- grep("TERRITORIAL_CODE_NIS|TERRITORIAL_CODE_INS",
@@ -109,6 +112,8 @@ build_master_table <- function(raw_data) {
 
     # NUTS references
     nuts3_ref_2021 = nuts3_ref_2021,
+    nuts3_ref_2027 = unique(master_2019[!is.na(cd_nuts3_2027),
+                                         .(cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027)]),
     nuts_to_internal = internal_map,
 
     # Parsed hierarchies
@@ -191,6 +196,37 @@ build_nis_commune_table <- function(nis_parsed, version) {
   return(communes)
 }
 
+#' Derive NUTS 2027 columns from existing NUTS 2021 columns in master table
+#'
+#' Applies the remapping defined in NUTS2021_TO_NUTS2027 (00_config.R).
+#' Codes not listed in the mapping are carried over unchanged.
+#'
+#' @param master data.table with cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0 columns
+#' @return data.table with added cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027
+add_nuts2027_columns <- function(master) {
+
+  master <- copy(master)
+
+  nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
+  nuts2_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 4]
+
+  # NUTS3
+  master <- merge(master, nuts3_map, by.x = "cd_nuts3", by.y = "nuts_2021", all.x = TRUE)
+  setnames(master, "nuts_2027", "cd_nuts3_2027")
+  master[is.na(cd_nuts3_2027), cd_nuts3_2027 := cd_nuts3]
+
+  # NUTS2
+  master <- merge(master, nuts2_map, by.x = "cd_nuts2", by.y = "nuts_2021", all.x = TRUE)
+  setnames(master, "nuts_2027", "cd_nuts2_2027")
+  master[is.na(cd_nuts2_2027), cd_nuts2_2027 := cd_nuts2]
+
+  # NUTS1 and NUTS0 are unchanged for Belgium
+  master[, cd_nuts1_2027 := cd_nuts1]
+  master[, cd_nuts0_2027 := cd_nuts0]
+
+  return(master)
+}
+
 #' Save master table and auxiliary tables to processed directory
 #'
 #' @param master_data Output from build_master_table()
@@ -203,7 +239,7 @@ save_master_tables <- function(master_data, output_dir = get_processed_data_path
 
   tables_to_save <- c("master_nis2019_nuts2021", "communes_nis2019", "communes_nis2025",
                        "postal_to_nis2019", "postal_to_nis2025", "nis_changes",
-                       "nuts3_ref_2021", "nuts_to_internal")
+                       "nuts3_ref_2021", "nuts3_ref_2027", "nuts_to_internal")
 
   for (tbl_name in tables_to_save) {
     if (tbl_name %in% names(master_data)) {
