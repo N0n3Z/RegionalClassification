@@ -86,6 +86,12 @@ build_master_table <- function(raw_data) {
   postal_map_2025[, cd_commune_nis := as.integer(cd_commune_nis)]
   postal_map_2025[, cd_postal := as.integer(cd_postal)]
 
+  # --- 7b. Build NIS 2025 -> NUTS 2027 mapping (optional - requires file) ---
+  comm2025_to_nuts2027 <- NULL
+  if (!is.null(raw_data$CONVERSION_NIS2025_NUTS2027)) {
+    comm2025_to_nuts2027 <- parse_nis2025_nuts2027(raw_data$CONVERSION_NIS2025_NUTS2027)
+  }
+
   # --- 8. Build NIS change mapping ---
   nis_change_map <- nis_changes[, .(cd_refnis_old, cd_refnis_new, nature)]
 
@@ -112,6 +118,7 @@ build_master_table <- function(raw_data) {
 
     # NUTS references
     nuts3_ref_2021 = nuts3_ref_2021,
+    comm2025_to_nuts2027 = comm2025_to_nuts2027,   # NULL until CONVERSION_NIS2025_NUTS2027.xlsx provided
     nuts3_ref_2027 = unique(master_2019[!is.na(cd_nuts3_2027),
                                          .(cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027)]),
     nuts_to_internal = internal_map,

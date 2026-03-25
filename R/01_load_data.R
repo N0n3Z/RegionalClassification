@@ -179,6 +179,12 @@ parse_nuts_nis_conversion <- function(conv_dt) {
 
   dt <- copy(conv_dt)
 
+  # For commune-level rows (CD_LVL == 4), keep only currently valid entries.
+  # Some communes have multiple rows with different validity periods (e.g. Limburg
+  # communes had NUTS3 codes BE221/BE222 until 2019-01-01, then BE224/BE225).
+  # Keeping all rows would introduce duplicates in the master table.
+  dt_comm <- dt[CD_LVL == 4 & DT_VLDT_STOP == max(dt[CD_LVL == 4, DT_VLDT_STOP])]
+
   # Split by level
   nuts_hierarchy <- list(
     regions     = dt[CD_LVL == 1, .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
@@ -189,9 +195,9 @@ parse_nuts_nis_conversion <- function(conv_dt) {
     arrondissements = dt[CD_LVL == 3, .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
                                          tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
                                          cd_nuts_parent = CD_LVL_SUP)],
-    communes    = dt[CD_LVL == 4, .(cd_nuts_lau = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
-                                     tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
-                                     cd_nuts3 = CD_LVL_SUP)]
+    communes    = dt_comm[, .(cd_nuts_lau = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
+                               tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
+                               cd_nuts3 = CD_LVL_SUP)]
   )
 
   # Ensure cd_refnis is integer in communes
@@ -234,6 +240,44 @@ parse_nuts_arrondissement <- function(nuts_arr_dt) {
     result[[paste0(nuts_version, "_hierarchy")]] <- hier
   }
 
+  return(result)
+}
+
+#' Parse NIS 2025 -> NUTS 2027 conversion file
+#'
+#' Called only when CONVERSION_NIS2025_NUTS2027.xlsx is present in data/raw/.
+#' Column names are configured in FILE_MAPPING$CONVERSION_NIS2025_NUTS2027.
+#'
+#' @param conv_dt data.table from CONVERSION_NIS2025_NUTS2027.xlsx
+#' @param col_nis  Name of the NIS 2025 commune code column
+#' @param col_nuts3 Name of the NUTS3 2027 code column
+#' @return data.table with columns cd_commune_2025 (integer) and cd_nuts3_2027 (character)
+parse_nis2025_nuts2027 <- function(conv_dt,
+                                   col_nis   = FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis,
+                                   col_nuts3 = FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nuts3) {
+
+  dt <- copy(conv_dt)
+
+  if (!col_nis %in% names(dt)) {
+    stop(sprintf(
+      "Column '%s' not found in CONVERSION_NIS2025_NUTS2027. Available: %s\n%s",
+      col_nis, paste(names(dt), collapse = ", "),
+      "Update FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis in 00_config.R."
+    ))
+  }
+  if (!col_nuts3 %in% names(dt)) {
+    stop(sprintf(
+      "Column '%s' not found in CONVERSION_NIS2025_NUTS2027. Available: %s\n%s",
+      col_nuts3, paste(names(dt), collapse = ", "),
+      "Update FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nuts3 in 00_config.R."
+    ))
+  }
+
+  result <- dt[, .(cd_commune_2025 = as.integer(get(col_nis)),
+                   cd_nuts3_2027   = as.character(get(col_nuts3)))]
+  result <- unique(result[!is.na(cd_commune_2025) & !is.na(cd_nuts3_2027)])
+
+  message(sprintf("  -> NIS2025->NUTS2027 mapping: %d communes", nrow(result)))
   return(result)
 }
 

@@ -217,6 +217,30 @@ route_conversion <- function(input_dt, from, to, md) {
     }
   }
 
+  # --- NIS COMMUNE 2025 -> NUTS 2027 (requires CONVERSION_NIS2025_NUTS2027.xlsx) ---
+  if (from == "NIS_COMMUNE_2025" && grepl("^NUTS.*2027$", to)) {
+    if (is.null(md$comm2025_to_nuts2027)) {
+      stop(paste0(
+        "Conversion NIS_COMMUNE_2025 -> ", to, " requires the file ",
+        "'CONVERSION_NIS2025_NUTS2027.xlsx' in data/raw/.\n",
+        "File not yet available. Once provided, drop it in data/raw/ and reload."
+      ))
+    }
+    if (to == "NUTS3_2027") {
+      return(convert_via_lookup(input_dt, md$comm2025_to_nuts2027,
+                                "cd_commune_2025", "cd_nuts3_2027"))
+    }
+    if (to %in% c("NUTS2_2027", "NUTS1_2027")) {
+      nuts3 <- route_conversion(input_dt, "NIS_COMMUNE_2025", "NUTS3_2027", md)
+      intermediate <- data.table(code_from = nuts3$code_to)
+      upper <- route_conversion(intermediate, "NUTS3_2027", to, md)
+      return(data.table(
+        code_from = nuts3$code_from,
+        code_to   = upper$code_to[match(nuts3$code_to, upper$code_from)]
+      ))
+    }
+  }
+
   # --- NIS COMMUNE 2025 conversions ---
   if (from == "NIS_COMMUNE_2025") {
     comm_2025 <- md$communes_nis2025

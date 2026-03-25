@@ -102,6 +102,20 @@ FILE_MAPPING <- list(
     sheet = NULL,
     provides = c("NUTS", "INTERNAL"),
     filter = NULL
+  ),
+
+  # Optional - not yet available. When provided, enables NIS_COMMUNE_2025 -> NUTS3_2027.
+  # Expected columns: one for NIS 2025 commune code, one for NUTS3 2027 code.
+  # Column names are configured via FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis
+  # and $col_nuts3 below.
+  CONVERSION_NIS2025_NUTS2027 = list(
+    filename = "CONVERSION_NIS2025_NUTS2027.xlsx",
+    description = "NIS 2025 communes mapped to NUTS 2027 (official mapping - file not yet available)",
+    sheet = NULL,
+    provides = c("NIS_2025", "NUTS_2027"),
+    filter = NULL,
+    col_nis   = "CD_REFNIS_2025",   # expected column name for NIS 2025 commune code
+    col_nuts3 = "CD_NUTS3_2027"     # expected column name for NUTS3 2027 code
   )
 )
 
@@ -222,7 +236,21 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Via NUTS 2021: NUTS3_2027 -> NUTS3_2021 -> INTERNAL_ARRONDISSEMENT"),
   list(from = "POSTAL", to = "NUTS3_2027",
        relation = "N:1", via = "derived",
-       notes = "Via POSTAL -> NIS_COMMUNE_2019 -> NUTS3_2027")
+       notes = "Via POSTAL -> NIS_COMMUNE_2019 -> NUTS3_2027"),
+
+  # --- NIS 2025 -> NUTS 2027 (requires CONVERSION_NIS2025_NUTS2027.xlsx) ---
+  list(from = "NIS_COMMUNE_2025", to = "NUTS3_2027",
+       relation = "N:1", via = "CONVERSION_NIS2025_NUTS2027",
+       notes = paste0(
+         "Requires CONVERSION_NIS2025_NUTS2027.xlsx in data/raw/. ",
+         "File not yet available - structure is ready to absorb it."
+       )),
+  list(from = "NIS_COMMUNE_2025", to = "NUTS2_2027",
+       relation = "N:1", via = "CONVERSION_NIS2025_NUTS2027",
+       notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS2_2027"),
+  list(from = "NIS_COMMUNE_2025", to = "NUTS1_2027",
+       relation = "N:1", via = "CONVERSION_NIS2025_NUTS2027",
+       notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS1_2027")
 )
 
 # --- Helper: get data directory path ---
