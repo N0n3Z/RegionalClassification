@@ -179,25 +179,33 @@ parse_nuts_nis_conversion <- function(conv_dt) {
 
   dt <- copy(conv_dt)
 
-  # For commune-level rows (CD_LVL == 4), keep only currently valid entries.
-  # Some communes have multiple rows with different validity periods (e.g. Limburg
-  # communes had NUTS3 codes BE221/BE222 until 2019-01-01, then BE224/BE225).
-  # Keeping all rows would introduce duplicates in the master table.
-  dt_comm <- dt[CD_LVL == 4 & DT_VLDT_STOP == max(dt[CD_LVL == 4, DT_VLDT_STOP])]
+  # Keep only currently valid entries for each level by filtering on the maximum
+  # DT_VLDT_STOP per level. The conversion file contains historical rows alongside
+  # current ones (e.g. old Limburg codes BE221/222 expired 2019, old Hainaut codes
+  # BE321/322/324-327 expired 2019, ~98 commune rows with old NUTS3 parents).
+  # Retaining expired rows introduces duplicates and incorrect NUTS assignments.
+  filter_current <- function(sub_dt) {
+    max_stop <- max(sub_dt$DT_VLDT_STOP)
+    sub_dt[DT_VLDT_STOP == max_stop]
+  }
 
-  # Split by level
+  # Split by level (filtering each to current entries only)
   nuts_hierarchy <- list(
-    regions     = dt[CD_LVL == 1, .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
-                                     tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL)],
-    provinces   = dt[CD_LVL == 2, .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
-                                     tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
-                                     cd_nuts_parent = CD_LVL_SUP)],
-    arrondissements = dt[CD_LVL == 3, .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
-                                         tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
-                                         cd_nuts_parent = CD_LVL_SUP)],
-    communes    = dt_comm[, .(cd_nuts_lau = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
-                               tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
-                               cd_nuts3 = CD_LVL_SUP)]
+    regions     = filter_current(dt[CD_LVL == 1])[,
+                    .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
+                      tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL)],
+    provinces   = filter_current(dt[CD_LVL == 2])[,
+                    .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
+                      tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
+                      cd_nuts_parent = CD_LVL_SUP)],
+    arrondissements = filter_current(dt[CD_LVL == 3])[,
+                        .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
+                          tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
+                          cd_nuts_parent = CD_LVL_SUP)],
+    communes    = filter_current(dt[CD_LVL == 4])[,
+                    .(cd_nuts_lau = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
+                      tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
+                      cd_nuts3 = CD_LVL_SUP)]
   )
 
   # Ensure cd_refnis is integer in communes
