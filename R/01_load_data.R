@@ -92,7 +92,8 @@ load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
 parse_refnis_hierarchy <- function(refnis_dt,
                                    code_col = "Code INS",
                                    name_fr_col = "Entit\u00e9s administratives",
-                                   name_nl_col = "Administratieve eenheden") {
+                                   name_nl_col = "Administratieve eenheden",
+                                   lang_col = NULL) {
 
   dt <- copy(refnis_dt)
 
@@ -110,14 +111,21 @@ parse_refnis_hierarchy <- function(refnis_dt,
   # x0000 (5-digit, ends in 0000) = province
   # xy000 (5-digit, ends in 000 but not 0000) = arrondissement
   # xyzzz (5-digit, doesn't end in 000) = commune
+  if (!is.null(lang_col) && lang_col %in% names(dt)) {
+    dt[, is_valid_commune := !is.na(get(lang_col))]
+  } else {
+    dt[, is_valid_commune := TRUE]
+  }
+
   dt[, level := fcase(
     cd_refnis == 1000L, "pays",
     cd_refnis < 10000L & cd_refnis %% 1000L == 0L, "region",
     cd_refnis >= 10000L & cd_refnis %% 10000L == 0L, "province",
     cd_refnis >= 10000L & cd_refnis %% 1000L == 0L, "arrondissement",
-    cd_refnis >= 10000L & cd_refnis %% 1000L != 0L, "commune",
+    cd_refnis >= 10000L & cd_refnis %% 1000L != 0L & is_valid_commune, "commune",
     default = "unknown"
   )]
+  dt[, is_valid_commune := NULL]
 
   # Derive parent codes
   dt[level == "commune", cd_arr := (cd_refnis %/% 1000L) * 1000L]
@@ -174,35 +182,41 @@ parse_refnis_hierarchy <- function(refnis_dt,
 #' Parse the NUTS-NIS conversion file
 #'
 #' @param conv_dt data.table from CONVERSION_NIS2019_NUTS2021.xlsx
+#' @param reference_date Date to filter validity. NULL = use current (max DT_VLDT_STOP).
+#'   Use as.Date("2018-12-31") for pre-2019 historical NUTS assignments.
 #' @return list with NUTS hierarchy and commune-level mapping
-parse_nuts_nis_conversion <- function(conv_dt) {
+parse_nuts_nis_conversion <- function(conv_dt, reference_date = NULL) {
 
   dt <- copy(conv_dt)
 
-  # Keep only currently valid entries for each level by filtering on the maximum
-  # DT_VLDT_STOP per level. The conversion file contains historical rows alongside
-  # current ones (e.g. old Limburg codes BE221/222 expired 2019, old Hainaut codes
-  # BE321/322/324-327 expired 2019, ~98 commune rows with old NUTS3 parents).
-  # Retaining expired rows introduces duplicates and incorrect NUTS assignments.
-  filter_current <- function(sub_dt) {
-    max_stop <- max(sub_dt$DT_VLDT_STOP)
-    sub_dt[DT_VLDT_STOP == max_stop]
+  # Filter to entries valid at a given reference date.
+  # When reference_date is NULL, keep only the most recent entries (current).
+  # When reference_date is provided, keep entries where:
+  #   DT_VLDT_STRT <= reference_date < DT_VLDT_STOP
+  filter_at_date <- function(sub_dt, ref_date) {
+    if (is.null(ref_date)) {
+      max_stop <- max(sub_dt$DT_VLDT_STOP)
+      sub_dt[DT_VLDT_STOP == max_stop]
+    } else {
+      ref_posix <- as.POSIXct(as.character(ref_date), tz = "UTC")
+      sub_dt[DT_VLDT_STRT <= ref_posix & DT_VLDT_STOP > ref_posix]
+    }
   }
 
-  # Split by level (filtering each to current entries only)
+  # Split by level (filtering each to entries valid at reference_date)
   nuts_hierarchy <- list(
-    regions     = filter_current(dt[CD_LVL == 1])[,
+    regions     = filter_at_date(dt[CD_LVL == 1], reference_date)[,
                     .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
                       tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL)],
-    provinces   = filter_current(dt[CD_LVL == 2])[,
+    provinces   = filter_at_date(dt[CD_LVL == 2], reference_date)[,
                     .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
                       tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
                       cd_nuts_parent = CD_LVL_SUP)],
-    arrondissements = filter_current(dt[CD_LVL == 3])[,
+    arrondissements = filter_at_date(dt[CD_LVL == 3], reference_date)[,
                         .(cd_nuts = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
                           tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
                           cd_nuts_parent = CD_LVL_SUP)],
-    communes    = filter_current(dt[CD_LVL == 4])[,
+    communes    = filter_at_date(dt[CD_LVL == 4], reference_date)[,
                     .(cd_nuts_lau = CD_LAU, cd_refnis = CD_MUNTY_REFNIS,
                       tx_descr_fr = TX_DESCR_FR, tx_descr_nl = TX_DESCR_NL,
                       cd_nuts3 = CD_LVL_SUP)]
@@ -286,6 +300,37 @@ parse_nis2025_nuts2027 <- function(conv_dt,
   result <- unique(result[!is.na(cd_commune_2025) & !is.na(cd_nuts3_2027)])
 
   message(sprintf("  -> NIS2025->NUTS2027 mapping: %d communes", nrow(result)))
+  return(result)
+}
+
+#' Parse NIS BEFORE_2019 -> NIS 2019 change table (optional file)
+#'
+#' @param change_dt data.table from REFNIS_CHANGE_BEFORE2019.xlsx
+#' @param col_old Name of old NIS code column
+#' @param col_new Name of new NIS code column
+#' @return data.table with cd_refnis_before2019 (integer) and cd_refnis_2019 (integer)
+parse_refnis_change_before2019 <- function(
+    change_dt,
+    col_old = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_old,
+    col_new = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_new) {
+
+  dt <- copy(change_dt)
+
+  for (col in c(col_old, col_new)) {
+    if (!col %in% names(dt)) {
+      stop(sprintf(
+        "Column '%s' not found in REFNIS_CHANGE_BEFORE2019. Available: %s\n%s",
+        col, paste(names(dt), collapse = ", "),
+        sprintf("Update FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$%s in 00_config.R.",
+                ifelse(col == col_old, "col_nis_old", "col_nis_new"))
+      ))
+    }
+  }
+
+  result <- dt[, .(cd_refnis_before2019 = as.integer(get(col_old)),
+                   cd_refnis_2019       = as.integer(get(col_new)))]
+  result <- unique(result[!is.na(cd_refnis_before2019) & !is.na(cd_refnis_2019)])
+  message(sprintf("  -> NIS BEFORE_2019->2019 changes: %d entries", nrow(result)))
   return(result)
 }
 

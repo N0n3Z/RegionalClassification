@@ -68,6 +68,12 @@ normalize_classification_id <- function(class_id) {
 
   # Common aliases
   aliases <- list(
+    "NIS_COMMUNE_BEFORE_2019"       = "NIS_COMMUNE_BEFORE_2019",
+    "NIS_COM_BEFORE_2019"           = "NIS_COMMUNE_BEFORE_2019",
+    "NIS_ARRONDISSEMENT_BEFORE_2019" = "NIS_ARRONDISSEMENT_BEFORE_2019",
+    "NIS_ARR_BEFORE_2019"           = "NIS_ARRONDISSEMENT_BEFORE_2019",
+    "NIS_PROVINCE_BEFORE_2019"      = "NIS_PROVINCE_BEFORE_2019",
+    "NIS_REGION_BEFORE_2019"        = "NIS_REGION_BEFORE_2019",
     "NIS_COMMUNE_2019" = "NIS_COMMUNE_2019",
     "NIS_COM_2019" = "NIS_COMMUNE_2019",
     "COMMUNE_2019" = "NIS_COMMUNE_2019",
@@ -214,6 +220,40 @@ route_conversion <- function(input_dt, from, to, md) {
     }
     if (to == "NIS_COMMUNE_2025") {
       return(convert_nis2019_to_nis2025(input_dt, md))
+    }
+  }
+
+  # --- NIS COMMUNE BEFORE_2019 conversions ---
+  if (from == "NIS_COMMUNE_BEFORE_2019") {
+    if (is.null(md$master_before2019)) {
+      stop("NIS BEFORE_2019 data not loaded. Ensure REFNIS_BEFORE_2019.xls is in data/raw/ and reload.")
+    }
+    master_b19 <- md$master_before2019
+    input_dt[, code_from := as.integer(code_from)]
+
+    if (to == "NIS_ARRONDISSEMENT_BEFORE_2019") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_arr"))
+    }
+    if (to == "NIS_PROVINCE_BEFORE_2019") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_province"))
+    }
+    if (to == "NIS_REGION_BEFORE_2019") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_region"))
+    }
+    if (to == "NUTS3_2021") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_nuts3"))
+    }
+    if (to == "NUTS2_2021") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_nuts2"))
+    }
+    if (to == "NUTS3_2027") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_nuts3_2027"))
+    }
+    if (to == "INTERNAL_ARRONDISSEMENT") {
+      return(convert_via_master(input_dt, master_b19, "cd_commune", "cd_arr_internal"))
+    }
+    if (to == "NIS_COMMUNE_2019") {
+      return(convert_nis_before2019_to_nis2019(input_dt, md))
     }
   }
 
@@ -539,6 +579,55 @@ convert_nis2025_to_nis2019 <- function(input_dt, md) {
     ))
   }
   result[, n_mappings := NULL]
+
+  return(result[, .(code_from, code_to, nature)])
+}
+
+#' Convert NIS BEFORE_2019 communes to NIS 2019
+#'
+#' Unchanged communes: 1:1. Merged communes require REFNIS_CHANGE_BEFORE2019.xlsx.
+#'
+#' @param input_dt data.table with code_from (integer NIS BEFORE_2019 codes)
+#' @param md Master data
+#' @return data.table with code_from, code_to, nature
+convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
+
+  # Communes present in both versions: 1:1 (same code)
+  comm_2019_codes <- md$communes_nis2019$cd_commune
+  comm_b19_codes  <- md$communes_nis_before2019$cd_commune
+
+  result <- copy(input_dt)
+  result[, code_to := NA_integer_]
+  result[, nature  := NA_character_]
+
+  # Unchanged codes (exist in both versions)
+  unchanged <- intersect(comm_b19_codes, comm_2019_codes)
+  result[code_from %in% unchanged, `:=`(code_to = code_from, nature = "UNCHANGED")]
+
+  # Merged codes: use change table if available
+  merged_codes <- setdiff(comm_b19_codes, comm_2019_codes)
+  if (length(merged_codes) > 0 && any(result$code_from %in% merged_codes)) {
+    if (!is.null(md$nis_change_before2019)) {
+      changes <- md$nis_change_before2019
+      unresolved <- result[is.na(code_to) & code_from %in% merged_codes]
+      resolved <- merge(unresolved[, .(code_from)],
+                        changes[, .(cd_refnis_before2019, cd_refnis_2019)],
+                        by.x = "code_from", by.y = "cd_refnis_before2019", all.x = TRUE)
+      resolved[!is.na(cd_refnis_2019), `:=`(code_to = cd_refnis_2019, nature = "FUSION")]
+      resolved[, cd_refnis_2019 := NULL]
+      result <- rbind(result[!(code_from %in% merged_codes) | !is.na(code_to)], resolved)
+    } else {
+      # Warn about unavailable mapping
+      n_merged_input <- sum(result$code_from %in% merged_codes, na.rm = TRUE)
+      if (n_merged_input > 0) {
+        warning(sprintf(
+          paste0("%d code(s) are merged communes with no NIS 2019 equivalent. ",
+                 "Provide REFNIS_CHANGE_BEFORE2019.xlsx in data/raw/ for full mapping."),
+          n_merged_input
+        ))
+      }
+    }
+  }
 
   return(result[, .(code_from, code_to, nature)])
 }

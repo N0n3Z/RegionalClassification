@@ -23,7 +23,7 @@ library(data.table)
 CLASSIFICATION_REGISTRY <- list(
   NIS = list(
     description = "Nomenclature INS/NIS (Institut National de Statistique)",
-    versions = c("2019", "2025"),
+    versions = c("BEFORE_2019", "2019", "2025"),
     levels = c("commune", "arrondissement", "province", "region", "pays"),
     source = "Statbel"
   ),
@@ -89,6 +89,23 @@ FILE_MAPPING <- list(
     provides = c("NIS_2025"),
     filter = NULL
   ),
+  REFNIS_BEFORE_2019 = list(
+    filename = "REFNIS_BEFORE_2019.xls",
+    description = "Reference NIS BEFORE_2019 - communes pre-2019 fusion",
+    sheet = "REFNIS",
+    provides = c("NIS_BEFORE_2019"),
+    filter = NULL
+  ),
+  # Optional - enables NIS_COMMUNE_BEFORE_2019 -> NIS_COMMUNE_2019 for merged communes
+  REFNIS_CHANGE_BEFORE2019 = list(
+    filename = "REFNIS_CHANGE_BEFORE2019.xlsx",
+    description = "Changes between NIS BEFORE_2019 and NIS 2019 (file not yet available)",
+    sheet = NULL,
+    provides = c("NIS_BEFORE_2019", "NIS_2019"),
+    filter = NULL,
+    col_nis_old = "CD_REFNIS_OLD",
+    col_nis_new = "CD_REFNIS_NEW"
+  ),
   REFNIS_CHANGE = list(
     filename = "REFNIS_CHANGE_2025.xlsx",
     description = "Changes between NIS 2019 and NIS 2025",
@@ -130,6 +147,33 @@ FILE_MAPPING <- list(
 # Edges with relation "M:N" indicate that simple (direct) conversion is NOT
 # possible without additional assumptions or data splitting.
 CONVERSION_GRAPH_EDGES <- list(
+  # --- Within NIS BEFORE_2019 hierarchy ---
+  list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_ARRONDISSEMENT_BEFORE_2019",
+       relation = "N:1", via = "hierarchy",
+       notes = "Derived from commune code: first 2 digits * 1000"),
+  list(from = "NIS_ARRONDISSEMENT_BEFORE_2019", to = "NIS_PROVINCE_BEFORE_2019",
+       relation = "N:1", via = "hierarchy",
+       notes = "Derived from REFNIS hierarchy"),
+  list(from = "NIS_PROVINCE_BEFORE_2019", to = "NIS_REGION_BEFORE_2019",
+       relation = "N:1", via = "hierarchy",
+       notes = "Derived from REFNIS hierarchy"),
+
+  # --- NIS BEFORE_2019 to NUTS 2021 (pre-2019 assignments) ---
+  list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2021",
+       relation = "1:1", via = "CONVERSION_NIS2019_NUTS2021",
+       notes = "Uses historical NUTS assignments (DT_VLDT_STOP = 2019-01-01 for changed codes)"),
+  list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2027",
+       relation = "1:1", via = "derived",
+       notes = "Via NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+
+  # --- NIS BEFORE_2019 -> NIS 2019 (requires REFNIS_CHANGE_BEFORE2019.xlsx for merged communes) ---
+  list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_COMMUNE_2019",
+       relation = "M:N", via = "REFNIS_CHANGE_BEFORE2019",
+       notes = paste0(
+         "Unchanged communes: 1:1 (same code). ",
+         "26 merged communes require REFNIS_CHANGE_BEFORE2019.xlsx (not yet available)."
+       )),
+
   # --- Within NIS 2019 hierarchy ---
   list(from = "NIS_COMMUNE_2019", to = "NIS_ARRONDISSEMENT_2019",
        relation = "N:1", via = "hierarchy",

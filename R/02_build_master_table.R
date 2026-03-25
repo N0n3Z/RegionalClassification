@@ -56,6 +56,45 @@ build_master_table <- function(raw_data) {
   # --- 5b. Add NUTS 2027 codes (derived from NUTS 2021, EU regulation 2026/195) ---
   master_2019 <- add_nuts2027_columns(master_2019)
 
+  # --- 5c. Build NIS BEFORE_2019 commune table (if file available) ---
+  # Placed here so internal_map is already defined (step 5).
+  comm_before2019 <- NULL
+  master_before2019 <- NULL
+  nis_change_before2019 <- NULL
+
+  if (!is.null(raw_data$REFNIS_BEFORE_2019)) {
+    nis_before2019 <- parse_refnis_hierarchy(raw_data$REFNIS_BEFORE_2019,
+                                              lang_col = "Langue")
+    comm_before2019 <- build_nis_commune_table(nis_before2019, version = "BEFORE_2019")
+
+    # Historical NUTS assignments (filter at 2018-12-31)
+    nuts_nis_pre2019 <- parse_nuts_nis_conversion(
+      raw_data$CONVERSION_NIS2019_NUTS2021,
+      reference_date = as.Date("2018-12-31")
+    )
+    nuts_comm_pre2019 <- nuts_nis_pre2019$communes[, .(cd_refnis, cd_nuts_lau, cd_nuts3)]
+    nuts_arr_pre2019  <- nuts_nis_pre2019$arrondissements[, .(cd_nuts3 = cd_nuts,
+                                                               cd_nuts2 = cd_nuts_parent)]
+    nuts_prov_pre2019 <- nuts_nis_pre2019$provinces[, .(cd_nuts2 = cd_nuts,
+                                                         cd_nuts1 = cd_nuts_parent)]
+
+    nuts_comm_pre2019 <- merge(nuts_comm_pre2019, nuts_arr_pre2019, by = "cd_nuts3", all.x = TRUE)
+    nuts_comm_pre2019 <- merge(nuts_comm_pre2019, nuts_prov_pre2019, by = "cd_nuts2", all.x = TRUE)
+    nuts_comm_pre2019[, cd_nuts0 := "BE"]
+
+    master_before2019 <- merge(comm_before2019, nuts_comm_pre2019,
+                                by.x = "cd_commune", by.y = "cd_refnis",
+                                all.x = TRUE)
+    master_before2019 <- add_nuts2027_columns(master_before2019)
+    master_before2019 <- merge(master_before2019, internal_map, by = "cd_nuts3", all.x = TRUE)
+
+    message(sprintf("  NIS BEFORE_2019: %d communes", nrow(comm_before2019)))
+
+    if (!is.null(raw_data$REFNIS_CHANGE_BEFORE2019)) {
+      nis_change_before2019 <- parse_refnis_change_before2019(raw_data$REFNIS_CHANGE_BEFORE2019)
+    }
+  }
+
   # --- 6. Add postal codes (NIS 2019) ---
   postal_2019 <- raw_data$CONVERSION_POSTAL_NIS2019
   postal_col_nis <- grep("TERRITORIAL_CODE_NIS|TERRITORIAL_CODE_INS",
@@ -122,6 +161,11 @@ build_master_table <- function(raw_data) {
     nuts3_ref_2027 = unique(master_2019[!is.na(cd_nuts3_2027),
                                          .(cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027)]),
     nuts_to_internal = internal_map,
+
+    # NIS BEFORE_2019 tables (NULL if REFNIS_BEFORE_2019.xls not available)
+    communes_nis_before2019  = comm_before2019,
+    master_before2019        = master_before2019,
+    nis_change_before2019    = nis_change_before2019,
 
     # Parsed hierarchies
     nis_hierarchy_2019 = nis_2019,
