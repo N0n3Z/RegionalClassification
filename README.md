@@ -120,6 +120,10 @@ fuzzy_match_names(c("Bruxeles", "Antwerpn", "Vervirs"), "NIS_COMMUNE_2019",
 | Function | Description |
 |---|---|
 | `convert_codes(codes, from, to, master_data)` | Convert codes between classifications |
+| `convert_dataset(dt, code_col, to, master_data)` | Convert a column in a dataset (auto-detects source) |
+| `split_ambiguous(dt, code_col, value_cols, from, to, master_data)` | Weighted split for M:N conversions (e.g. Verviers) |
+| `diagnose_classification(dt, code_col, master_data)` | Diagnose coverage or auto-detect classification |
+| `register_split_weights(from, to, weights_dt, variable)` | Register population/employment weights |
 | `check_conversion_path(from, to)` | Check if a conversion is direct/ambiguous |
 | `print_conversion_check(from, to)` | Print detailed path info |
 | `fuzzy_match_names(names, target, master_data)` | Match names to codes |
