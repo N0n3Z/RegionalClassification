@@ -126,13 +126,11 @@ FILE_MAPPING <- list(
   # Column names are configured via FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis
   # and $col_nuts3 below.
   CONVERSION_NIS2025_NUTS2027 = list(
-    filename = "CONVERSION_NIS2025_NUTS2027.xlsx",
-    description = "NIS 2025 communes mapped to NUTS 2027 (official mapping - file not yet available)",
-    sheet = NULL,
-    provides = c("NIS_2025", "NUTS_2027"),
-    filter = NULL,
-    col_nis   = "CD_REFNIS_2025",   # expected column name for NIS 2025 commune code
-    col_nuts3 = "CD_NUTS3_2027"     # expected column name for NUTS3 2027 code
+    filename    = "REFNIS_2025-NUTS_2027.xlsx",
+    description = "NIS 2025 communes mapped to NUTS 2027 — same hierarchical format as CONVERSION_NIS2019_NUTS2021.xlsx",
+    sheet       = NULL,
+    provides    = c("NIS_2025", "NUTS_2027"),
+    filter      = NULL
   )
 )
 

@@ -134,10 +134,18 @@ build_master_table <- function(raw_data) {
   postal_2025    <- raw_data$CONVERSION_POSTAL_NIS2025
   postal_map_2025 <- .extract_postal_map(postal_2025, label = "CONVERSION_POSTAL_NIS2025")
 
-  # --- 7b. Build NIS 2025 -> NUTS 2027 mapping (optional - requires file) ---
+  # --- 7b. Build NIS 2025 -> NUTS 2027 mapping ---
+  # Uses the same hierarchical format as CONVERSION_NIS2019_NUTS2021.xlsx.
+  # parse_nuts_nis_conversion() with no reference_date keeps only current entries
+  # (DT_VLDT_STOP = max), which gives NUTS 2027 codes for NIS 2025 communes.
   comm2025_to_nuts2027 <- NULL
+  nuts2027_nis_parsed  <- NULL
   if (!is.null(raw_data$CONVERSION_NIS2025_NUTS2027)) {
-    comm2025_to_nuts2027 <- parse_nis2025_nuts2027(raw_data$CONVERSION_NIS2025_NUTS2027)
+    nuts2027_nis_parsed  <- parse_nuts_nis_conversion(raw_data$CONVERSION_NIS2025_NUTS2027)
+    comm2025_to_nuts2027 <- nuts2027_nis_parsed$communes[,
+      .(cd_commune_2025 = cd_refnis, cd_nuts3_2027 = cd_nuts3)
+    ]
+    message(sprintf("  NIS 2025 -> NUTS 2027: %d communes mapped", nrow(comm2025_to_nuts2027)))
   }
 
   # --- 8. Build NIS change mapping ---
@@ -166,9 +174,20 @@ build_master_table <- function(raw_data) {
 
     # NUTS references
     nuts3_ref_2021 = nuts3_ref_2021,
-    comm2025_to_nuts2027 = comm2025_to_nuts2027,   # NULL until CONVERSION_NIS2025_NUTS2027.xlsx provided
-    nuts3_ref_2027 = unique(master_2019[!is.na(cd_nuts3_2027),
-                                         .(cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027)]),
+    comm2025_to_nuts2027 = comm2025_to_nuts2027,
+    nuts3_ref_2027 = {
+      # Use official NUTS 2027 names when available, otherwise derive from NUTS 2021
+      if (!is.null(nuts2027_nis_parsed)) {
+        arr_2027 <- nuts2027_nis_parsed$arrondissements
+        unique(arr_2027[, .(cd_nuts3_2027 = cd_nuts,
+                            cd_nuts2_2027 = cd_nuts_parent,
+                            tx_nuts3_fr   = tx_descr_fr,
+                            tx_nuts3_nl   = tx_descr_nl)])
+      } else {
+        unique(master_2019[!is.na(cd_nuts3_2027),
+                           .(cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027)])
+      }
+    },
     nuts_to_internal = internal_map,
 
     # NIS BEFORE_2019 tables (NULL if REFNIS_BEFORE_2019.xls not available)
