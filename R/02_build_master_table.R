@@ -308,8 +308,9 @@ add_nuts2027_columns <- function(master) {
 
 #' Save master table and all auxiliary tables to processed directory
 #'
-#' Saves every flat data.table in master_data as a CSV file.
-#' Call this after build_master_table() to update the pre-built snapshot.
+#' Saves every flat data.table in master_data as an RDS file, preserving all
+#' R types exactly.  Call this after build_master_table() to update the
+#' pre-built snapshot used by load_master_data().
 #'
 #' @param master_data Output from build_master_table()
 #' @param output_dir  Path to output directory (default: data/processed/)
@@ -319,31 +320,14 @@ save_master_tables <- function(master_data, output_dir = get_processed_data_path
     dir.create(output_dir, recursive = TRUE)
   }
 
-  # All flat tables that must be persisted (hierarchy lists are excluded)
-  tables_to_save <- c(
-    "master_nis2019_nuts2021",
-    "communes_nis2019",
-    "communes_nis2025",
-    "postal_to_nis2019",
-    "postal_to_nis2025",
-    "nis_changes",
-    "nuts3_ref_2021",
-    "comm2025_to_nuts2027",
-    "nuts3_ref_2027",
-    "nuts_to_internal",
-    "communes_nis_before2019",
-    "master_before2019",
-    "nis_change_before2019"
-  )
-
-  for (tbl_name in tables_to_save) {
+  for (tbl_name in MASTER_FLAT_TABLES) {
     tbl <- master_data[[tbl_name]]
     if (is.null(tbl)) {
       message(sprintf("  SKIP  %s  (NULL)", tbl_name))
       next
     }
-    filepath <- file.path(output_dir, paste0(tbl_name, ".csv"))
-    fwrite(tbl, filepath)
+    filepath <- file.path(output_dir, paste0(tbl_name, ".rds"))
+    saveRDS(tbl, filepath)
     message(sprintf("  SAVED %s -> %s  (%d rows)", tbl_name, filepath, nrow(tbl)))
   }
 }

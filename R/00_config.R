@@ -295,6 +295,26 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS1_2027")
 )
 
+# --- Flat tables persisted in data/processed/ ---
+# Single source of truth used by both save_master_tables() and load_master_data().
+# Hierarchy lists (nis_hierarchy_*, nuts_hierarchy_*, nuts_arrondissement_mapping)
+# are intentionally excluded: they are build-time intermediates not needed at runtime.
+MASTER_FLAT_TABLES <- c(
+  "master_nis2019_nuts2021",
+  "communes_nis2019",
+  "communes_nis2025",
+  "postal_to_nis2019",
+  "postal_to_nis2025",
+  "nis_changes",
+  "nuts3_ref_2021",
+  "comm2025_to_nuts2027",
+  "nuts3_ref_2027",
+  "nuts_to_internal",
+  "communes_nis_before2019",
+  "master_before2019",
+  "nis_change_before2019"
+)
+
 # --- Helper: get data directory path ---
 get_raw_data_path <- function() {
   if (requireNamespace("here", quietly = TRUE)) {
