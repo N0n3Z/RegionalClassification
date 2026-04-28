@@ -1,14 +1,18 @@
 # ==============================================================================
 # main.R - Entry point for the RegionalClassification package
 # ==============================================================================
-# This script loads all modules, builds the master classification table,
-# and provides an interactive environment for working with Belgian
-# geographic classifications.
+# By default, master_data is loaded instantly from pre-built CSV files in
+# data/processed/.  The raw XLSX/XLS source files are NOT required for normal
+# use.
+#
+# To rebuild the pre-built snapshot from the raw source files:
+#   source("main.R")
+#   master_data <- rebuild_master_data()   # requires data/raw/ files
 # ==============================================================================
 
 # --- Load dependencies ---
-required_packages <- c("data.table", "readxl", "here", "stringdist")
-optional_packages <- c("visNetwork", "ggplot2")
+required_packages <- c("data.table", "here")
+optional_packages <- c("readxl", "stringdist", "visNetwork", "ggplot2")
 
 for (pkg in required_packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -22,7 +26,12 @@ for (pkg in optional_packages) {
   if (requireNamespace(pkg, quietly = TRUE)) {
     library(pkg, character.only = TRUE)
   } else {
-    message(sprintf("Optional package '%s' not installed. Some visualizations will be limited.", pkg))
+    if (pkg %in% c("readxl", "stringdist")) {
+      message(sprintf(
+        "Optional package '%s' not installed. Needed only for rebuild_master_data() / fuzzy matching.",
+        pkg
+      ))
+    }
   }
 }
 
@@ -35,14 +44,11 @@ source(file.path("R", "04_fuzzy_match.R"))
 source(file.path("R", "05_conversion_check.R"))
 source(file.path("R", "06_visualize.R"))
 source(file.path("R", "07_dataset_convert.R"))
+source(file.path("R", "08_load_prebuilt.R"))
 
-# --- Initialize ---
+# --- Load master data (fast path: pre-built CSV files) ---
 message("=== RegionalClassification Package ===")
-message("Loading raw data...")
-raw_data <- load_all_raw_data()
-
-message("\nBuilding master classification table...")
-master_data <- build_master_table(raw_data)
+master_data <- load_master_data()
 
 message("\n=== Package ready! ===")
 message("Available functions:")
@@ -60,6 +66,9 @@ message("  convert_dataset(dt, code_col, to, master_data, from=NULL)")
 message("  split_ambiguous(dt, code_col, value_cols, from, to, master_data, weights=NULL)")
 message("  register_split_weights(from, to, weights_dt, variable='population')")
 message("  list_split_weights()")
+message("")
+message("To rebuild master_data from raw source files:")
+message("  master_data <- rebuild_master_data()")
 message("")
 message("Example:")
 message('  convert_codes(c(1000, 2000, 4000), "POSTAL", "NUTS3_2021", master_data)')
