@@ -49,25 +49,37 @@ fuzzy_match_names(c("Bruxeles", "Anvers", "Liege"), "NIS_COMMUNE_2019", master_d
 ### Prerequisites
 
 ```r
-install.packages(c("data.table", "readxl", "here", "stringdist"))
+# Required for normal use
+install.packages(c("data.table", "here"))
+
+# Required only for rebuild_master_data()
+install.packages(c("readxl", "stringdist"))
 ```
 
-### Data files
+### Normal use — no raw files needed
 
-Place the following files in `data/raw/`:
+The package ships with a pre-built snapshot in `data/processed/`. Simply run:
 
-| File | Description | Required |
-|---|---|---|
-| `REFNIS_2019.xls` | NIS commune reference 2019 | Yes |
-| `REFNIS_2025.xlsx` | NIS commune reference 2025 | Yes |
-| `REFNIS_BEFORE_2019.xls` | NIS commune reference pre-2019 | Yes |
-| `CONVERSION_NIS2019_NUTS2021.xlsx` | NIS 2019 → NUTS 2021 mapping | Yes |
-| `CONVERSION_POSTAL_NIS2019.xlsx` | Postal → NIS 2019 mapping | Yes |
-| `CONVERSION_POSTAL_NIS2025.xlsx` | Postal → NIS 2025 mapping | Yes |
-| `NUTS_ARRONDISSEMENT.csv` | NUTS ↔ internal arrondissement codes | Yes |
-| `REFNIS_CHANGE_2025.xlsx` | NIS 2019 → 2025 fusion table | Yes |
-| `REFNIS_CHANGE_BEFORE2019.xlsx` | NIS BEFORE_2019 → 2019 change table | Yes |
-| `CONVERSION_NIS2025_NUTS2027.xlsx` | NIS 2025 → NUTS 2027 mapping | No (pending) |
+```r
+source("main.R")   # loads from data/processed/ in milliseconds
+```
+
+### Rebuilding the snapshot
+
+Only needed if the raw source files change. Place the files below in `data/raw/`, then call `rebuild_master_data()`.
+
+| File | Description |
+|---|---|
+| `REFNIS_2019.xls` | NIS commune reference 2019 |
+| `REFNIS_2025.xlsx` | NIS commune reference 2025 |
+| `REFNIS_BEFORE_2019.xls` | NIS commune reference pre-2019 |
+| `REFNIS_CHANGE_2025.xlsx` | NIS 2019 → 2025 fusion table |
+| `REFNIS_CHANGE_BEFORE2019.xlsx` | NIS BEFORE_2019 → 2019 change table |
+| `CONVERSION_NIS2019_NUTS2021.xlsx` | NIS 2019 → NUTS 2021 mapping |
+| `REFNIS_2025-NUTS_2027.xlsx` | NIS 2025 → NUTS 2027 mapping |
+| `CONVERSION_POSTAL_NIS2019.xlsx` | Postal → NIS 2019 mapping |
+| `CONVERSION_POSTAL_NIS2025.xlsx` | Postal → NIS 2025 mapping |
+| `NUTS_ARRONDISSEMENT.csv` | NUTS ↔ internal arrondissement codes |
 
 ## NIS Versions
 
@@ -136,19 +148,23 @@ fuzzy_match_names(c("Bruxeles", "Antwerpn", "Vervirs"), "NIS_COMMUNE_2019",
 
 ```
 RegionalClassification/
-├── main.R                    # Entry point
+├── main.R                       # Entry point (loads from data/processed/ by default)
 ├── R/
-│   ├── 00_config.R           # Classification registry, file mappings, NUTS 2027 lookup
-│   ├── 01_load_data.R        # Data loading and parsing functions
-│   ├── 02_build_master_table.R  # Master table construction
-│   ├── 03_convert.R          # Conversion routing and execution
-│   ├── 04_fuzzy_match.R      # Fuzzy name matching
-│   ├── 05_conversion_check.R # Conversion path checker
-│   └── 06_visualize.R        # Visualization utilities
+│   ├── 00_config.R              # Classification registry, file mappings, NUTS 2027 lookup
+│   ├── 01_load_data.R           # Data loading and parsing functions
+│   ├── 02_build_master_table.R  # Master table construction + save_master_tables()
+│   ├── 03_convert.R             # Conversion routing and execution
+│   ├── 04_fuzzy_match.R         # Fuzzy name matching
+│   ├── 05_conversion_check.R    # Conversion path checker
+│   ├── 06_visualize.R           # Visualization utilities
+│   ├── 07_dataset_convert.R     # convert_dataset(), split_ambiguous(), diagnose_classification()
+│   └── 08_load_prebuilt.R       # load_master_data(), rebuild_master_data()
 ├── data/
-│   └── raw/                  # Source data files (not versioned)
+│   ├── processed/               # Pre-built RDS snapshot (versioned)
+│   └── raw/                     # Source data files (not versioned)
 ├── tests/
-│   └── test_conversions.R    # 11 conversion tests
+│   ├── test_conversions.R       # 13 automated conversion tests
+│   └── test_template.R          # Template for user-defined tests
 └── vignettes/
-    └── introduction.Rmd      # Detailed usage guide
+    └── introduction.Rmd         # Detailed usage guide
 ```

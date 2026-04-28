@@ -96,10 +96,9 @@ FILE_MAPPING <- list(
     provides = c("NIS_BEFORE_2019"),
     filter = NULL
   ),
-  # Optional - enables NIS_COMMUNE_BEFORE_2019 -> NIS_COMMUNE_2019 for merged communes
   REFNIS_CHANGE_BEFORE2019 = list(
     filename = "REFNIS_CHANGE_BEFORE2019.xlsx",
-    description = "Changes between NIS BEFORE_2019 and NIS 2019 (file not yet available)",
+    description = "Changes between NIS BEFORE_2019 and NIS 2019",
     sheet = NULL,
     provides = c("NIS_BEFORE_2019", "NIS_2019"),
     filter = NULL,
@@ -121,10 +120,6 @@ FILE_MAPPING <- list(
     filter = NULL
   ),
 
-  # Optional - not yet available. When provided, enables NIS_COMMUNE_2025 -> NUTS3_2027.
-  # Expected columns: one for NIS 2025 commune code, one for NUTS3 2027 code.
-  # Column names are configured via FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis
-  # and $col_nuts3 below.
   CONVERSION_NIS2025_NUTS2027 = list(
     filename    = "REFNIS_2025-NUTS_2027.xlsx",
     description = "NIS 2025 communes mapped to NUTS 2027 — same hierarchical format as CONVERSION_NIS2019_NUTS2021.xlsx",
@@ -169,7 +164,7 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "M:N", via = "REFNIS_CHANGE_BEFORE2019",
        notes = paste0(
          "Unchanged communes: 1:1 (same code). ",
-         "26 merged communes require REFNIS_CHANGE_BEFORE2019.xlsx (not yet available)."
+         "Merged communes resolved via REFNIS_CHANGE_BEFORE2019.xlsx."
        )),
 
   # --- Within NIS 2019 hierarchy ---
@@ -280,13 +275,10 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "N:1", via = "derived",
        notes = "Via POSTAL -> NIS_COMMUNE_2019 -> NUTS3_2027"),
 
-  # --- NIS 2025 -> NUTS 2027 (requires CONVERSION_NIS2025_NUTS2027.xlsx) ---
+  # --- NIS 2025 -> NUTS 2027 ---
   list(from = "NIS_COMMUNE_2025", to = "NUTS3_2027",
        relation = "N:1", via = "CONVERSION_NIS2025_NUTS2027",
-       notes = paste0(
-         "Requires CONVERSION_NIS2025_NUTS2027.xlsx in data/raw/. ",
-         "File not yet available - structure is ready to absorb it."
-       )),
+       notes = "Direct mapping via REFNIS_2025-NUTS_2027.xlsx (hierarchical format)."),
   list(from = "NIS_COMMUNE_2025", to = "NUTS2_2027",
        relation = "N:1", via = "CONVERSION_NIS2025_NUTS2027",
        notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS2_2027"),

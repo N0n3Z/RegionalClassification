@@ -24,13 +24,16 @@ source("main.R")
 # master_data is now available — it contains all lookup tables
 ```
 
-On load, the package reads all source files from `data/raw/` and builds a unified master table. You'll see messages like:
+By default the package loads instantly from pre-built RDS files in `data/processed/` — no raw source files are needed. You'll see:
 
 ```
-Master table built: 583 communes NIS 2019, 567 communes NIS 2025
-  Postal codes NIS 2019: 1149, NIS 2025: 1148
-  NIS changes 2019->2025: 30 entries
-  NIS BEFORE_2019: 589 communes
+Master data loaded from 'data/processed': 583 communes NIS 2019, 567 communes NIS 2025, 589 communes NIS BEFORE_2019
+```
+
+To rebuild the snapshot after updating raw source files:
+
+```{r rebuild, eval=FALSE}
+master_data <- rebuild_master_data()   # requires data/raw/ files
 ```
 
 ---
@@ -275,12 +278,13 @@ diagnose_classification(nuts3_data, "nuts3", master_data)
 
 ---
 
-## 10. Pending features
+## 10. Rebuilding from raw files
 
-The following features are ready in the code but require additional data files not yet available:
+The pre-built snapshot in `data/processed/` covers all supported conversions. If you update the raw source files in `data/raw/`, regenerate the snapshot with:
 
-| Feature | Waiting for |
-|---|---|
-| `NIS_COMMUNE_2025` → `NUTS3_2027` | `CONVERSION_NIS2025_NUTS2027.xlsx` |
+```{r rebuild2, eval=FALSE}
+source("main.R")
+master_data <- rebuild_master_data()
+```
 
-Once the file is placed in `data/raw/` and the package reloaded, the conversion will work automatically.
+`rebuild_master_data()` requires the additional packages `readxl` and `stringdist`.
