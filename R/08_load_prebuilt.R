@@ -2,10 +2,27 @@
 # 08_load_prebuilt.R - Load pre-built master table from bundled RDS files
 # ==============================================================================
 
-library(data.table)
+#' Resolve the directory containing the pre-built RDS files
+#'
+#' Tries system.file() first (installed package or devtools::load_all()),
+#' then falls back to inst/extdata/ relative to the project root for the
+#' source("main.R") workflow.
+#'
+#' @return Character path to the extdata directory
+.get_prebuilt_dir <- function() {
+  pkg_dir <- tryCatch(
+    system.file("extdata", package = "RegionalClassification", mustWork = FALSE),
+    error = function(e) ""
+  )
+  if (nchar(pkg_dir) > 0 && dir.exists(pkg_dir)) return(pkg_dir)
 
-# Directory where the pre-built RDS files live (relative to project root)
-.PREBUILT_DIR <- file.path("data", "processed")
+  local_dir <- if (requireNamespace("here", quietly = TRUE)) {
+    here::here("inst", "extdata")
+  } else {
+    file.path("inst", "extdata")
+  }
+  local_dir
+}
 
 #' Load the pre-built master table from bundled RDS files
 #'
@@ -14,11 +31,11 @@ library(data.table)
 #' are preserved exactly as serialised by save_master_tables().
 #'
 #' @param dir  Path to the directory containing the RDS files.
-#'             Defaults to \code{data/processed/} relative to the project root.
+#'             Defaults to the package extdata directory.
 #' @return Named list identical in structure to the output of build_master_table().
 #'         The four intermediate hierarchy lists are set to NULL as they are not
 #'         needed at runtime.
-load_master_data <- function(dir = .PREBUILT_DIR) {
+load_master_data <- function(dir = .get_prebuilt_dir()) {
 
   if (!dir.exists(dir)) {
     stop(sprintf(
@@ -61,13 +78,18 @@ load_master_data <- function(dir = .PREBUILT_DIR) {
 #' Rebuild the master table from raw source files and save as RDS
 #'
 #' Call this only when the source files change. Requires all raw XLSX/XLS/CSV
-#' files in data/raw/ to be present.
+#' files in data/raw/ to be present, as well as the readxl package.
 #'
 #' @param raw_dir   Path to the raw data directory. Defaults to data/raw/.
-#' @param out_dir   Path where RDS files will be written. Defaults to data/processed/.
+#' @param out_dir   Path where RDS files will be written.
+#'                  Defaults to inst/extdata/ (accessible after package install).
 #' @return master_data list (same as load_master_data() output), invisibly
 rebuild_master_data <- function(raw_dir = get_raw_data_path(),
-                                out_dir = .PREBUILT_DIR) {
+                                out_dir = get_processed_data_path()) {
+
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    stop("Package 'readxl' is required to rebuild from raw files. Install it with: install.packages('readxl')")
+  }
 
   message("=== Rebuilding master data from raw files ===")
   raw_data    <- load_all_raw_data(raw_dir)

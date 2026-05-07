@@ -2,7 +2,6 @@
 # 05_conversion_check.R - Check if simple conversion is possible
 # ==============================================================================
 
-library(data.table)
 
 #' Check if a simple (direct, unambiguous) conversion is possible
 #'

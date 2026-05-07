@@ -16,7 +16,6 @@
 #    the classification system design.
 # ==============================================================================
 
-library(data.table)
 
 # --- Classification Registry ---
 # Defines all known classification systems, their versions, and levels.
@@ -317,9 +316,9 @@ get_raw_data_path <- function() {
 
 get_processed_data_path <- function() {
   if (requireNamespace("here", quietly = TRUE)) {
-    return(here::here("data", "processed"))
+    return(here::here("inst", "extdata"))
   }
-  return(file.path("data", "processed"))
+  return(file.path("inst", "extdata"))
 }
 
 # --- NUTS 2021 → NUTS 2027 mapping ---

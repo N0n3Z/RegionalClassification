@@ -2,7 +2,6 @@
 # 07_dataset_convert.R - Dataset-level conversion and ambiguous split functions
 # ==============================================================================
 
-library(data.table)
 
 # ==============================================================================
 # 1. convert_dataset()

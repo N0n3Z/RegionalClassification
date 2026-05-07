@@ -2,7 +2,6 @@
 # 03_convert.R - Conversion functions between classifications
 # ==============================================================================
 
-library(data.table)
 
 #' Convert codes from one classification to another
 #'

@@ -2,7 +2,6 @@
 # 06_visualize.R - Visualization tools for classification relationships
 # ==============================================================================
 
-library(data.table)
 
 #' Visualize the classification relationship graph
 #'

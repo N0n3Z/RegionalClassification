@@ -2,8 +2,6 @@
 # 01_load_data.R - Load and parse all raw input data files
 # ==============================================================================
 
-library(data.table)
-library(readxl)
 
 #' Load all raw data files and return a named list of data.tables
 #'
@@ -46,16 +44,16 @@ load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
   dt <- switch(ext,
     "xlsx" = {
       if (is.null(sheet)) {
-        as.data.table(read_excel(filepath))
+        as.data.table(readxl::read_excel(filepath))
       } else {
-        as.data.table(read_excel(filepath, sheet = sheet))
+        as.data.table(readxl::read_excel(filepath, sheet = sheet))
       }
     },
     "xls" = {
       if (is.null(sheet)) {
-        as.data.table(read_excel(filepath))
+        as.data.table(readxl::read_excel(filepath))
       } else {
-        as.data.table(read_excel(filepath, sheet = sheet))
+        as.data.table(readxl::read_excel(filepath, sheet = sheet))
       }
     },
     "csv" = {

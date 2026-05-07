@@ -2,7 +2,6 @@
 # 02_build_master_table.R - Build the combined master classification table
 # ==============================================================================
 
-library(data.table)
 
 #' Extract and standardise a postal code mapping table (internal)
 #'

@@ -2,7 +2,6 @@
 # 04_fuzzy_match.R - Fuzzy matching of geographic entity names
 # ==============================================================================
 
-library(data.table)
 
 #' Match entity names to classification codes using fuzzy matching
 #'
