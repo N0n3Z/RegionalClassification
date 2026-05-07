@@ -17,6 +17,15 @@
 #'   - relations: character vector of relationship types along the path
 #'   - explanation: human-readable explanation
 #'   - edges_used: list of edges in the path
+#' @examples
+#' # Simple 1:1 path
+#' check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
+#'
+#' # Ambiguous path (Verviers splits two NUTS3 regions)
+#' check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+#'
+#' # Multi-hop path via intermediate classification
+#' check_conversion_path("POSTAL", "NUTS3_2027")
 check_conversion_path <- function(from, to) {
 
   from_norm <- normalize_classification_id(from)
@@ -204,6 +213,10 @@ bfs_find_path <- function(from, to, graph, only_simple = FALSE) {
 #' @param from Source classification
 #' @param to Target classification
 #' @return Invisible path check result (prints to console)
+#' @examples
+#' print_conversion_check("NIS_COMMUNE_2019", "NUTS3_2021")
+#' print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+#' print_conversion_check("POSTAL", "NUTS3_2027")
 print_conversion_check <- function(from, to) {
 
   result <- check_conversion_path(from, to)

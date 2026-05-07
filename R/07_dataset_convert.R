@@ -172,6 +172,13 @@ convert_dataset <- function(
 #' @param codes     Vector of codes (character or integer/numeric)
 #' @param master_data Output from build_master_table()
 #' @return Character classification identifier, or NULL
+#' @examples
+#' \donttest{
+#'   master_data <- load_master_data()
+#'   detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_COMMUNE_2019"
+#'   detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS3_2021"
+#'   detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
+#' }
 detect_classification <- function(codes, master_data) {
 
   codes_sample <- unique(na.omit(codes))
@@ -494,6 +501,17 @@ register_split_weights <- function(from, to, weights_dt, variable = "population"
 #' @param to       Target classification
 #' @param variable Weighting variable name (default: "population")
 #' @return data.table(code_from, code_to, weight) or NULL
+#' @examples
+#' \donttest{
+#'   library(data.table)
+#'   register_split_weights(
+#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+#'     data.table(code_from = c(63000L, 63000L),
+#'                code_to   = c("BE335", "BE336"),
+#'                weight    = c(0.857, 0.143))
+#'   )
+#'   get_split_weights("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+#' }
 get_split_weights <- function(from, to, variable = "population") {
   from_norm <- normalize_classification_id(from)
   to_norm   <- normalize_classification_id(to)
@@ -507,6 +525,10 @@ get_split_weights <- function(from, to, variable = "population") {
 #' List all registered split weights
 #'
 #' @return data.table with columns (from, to, variable) or NULL
+#' @examples
+#' \donttest{
+#'   list_split_weights()  # returns NULL or data.table of registered weights
+#' }
 list_split_weights <- function() {
   keys <- ls(.split_weight_registry)
   if (length(keys) == 0) {

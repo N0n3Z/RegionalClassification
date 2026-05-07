@@ -1,0 +1,228 @@
+---
+title: "Conversions géographiques"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Conversions géographiques}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Initialisation
+
+```{r load}
+library(RegionalClassification)
+master_data <- load_master_data()
+```
+
+---
+
+## 1. `convert_codes()` — conversion de vecteurs
+
+La fonction centrale du package. Elle accepte un vecteur de codes source et retourne un `data.table` avec les colonnes `code_from` et `code_to`.
+
+### NIS communes → NUTS3 2021
+
+```{r nuts3-2021}
+convert_codes(
+  c(21004L, 11002L, 44021L, 62063L),
+  from = "NIS_COMMUNE_2019",
+  to   = "NUTS3_2021",
+  master_data
+)
+#    code_from code_to
+# 1:     21004   BE100
+# 2:     11002   BE211
+# 3:     44021   BE234
+# 4:     62063   BE332
+```
+
+### NIS communes → NUTS3 2027
+
+```{r nuts3-2027}
+convert_codes(
+  c(21004L, 11002L, 44021L),
+  from = "NIS_COMMUNE_2019",
+  to   = "NUTS3_2027",
+  master_data
+)
+#    code_from code_to
+# 1:     21004   BE100   (inchangé)
+# 2:     11002   BE261   (BE211 -> BE261)
+# 3:     44021   BE274   (BE234 -> BE274)
+```
+
+### Codes postaux → communes NIS
+
+```{r postal}
+convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
+#    code_from code_to
+# 1:      1000   21004
+# 2:      2000   11002
+# 3:      4000   62063
+```
+
+### NIS 2019 → NIS 2025 (fusions)
+
+```{r nis-versions}
+# Communes fusionnées en 2025 : plusieurs codes 2019 -> 1 code 2025
+convert_codes(c(71002L, 71011L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+
+# Sens inverse : 1 code 2025 -> plusieurs codes 2019
+convert_codes(71072L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data)
+```
+
+### Commune pré-2019 → classification actuelle
+
+```{r before-2019}
+# 55022 = Fosses-la-Ville (fusionné en 2019 en commune 58001 = Mettet)
+convert_codes(55022L, "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019", master_data)
+convert_codes(55022L, "NIS_COMMUNE_BEFORE_2019", "NUTS3_2021",       master_data)
+convert_codes(55022L, "NIS_COMMUNE_BEFORE_2019", "NUTS3_2027",       master_data)
+```
+
+### Tous les niveaux géographiques pour une commune
+
+```{r all-levels}
+commune <- 11002L  # Antwerpen
+
+convert_codes(commune, "NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NIS_PROVINCE_2019",       master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NIS_REGION_2019",         master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NUTS3_2021",              master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NUTS2_2021",              master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "NUTS1_2021",              master_data)
+convert_codes(commune, "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", master_data)
+```
+
+### Identifiants abrégés
+
+Les noms de classifications acceptent plusieurs alias :
+
+```{r aliases}
+# Ces appels sont équivalents
+convert_codes(1000L, "CP",           "NIS_COM_2019", master_data)
+convert_codes(1000L, "CODE_POSTAL",  "COMMUNE_2019", master_data)
+convert_codes(1000L, "POSTAL",       "NIS_COMMUNE_2019", master_data)
+```
+
+---
+
+## 2. `convert_dataset()` — conversion d'un dataset complet
+
+Opère directement sur une colonne de `data.table`, avec auto-détection optionnelle de la classification source.
+
+### Usage de base
+
+```{r dataset-basic}
+library(data.table)
+
+salaires <- data.table(
+  commune = c(21004L, 11002L, 62063L),
+  salaire = c(3500, 2900, 2600)
+)
+
+# Convertit la colonne 'commune' et ajoute une colonne 'cd_nuts3_2021'
+result <- convert_dataset(
+  dt       = salaires,
+  code_col = "commune",
+  from     = "NIS_COMMUNE_2019",
+  to       = "NUTS3_2021",
+  master_data
+)
+print(result)
+#    commune salaire cd_nuts3_2021
+# 1:   21004    3500         BE100
+# 2:   11002    2900         BE211
+# 3:   62063    2600         BE332
+```
+
+### Auto-détection de la classification source
+
+```{r dataset-autodetect}
+# Pas besoin de préciser 'from', le package détecte automatiquement
+nuts_data <- data.table(
+  nuts = c("BE100", "BE211", "BE332"),
+  val  = c(100, 200, 300)
+)
+
+convert_dataset(nuts_data, "nuts", to = "NUTS3_2027", master_data)
+#     nuts val cd_nuts3_2027
+# 1: BE100 100         BE100
+# 2: BE211 200         BE261
+# 3: BE332 300         BE332
+```
+
+### Nom de colonne cible personnalisé
+
+```{r dataset-colname}
+convert_dataset(
+  dt         = salaires,
+  code_col   = "commune",
+  from       = "NIS_COMMUNE_2019",
+  to         = "NUTS3_2027",
+  master_data,
+  target_col = "nuts3_2027"
+)
+```
+
+### Gestion des NA
+
+```{r dataset-na}
+dt_avec_na <- data.table(
+  code    = c(21004L, NA, 99999L),
+  valeur  = c(100, 200, 300)
+)
+
+# Avertissement pour NA et codes inconnus (comportement par défaut)
+convert_dataset(dt_avec_na, "code", to = "NUTS3_2021", master_data,
+                na_action = "warn")
+
+# Supprimer les lignes NA/inconnues
+convert_dataset(dt_avec_na, "code", to = "NUTS3_2021", master_data,
+                na_action = "drop")
+```
+
+---
+
+## 3. `list_available_conversions()` — chemins disponibles
+
+Affiche tous les chemins de conversion supportés avec leur type de relation.
+
+```{r list-conversions}
+list_available_conversions()
+# From                       To                        Relation  Via
+# NIS_COMMUNE_2019           NUTS3_2021                N:1       CONVERSION_NIS2019_NUTS2021
+# NIS_COMMUNE_2019           NUTS3_2027                1:1       derived
+# NIS_COMMUNE_2025           NUTS3_2027                N:1       CONVERSION_NIS2025_NUTS2027
+# NIS_ARRONDISSEMENT_2019    NUTS3_2021                M:N       CONVERSION_NIS2019_NUTS2021  (!)
+# ...
+```
+
+---
+
+## 4. `check_conversion_path()` et `print_conversion_check()`
+
+Vérifient si un chemin de conversion est direct (sans ambiguïté M:N) avant de l'exécuter.
+
+```{r check-path}
+# Chemin simple : OK
+check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
+# $is_simple    TRUE
+# $path         c("NIS_COMMUNE_2019", "NUTS_LAU_2021", "NUTS3_2021")
+
+# Chemin ambigu : Verviers
+check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+# $is_simple    FALSE
+# $explanation  "... M:N step: NIS_ARRONDISSEMENT_2019 -> NUTS3_2021 ..."
+```
+
+```{r print-path}
+# Version lisible pour exploration interactive
+print_conversion_check("POSTAL", "NUTS3_2021")
+print_conversion_check("NIS_COMMUNE_2025", "NUTS3_2027")
+print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+```

@@ -15,6 +15,24 @@
 #' @param allow_ambiguous Logical. If FALSE (default), raises error on M:N conversions.
 #'   If TRUE, returns all possible mappings.
 #' @return data.table with columns: code_from, code_to (and optionally notes)
+#' @examples
+#' \donttest{
+#'   master_data <- load_master_data()
+#'
+#'   # NIS communes -> NUTS3 2021
+#'   convert_codes(c(21004L, 11002L, 62063L),
+#'                 "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+#'
+#'   # Postal codes -> NIS communes
+#'   convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
+#'
+#'   # NIS communes -> NUTS3 2027
+#'   convert_codes(c(21004L, 11002L), "NIS_COMMUNE_2019", "NUTS3_2027", master_data)
+#'
+#'   # Ambiguous conversion (Verviers arrondissement spans two NUTS3 regions)
+#'   convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+#'                 master_data, allow_ambiguous = TRUE)
+#' }
 convert_codes <- function(codes, from, to, master_data,
                           allow_ambiguous = FALSE) {
 
@@ -634,6 +652,8 @@ convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
 #' List all available conversion paths
 #'
 #' @return data.table describing available conversions
+#' @examples
+#' list_available_conversions()
 list_available_conversions <- function() {
   edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, as.data.table))
   edges[, .(from, to, relation, notes)]

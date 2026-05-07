@@ -35,6 +35,11 @@
 #' @return Named list identical in structure to the output of build_master_table().
 #'         The four intermediate hierarchy lists are set to NULL as they are not
 #'         needed at runtime.
+#' @examples
+#' \donttest{
+#'   master_data <- load_master_data()
+#'   # master_data now contains all lookup tables, ready for convert_codes() etc.
+#' }
 load_master_data <- function(dir = .get_prebuilt_dir()) {
 
   if (!dir.exists(dir)) {
@@ -84,6 +89,11 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
 #' @param out_dir   Path where RDS files will be written.
 #'                  Defaults to inst/extdata/ (accessible after package install).
 #' @return master_data list (same as load_master_data() output), invisibly
+#' @examples
+#' \dontrun{
+#'   # Only needed when raw source files in data/raw/ change
+#'   master_data <- rebuild_master_data()
+#' }
 rebuild_master_data <- function(raw_dir = get_raw_data_path(),
                                 out_dir = get_processed_data_path()) {
 

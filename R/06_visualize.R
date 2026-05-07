@@ -13,6 +13,17 @@
 #' @param highlight_to Optional: highlight paths to this classification
 #' @param output_file Optional: save to HTML file
 #' @return visNetwork object (if visNetwork is available), otherwise a text summary
+#' @examples
+#' \donttest{
+#'   # Full graph
+#'   visualize_classification_graph()
+#'
+#'   # Highlight paths from NIS communes
+#'   visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
+#'
+#'   # Save to file
+#'   visualize_classification_graph(output_file = "classification_graph.html")
+#' }
 visualize_classification_graph <- function(highlight_from = NULL,
                                            highlight_to = NULL,
                                            output_file = NULL) {
@@ -195,6 +206,11 @@ print_text_graph <- function() {
 #'
 #' @param output_file Optional: save plot to file
 #' @return ggplot object if ggplot2 available, otherwise text matrix
+#' @examples
+#' \donttest{
+#'   visualize_conversion_matrix()
+#'   visualize_conversion_matrix(output_file = "conversion_matrix.png")
+#' }
 visualize_conversion_matrix <- function(output_file = NULL) {
 
   mat <- get_conversion_matrix()
@@ -246,6 +262,13 @@ visualize_conversion_matrix <- function(output_file = NULL) {
 #' @param master_data Output from build_master_table()
 #' @param max_communes Maximum communes to show per arrondissement (default 3)
 #' @return Character string (tree representation), printed to console
+#' @examples
+#' \donttest{
+#'   master_data <- load_master_data()
+#'   visualize_hierarchy("NIS_2019",  master_data)
+#'   visualize_hierarchy("NIS_2025",  master_data)
+#'   visualize_hierarchy("NUTS_2021", master_data)
+#' }
 visualize_hierarchy <- function(classification, master_data,
                                 max_communes = 3) {
 
