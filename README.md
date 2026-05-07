@@ -92,7 +92,7 @@ BEFORE_2019  --[REFNIS_CHANGE_BEFORE2019]--> 2019 --[REFNIS_CHANGE_2025]--> 2025
 
 ## NUTS 2027
 
-NUTS 2027 codes are derived from NUTS 2021 according to EU regulation 2026/195. Key changes for Belgium:
+NUTS 2027 codes are sourced from the official Statbel file `REFNIS_2025-NUTS_2027.xlsx` for NIS 2025 communes. For NIS 2019 and BEFORE_2019 communes, NUTS 2027 is derived by remapping NUTS 2021 codes according to EU regulation 2026/195. Key changes for Belgium:
 
 | NUTS 2021 | NUTS 2027 | Province |
 |---|---|---|

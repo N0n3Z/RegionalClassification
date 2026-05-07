@@ -84,7 +84,7 @@ build_master_table <- function(raw_data) {
   }
   master_2019 <- merge(master_2019, internal_map, by = "cd_nuts3", all.x = TRUE)
 
-  # --- 5b. Add NUTS 2027 codes (derived from NUTS 2021, EU regulation 2026/195) ---
+  # --- 5b. Add NUTS 2027 codes for NIS 2019 (remapped from NUTS 2021 per EU regulation 2026/195) ---
   master_2019 <- add_nuts2027_columns(master_2019)
 
   # --- 5c. Build NIS BEFORE_2019 commune table (if file available) ---
@@ -275,9 +275,11 @@ build_nis_commune_table <- function(nis_parsed, version) {
   return(communes)
 }
 
-#' Derive NUTS 2027 columns from existing NUTS 2021 columns in master table
+#' Derive NUTS 2027 columns from NUTS 2021 columns (NIS 2019 / BEFORE_2019 path)
 #'
-#' Applies the remapping defined in NUTS2021_TO_NUTS2027 (00_config.R).
+#' Applies the NUTS 2021 → NUTS 2027 remapping from NUTS2021_TO_NUTS2027 (00_config.R),
+#' based on EU regulation 2026/195. For NIS 2025 communes, the official
+#' REFNIS_2025-NUTS_2027.xlsx file is used instead (see build_master_table step 7b).
 #' Codes not listed in the mapping are carried over unchanged.
 #'
 #' @param master data.table with cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0 columns

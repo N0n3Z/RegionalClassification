@@ -121,7 +121,7 @@ convert_codes(55022L, "NIS_COMMUNE_BEFORE_2019", "NUTS3_2027", master_data)
 
 ## 3. NUTS 2027
 
-NUTS 2027 codes are derived from NUTS 2021 per EU regulation 2026/195. The main changes for Belgium affect Antwerpen and the Flemish provinces.
+NUTS 2027 codes for NIS 2025 communes come directly from the official Statbel file `REFNIS_2025-NUTS_2027.xlsx`. For NIS 2019 and BEFORE_2019 communes, NUTS 2027 is derived by remapping NUTS 2021 codes per EU regulation 2026/195. The main changes for Belgium affect Antwerpen and the Flemish provinces.
 
 ```{r}
 # NIS 2019 communes → NUTS 2027
