@@ -275,10 +275,10 @@ visualize_hierarchy <- function(classification, master_data,
   cls <- toupper(trimws(classification))
 
   if (cls %in% c("NIS_2019", "NIS2019")) {
-    return(print_nis_tree(master_data$communes_nis2019, max_communes))
+    return(print_nis_tree(master_data$communes[nis_version == "2019"], max_communes))
   }
   if (cls %in% c("NIS_2025", "NIS2025")) {
-    return(print_nis_tree(master_data$communes_nis2025, max_communes))
+    return(print_nis_tree(master_data$communes[nis_version == "2025"], max_communes))
   }
   if (cls %in% c("NUTS_2021", "NUTS2021")) {
     return(print_nuts_tree(master_data, max_communes))
@@ -353,43 +353,36 @@ print_nis_tree <- function(communes, max_communes = 3) {
 #' Print NUTS tree structure
 print_nuts_tree <- function(master_data, max_communes = 3) {
 
-  master <- master_data$master_nis2019_nuts2021
-  nuts_hier <- master_data$nuts_hierarchy_2021
+  master <- master_data$communes[nis_version == "2019"]
 
   cat("\nNUTS 2021 Hierarchy (Belgium)\n")
   cat("BE (Belgique/Belgie)\n")
 
   # NUTS1
-  nuts1_list <- unique(master[!is.na(cd_nuts1), .(cd_nuts1)])$cd_nuts1
-  nuts1_list <- sort(nuts1_list)
+  nuts1_list <- sort(unique(master[!is.na(cd_nuts1), cd_nuts1]))
 
   for (n1 in nuts1_list) {
     cat(sprintf("  |-- %s\n", n1))
 
     # NUTS2
-    nuts2_list <- unique(master[cd_nuts1 == n1 & !is.na(cd_nuts2),
-                                 .(cd_nuts2)])$cd_nuts2
-    nuts2_list <- sort(nuts2_list)
+    nuts2_list <- sort(unique(master[cd_nuts1 == n1 & !is.na(cd_nuts2), cd_nuts2]))
 
     for (n2 in nuts2_list) {
       cat(sprintf("  |   |-- %s\n", n2))
 
       # NUTS3
-      nuts3_list <- unique(master[cd_nuts2 == n2 & !is.na(cd_nuts3),
-                                   .(cd_nuts3)])$cd_nuts3
-      nuts3_list <- sort(nuts3_list)
+      nuts3_list <- sort(unique(master[cd_nuts2 == n2 & !is.na(cd_nuts3), cd_nuts3]))
 
       for (n3 in nuts3_list) {
-        # Get NUTS3 name
-        n3_ref <- nuts_hier$arrondissements[cd_nuts == n3]
-        n3_name <- if (nrow(n3_ref) > 0) n3_ref$tx_descr_fr[1] else ""
+        # Get NUTS3 name from embedded column
+        n3_name <- master[cd_nuts3 == n3 & !is.na(tx_nuts3_fr), tx_nuts3_fr][1L]
+        if (is.na(n3_name)) n3_name <- ""
         cat(sprintf("  |   |   |-- %s %s\n", n3, n3_name))
 
         # Communes
-        comms <- master[cd_nuts3 == n3,
-                         .(cd_commune, tx_commune_fr, cd_nuts_lau)]
+        comms  <- master[cd_nuts3 == n3, .(cd_commune, tx_commune_fr, cd_nuts_lau)]
         n_comms <- nrow(comms)
-        show_n <- min(max_communes, n_comms)
+        show_n  <- min(max_communes, n_comms)
 
         for (c_i in seq_len(show_n)) {
           cat(sprintf("  |   |   |   |-- %s %s (NIS: %d)\n",

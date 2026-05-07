@@ -145,19 +145,19 @@ route_conversion <- function(input_dt, from, to, md) {
 
   # --- POSTAL conversions ---
   if (from == "POSTAL" && to == "NIS_COMMUNE_2019") {
-    return(convert_via_lookup(input_dt, md$postal_to_nis2019,
+    return(convert_via_lookup(input_dt, md$postal[nis_version == "2019"],
                               "cd_postal", "cd_commune_nis"))
   }
   if (from == "POSTAL" && to == "NIS_COMMUNE_2025") {
-    return(convert_via_lookup(input_dt, md$postal_to_nis2025,
+    return(convert_via_lookup(input_dt, md$postal[nis_version == "2025"],
                               "cd_postal", "cd_commune_nis"))
   }
 
   # POSTAL to any NIS level via commune
   if (from == "POSTAL" && grepl("^NIS_", to)) {
     # First convert postal -> commune, then commune -> target
-    postal_to_comm <- convert_via_lookup(input_dt, md$postal_to_nis2019,
-                                          "cd_postal", "cd_commune_nis")
+    postal_to_comm <- convert_via_lookup(input_dt, md$postal[nis_version == "2019"],
+                                         "cd_postal", "cd_commune_nis")
     if (to == "NIS_COMMUNE_2019") return(postal_to_comm)
 
     intermediate <- data.table(code_from = postal_to_comm$code_to)
@@ -170,8 +170,8 @@ route_conversion <- function(input_dt, from, to, md) {
 
   # POSTAL to NUTS
   if (from == "POSTAL" && grepl("^NUTS", to)) {
-    postal_to_comm <- convert_via_lookup(input_dt, md$postal_to_nis2019,
-                                          "cd_postal", "cd_commune_nis")
+    postal_to_comm <- convert_via_lookup(input_dt, md$postal[nis_version == "2019"],
+                                         "cd_postal", "cd_commune_nis")
     intermediate <- data.table(code_from = postal_to_comm$code_to)
     next_result <- route_conversion(intermediate, "NIS_COMMUNE_2019", to, md)
     return(data.table(
@@ -196,7 +196,7 @@ route_conversion <- function(input_dt, from, to, md) {
 
   # --- NIS COMMUNE 2019 conversions ---
   if (from == "NIS_COMMUNE_2019") {
-    master <- md$master_nis2019_nuts2021
+    master <- md$communes[nis_version == "2019"]
     input_dt[, code_from := as.integer(code_from)]
 
     if (to == "NIS_ARRONDISSEMENT_2019") {
@@ -242,10 +242,10 @@ route_conversion <- function(input_dt, from, to, md) {
 
   # --- NIS COMMUNE BEFORE_2019 conversions ---
   if (from == "NIS_COMMUNE_BEFORE_2019") {
-    if (is.null(md$master_before2019)) {
+    master_b19 <- md$communes[nis_version == "BEFORE_2019"]
+    if (nrow(master_b19) == 0L) {
       stop("NIS BEFORE_2019 data not loaded. Ensure REFNIS_BEFORE_2019.xls is in data/raw/ and reload.")
     }
-    master_b19 <- md$master_before2019
     input_dt[, code_from := as.integer(code_from)]
 
     if (to == "NIS_ARRONDISSEMENT_BEFORE_2019") {
@@ -274,18 +274,19 @@ route_conversion <- function(input_dt, from, to, md) {
     }
   }
 
-  # --- NIS COMMUNE 2025 -> NUTS 2027 (requires CONVERSION_NIS2025_NUTS2027.xlsx) ---
+  # --- NIS COMMUNE 2025 -> NUTS 2027 ---
   if (from == "NIS_COMMUNE_2025" && grepl("^NUTS.*2027$", to)) {
-    if (is.null(md$comm2025_to_nuts2027)) {
+    comm2025_nuts <- md$communes[nis_version == "2025" & !is.na(cd_nuts3_2027),
+                                  .(cd_commune, cd_nuts3_2027)]
+    if (nrow(comm2025_nuts) == 0L) {
       stop(paste0(
         "Conversion NIS_COMMUNE_2025 -> ", to, " requires the file ",
-        "'CONVERSION_NIS2025_NUTS2027.xlsx' in data/raw/.\n",
+        "'REFNIS_2025-NUTS_2027.xlsx' in data/raw/.\n",
         "File not yet available. Once provided, drop it in data/raw/ and reload."
       ))
     }
     if (to == "NUTS3_2027") {
-      return(convert_via_lookup(input_dt, md$comm2025_to_nuts2027,
-                                "cd_commune_2025", "cd_nuts3_2027"))
+      return(convert_via_lookup(input_dt, comm2025_nuts, "cd_commune", "cd_nuts3_2027"))
     }
     if (to %in% c("NUTS2_2027", "NUTS1_2027")) {
       nuts3 <- route_conversion(input_dt, "NIS_COMMUNE_2025", "NUTS3_2027", md)
@@ -300,7 +301,7 @@ route_conversion <- function(input_dt, from, to, md) {
 
   # --- NIS COMMUNE 2025 conversions ---
   if (from == "NIS_COMMUNE_2025") {
-    comm_2025 <- md$communes_nis2025
+    comm_2025 <- md$communes[nis_version == "2025"]
     input_dt[, code_from := as.integer(code_from)]
 
     if (to == "NIS_ARRONDISSEMENT_2025") {
@@ -320,17 +321,15 @@ route_conversion <- function(input_dt, from, to, md) {
   # --- NIS ARRONDISSEMENT conversions ---
   if (from == "NIS_ARRONDISSEMENT_2019") {
     input_dt[, code_from := as.integer(code_from)]
-    master <- md$master_nis2019_nuts2021
+    master <- md$communes[nis_version == "2019"]
 
     if (to == "NUTS3_2021") {
-      # This is the M:N case (Verviers)
       return(convert_arr_to_nuts3(input_dt, master))
     }
     if (to == "INTERNAL_ARRONDISSEMENT") {
       return(convert_arr_to_internal(input_dt, master))
     }
     if (to == "NIS_PROVINCE_2019") {
-      # Get first commune in each arrondissement, then get province
       arr_prov <- unique(master[, .(cd_arr, cd_province)])
       return(convert_via_lookup(input_dt, arr_prov, "cd_arr", "cd_province"))
     }
@@ -338,7 +337,7 @@ route_conversion <- function(input_dt, from, to, md) {
 
   if (from == "NIS_ARRONDISSEMENT_2025") {
     input_dt[, code_from := as.integer(code_from)]
-    comm_2025 <- md$communes_nis2025
+    comm_2025 <- md$communes[nis_version == "2025"]
 
     if (to == "NIS_PROVINCE_2025") {
       arr_prov <- unique(comm_2025[, .(cd_arr, cd_province)])
@@ -349,37 +348,38 @@ route_conversion <- function(input_dt, from, to, md) {
   # --- NUTS conversions ---
   if (from == "NUTS3_2021") {
     if (to == "NUTS2_2021") {
-      nuts3_ref <- md$nuts3_ref_2021
-      master <- md$master_nis2019_nuts2021
+      master    <- md$communes[nis_version == "2019"]
       nuts3_to_nuts2 <- unique(master[, .(cd_nuts3, cd_nuts2)])
       return(convert_via_lookup(input_dt, nuts3_to_nuts2, "cd_nuts3", "cd_nuts2"))
     }
     if (to == "INTERNAL_ARRONDISSEMENT") {
-      return(convert_via_lookup(input_dt, md$nuts_to_internal,
-                                "cd_nuts3", "cd_arr_internal"))
+      nuts_to_int <- unique(md$communes[nis_version == "2019" & !is.na(cd_arr_internal),
+                                         .(cd_nuts3, cd_arr_internal)])
+      return(convert_via_lookup(input_dt, nuts_to_int, "cd_nuts3", "cd_arr_internal"))
     }
     if (to == "NIS_ARRONDISSEMENT_2019") {
-      nuts3_ref <- md$nuts3_ref_2021
-      return(convert_via_lookup(input_dt, nuts3_ref, "cd_nuts3", "cd_refnis_arr"))
+      arr_ref <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts3),
+                                     .(cd_nuts3, cd_arr)])
+      return(convert_via_lookup(input_dt, arr_ref, "cd_nuts3", "cd_arr"))
     }
   }
 
   if (from == "NUTS_LAU_2021") {
+    lau_ref <- md$communes[nis_version == "2019", .(cd_nuts_lau, cd_refnis = cd_commune, cd_nuts3)]
     if (to == "NIS_COMMUNE_2019") {
-      nuts_comm <- md$nuts_hierarchy_2021$communes
-      return(convert_via_lookup(input_dt, nuts_comm, "cd_nuts_lau", "cd_refnis"))
+      return(convert_via_lookup(input_dt, lau_ref, "cd_nuts_lau", "cd_refnis"))
     }
     if (to == "NUTS3_2021") {
-      nuts_comm <- md$nuts_hierarchy_2021$communes
-      return(convert_via_lookup(input_dt, nuts_comm, "cd_nuts_lau", "cd_nuts3"))
+      return(convert_via_lookup(input_dt, lau_ref, "cd_nuts_lau", "cd_nuts3"))
     }
   }
 
   # --- INTERNAL conversions ---
   if (from == "INTERNAL_ARRONDISSEMENT") {
     if (to == "NUTS3_2021") {
-      return(convert_via_lookup(input_dt, md$nuts_to_internal,
-                                "cd_arr_internal", "cd_nuts3"))
+      nuts_to_int <- unique(md$communes[nis_version == "2019" & !is.na(cd_arr_internal),
+                                         .(cd_nuts3, cd_arr_internal)])
+      return(convert_via_lookup(input_dt, nuts_to_int, "cd_arr_internal", "cd_nuts3"))
     }
     if (to == "NUTS3_2027") {
       nuts3_2021 <- route_conversion(input_dt, "INTERNAL_ARRONDISSEMENT", "NUTS3_2021", md)
@@ -424,14 +424,13 @@ route_conversion <- function(input_dt, from, to, md) {
   }
 
   if (from == "NUTS3_2027" && to == "NUTS2_2027") {
-    nuts3_ref <- md$nuts3_ref_2027
+    nuts3_ref <- unique(md$communes[!is.na(cd_nuts3_2027), .(cd_nuts3_2027, cd_nuts2_2027)])
     return(convert_via_lookup(input_dt, nuts3_ref, "cd_nuts3_2027", "cd_nuts2_2027"))
   }
 
   if (from == "NUTS2_2027" && to == "NUTS1_2027") {
-    nuts3_ref <- md$nuts3_ref_2027
-    return(convert_via_lookup(input_dt, unique(nuts3_ref[, .(cd_nuts2_2027, cd_nuts1_2027)]),
-                              "cd_nuts2_2027", "cd_nuts1_2027"))
+    nuts2_ref <- unique(md$communes[!is.na(cd_nuts2_2027), .(cd_nuts2_2027, cd_nuts1_2027)])
+    return(convert_via_lookup(input_dt, nuts2_ref, "cd_nuts2_2027", "cd_nuts1_2027"))
   }
 
   stop(sprintf("No conversion route implemented from '%s' to '%s'.\n%s",
@@ -554,7 +553,7 @@ convert_arr_to_internal <- function(input_dt, master) {
 #' @return data.table with code_from, code_to, change_nature
 convert_nis2019_to_nis2025 <- function(input_dt, md) {
 
-  changes <- md$nis_changes
+  changes <- md$nis_changes[from_version == "2019"]
 
   result <- merge(input_dt, changes[, .(cd_refnis_old, cd_refnis_new, nature)],
                   by.x = "code_from", by.y = "cd_refnis_old", all.x = TRUE)
@@ -577,7 +576,7 @@ convert_nis2019_to_nis2025 <- function(input_dt, md) {
 #' @return data.table with code_from, code_to, nature
 convert_nis2025_to_nis2019 <- function(input_dt, md) {
 
-  changes <- md$nis_changes
+  changes <- md$nis_changes[from_version == "2019"]
 
   result <- merge(input_dt, changes[, .(cd_refnis_old, cd_refnis_new, nature)],
                   by.x = "code_from", by.y = "cd_refnis_new", all.x = TRUE)
@@ -610,8 +609,8 @@ convert_nis2025_to_nis2019 <- function(input_dt, md) {
 convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
 
   # Communes present in both versions: 1:1 (same code)
-  comm_2019_codes <- md$communes_nis2019$cd_commune
-  comm_b19_codes  <- md$communes_nis_before2019$cd_commune
+  comm_2019_codes <- md$communes[nis_version == "2019",    cd_commune]
+  comm_b19_codes  <- md$communes[nis_version == "BEFORE_2019", cd_commune]
 
   result <- copy(input_dt)
   result[, code_to := NA_integer_]
@@ -624,17 +623,16 @@ convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
   # Merged codes: use change table if available
   merged_codes <- setdiff(comm_b19_codes, comm_2019_codes)
   if (length(merged_codes) > 0 && any(result$code_from %in% merged_codes)) {
-    if (!is.null(md$nis_change_before2019)) {
-      changes <- md$nis_change_before2019
+    b19_changes <- md$nis_changes[from_version == "BEFORE_2019"]
+    if (nrow(b19_changes) > 0) {
       unresolved <- result[is.na(code_to) & code_from %in% merged_codes]
       resolved <- merge(unresolved[, .(code_from)],
-                        changes[, .(cd_refnis_before2019, cd_refnis_2019)],
-                        by.x = "code_from", by.y = "cd_refnis_before2019", all.x = TRUE)
-      resolved[!is.na(cd_refnis_2019), `:=`(code_to = cd_refnis_2019, nature = "FUSION")]
-      resolved[, cd_refnis_2019 := NULL]
+                        b19_changes[, .(cd_refnis_old, cd_refnis_new)],
+                        by.x = "code_from", by.y = "cd_refnis_old", all.x = TRUE)
+      resolved[!is.na(cd_refnis_new), `:=`(code_to = cd_refnis_new, nature = "FUSION")]
+      resolved[, cd_refnis_new := NULL]
       result <- rbind(result[!(code_from %in% merged_codes) | !is.na(code_to)], resolved)
     } else {
-      # Warn about unavailable mapping
       n_merged_input <- sum(result$code_from %in% merged_codes, na.rm = TRUE)
       if (n_merged_input > 0) {
         warning(sprintf(

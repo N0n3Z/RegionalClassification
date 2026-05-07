@@ -293,9 +293,10 @@ run_all_tests <- function(master_data) {
   cat("--- Test 12: diagnose_classification() - check mode ---\n")
   tryCatch({
     # Full NUTS3_2021 dataset -> COMPLETE
+    nuts3_codes <- unique(master_data$communes[nis_version == "2019" & !is.na(cd_nuts3), cd_nuts3])
     nuts3_full <- data.table(
-      nuts3 = master_data$nuts3_ref_2021$cd_nuts3,
-      val   = seq_len(nrow(master_data$nuts3_ref_2021))
+      nuts3 = nuts3_codes,
+      val   = seq_along(nuts3_codes)
     )
     r_full <- diagnose_classification(nuts3_full, "nuts3", master_data,
                                        classification = "NUTS3_2021", verbose = FALSE)
@@ -336,7 +337,7 @@ run_all_tests <- function(master_data) {
   cat("--- Test 13: detect mode + split_ambiguous() ---\n")
   tryCatch({
     # Detect mode on NIS_COMMUNE_2019 data
-    comm_dt <- data.table(code = master_data$communes_nis2019$cd_commune)
+    comm_dt <- data.table(code = master_data$communes[nis_version == "2019", cd_commune])
     r_det <- diagnose_classification(comm_dt, "code", master_data, verbose = FALSE)
     stopifnot(r_det$mode == "detect")
     stopifnot(r_det$recommendation == "NIS_COMMUNE_2019")

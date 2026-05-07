@@ -69,13 +69,17 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
   result$nuts_hierarchy_2021         <- NULL
   result$nuts_arrondissement_mapping <- NULL
 
-  message(sprintf(
-    "Master data loaded from '%s': %d communes NIS 2019, %d communes NIS 2025, %d communes NIS BEFORE_2019",
-    dir,
-    nrow(result$communes_nis2019),
-    nrow(result$communes_nis2025),
-    nrow(result$communes_nis_before2019)
-  ))
+  if (!is.null(result$communes)) {
+    message(sprintf(
+      "Master data loaded from '%s': %d communes NIS 2019, %d NIS 2025, %d NIS BEFORE_2019",
+      dir,
+      nrow(result$communes[nis_version == "2019"]),
+      nrow(result$communes[nis_version == "2025"]),
+      nrow(result$communes[nis_version == "BEFORE_2019"])
+    ))
+  } else {
+    message(sprintf("Master data loaded from '%s' (some tables missing — run rebuild_master_data())", dir))
+  }
 
   return(result)
 }

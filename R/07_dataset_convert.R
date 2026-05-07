@@ -202,19 +202,21 @@ detect_classification <- function(codes, master_data) {
   if (!all_int) return(NULL)   # mixed or unknown
 
   # --- Integer codes: match against reference sets ---
+  comm19 <- master_data$communes[nis_version == "2019"]
+  comm25 <- master_data$communes[nis_version == "2025"]
   refs <- list(
-    NIS_COMMUNE_2019        = as.character(master_data$communes_nis2019$cd_commune),
-    NIS_COMMUNE_2025        = as.character(master_data$communes_nis2025$cd_commune),
-    NIS_ARRONDISSEMENT_2019 = as.character(unique(master_data$master_nis2019_nuts2021$cd_arr)),
-    NIS_PROVINCE_2019       = as.character(unique(master_data$master_nis2019_nuts2021$cd_province)),
-    NIS_REGION_2019         = as.character(unique(master_data$master_nis2019_nuts2021$cd_region)),
-    POSTAL                  = as.character(master_data$postal_to_nis2019$cd_postal),
-    INTERNAL_ARRONDISSEMENT = as.character(master_data$nuts_to_internal$cd_arr_internal)
+    NIS_COMMUNE_2019        = as.character(comm19$cd_commune),
+    NIS_COMMUNE_2025        = as.character(comm25$cd_commune),
+    NIS_ARRONDISSEMENT_2019 = as.character(unique(comm19$cd_arr)),
+    NIS_PROVINCE_2019       = as.character(unique(comm19$cd_province)),
+    NIS_REGION_2019         = as.character(unique(comm19$cd_region)),
+    POSTAL                  = as.character(master_data$postal[nis_version == "2019", cd_postal]),
+    INTERNAL_ARRONDISSEMENT = as.character(unique(comm19[!is.na(cd_arr_internal), cd_arr_internal]))
   )
 
-  if (!is.null(master_data$communes_nis_before2019)) {
-    refs[["NIS_COMMUNE_BEFORE_2019"]] <-
-      as.character(master_data$communes_nis_before2019$cd_commune)
+  comm_b19 <- master_data$communes[nis_version == "BEFORE_2019"]
+  if (nrow(comm_b19) > 0L) {
+    refs[["NIS_COMMUNE_BEFORE_2019"]] <- as.character(comm_b19$cd_commune)
   }
 
   rates <- vapply(refs, function(ref) mean(codes_chr %in% ref, na.rm = TRUE),
@@ -243,7 +245,7 @@ detect_classification <- function(codes, master_data) {
   if (length(nis_comm_candidates) > 1) {
     ref2019 <- refs[["NIS_COMMUNE_2019"]]
     ref2025 <- refs[["NIS_COMMUNE_2025"]]
-    refb19  <- if (!is.null(master_data$communes_nis_before2019))
+    refb19  <- if ("NIS_COMMUNE_BEFORE_2019" %in% names(refs))
                  refs[["NIS_COMMUNE_BEFORE_2019"]] else character(0)
 
     has_before2019_only <- any(codes_chr %in% setdiff(refb19, ref2019))
@@ -862,68 +864,73 @@ diagnose_classification <- function(
   switch(norm_classification,
 
     NIS_COMMUNE_2019 = {
-      dt <- md$communes_nis2019
+      dt <- md$communes[nis_version == "2019"]
       data.table(code = dt$cd_commune,
                  name_fr = dt$tx_commune_fr, name_nl = dt$tx_commune_nl)
     },
     NIS_COMMUNE_2025 = {
-      dt <- md$communes_nis2025
+      dt <- md$communes[nis_version == "2025"]
       data.table(code = dt$cd_commune,
                  name_fr = dt$tx_commune_fr, name_nl = dt$tx_commune_nl)
     },
     NIS_COMMUNE_BEFORE_2019 = {
-      if (is.null(md$communes_nis_before2019)) return(NULL)
-      dt <- md$communes_nis_before2019
+      dt <- md$communes[nis_version == "BEFORE_2019"]
+      if (nrow(dt) == 0L) return(NULL)
       data.table(code = dt$cd_commune,
                  name_fr = dt$tx_commune_fr, name_nl = dt$tx_commune_nl)
     },
     NIS_ARRONDISSEMENT_2019 = {
-      dt <- unique(md$master_nis2019_nuts2021[, .(cd_arr, tx_arr_fr, tx_arr_nl)])
+      dt <- unique(md$communes[nis_version == "2019", .(cd_arr, tx_arr_fr, tx_arr_nl)])
       data.table(code = dt$cd_arr,
                  name_fr = dt$tx_arr_fr, name_nl = dt$tx_arr_nl)
     },
     NIS_ARRONDISSEMENT_2025 = {
-      dt <- unique(md$communes_nis2025[, .(cd_arr, tx_arr_fr, tx_arr_nl)])
+      dt <- unique(md$communes[nis_version == "2025", .(cd_arr, tx_arr_fr, tx_arr_nl)])
       data.table(code = dt$cd_arr,
                  name_fr = dt$tx_arr_fr, name_nl = dt$tx_arr_nl)
     },
     NIS_PROVINCE_2019 = {
-      dt <- unique(md$master_nis2019_nuts2021[, .(cd_province, tx_prov_fr, tx_prov_nl)])
+      dt <- unique(md$communes[nis_version == "2019", .(cd_province, tx_prov_fr, tx_prov_nl)])
       data.table(code = dt$cd_province,
                  name_fr = dt$tx_prov_fr, name_nl = dt$tx_prov_nl)
     },
     NIS_PROVINCE_2025 = {
-      dt <- unique(md$communes_nis2025[, .(cd_province, tx_prov_fr, tx_prov_nl)])
+      dt <- unique(md$communes[nis_version == "2025", .(cd_province, tx_prov_fr, tx_prov_nl)])
       data.table(code = dt$cd_province,
                  name_fr = dt$tx_prov_fr, name_nl = dt$tx_prov_nl)
     },
     NIS_REGION_2019 = {
-      dt <- unique(md$master_nis2019_nuts2021[, .(cd_region, tx_region_fr, tx_region_nl)])
+      dt <- unique(md$communes[nis_version == "2019", .(cd_region, tx_region_fr, tx_region_nl)])
       data.table(code = dt$cd_region,
                  name_fr = dt$tx_region_fr, name_nl = dt$tx_region_nl)
     },
     NIS_REGION_2025 = {
-      dt <- unique(md$communes_nis2025[, .(cd_region, tx_region_fr, tx_region_nl)])
+      dt <- unique(md$communes[nis_version == "2025", .(cd_region, tx_region_fr, tx_region_nl)])
       data.table(code = dt$cd_region,
                  name_fr = dt$tx_region_fr, name_nl = dt$tx_region_nl)
     },
     NUTS3_2021 = {
-      dt <- md$nuts3_ref_2021
+      dt <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts3),
+                                .(cd_nuts3, tx_nuts3_fr, tx_nuts3_nl)])
       data.table(code = dt$cd_nuts3,
                  name_fr = dt$tx_nuts3_fr, name_nl = dt$tx_nuts3_nl)
     },
     NUTS3_2027 = {
-      dt <- md$nuts3_ref_2027
-      data.table(code = dt$cd_nuts3_2027, name_fr = NA_character_, name_nl = NA_character_)
+      dt <- unique(md$communes[!is.na(cd_nuts3_2027), .(cd_nuts3_2027)])
+      data.table(code = dt$cd_nuts3_2027,
+                 name_fr = NA_character_, name_nl = NA_character_)
     },
     POSTAL = {
-      dt <- unique(md$postal_to_nis2019[, .(cd_postal, tx_postal_name_fr, tx_postal_name_nl)])
+      dt <- unique(md$postal[nis_version == "2019",
+                              .(cd_postal, tx_postal_name_fr, tx_postal_name_nl)])
       data.table(code = dt$cd_postal,
                  name_fr = dt$tx_postal_name_fr, name_nl = dt$tx_postal_name_nl)
     },
     INTERNAL_ARRONDISSEMENT = {
-      dt <- md$nuts_to_internal
-      data.table(code = dt$cd_arr_internal, name_fr = NA_character_, name_nl = NA_character_)
+      dt <- unique(md$communes[nis_version == "2019" & !is.na(cd_arr_internal),
+                                .(cd_arr_internal)])
+      data.table(code = dt$cd_arr_internal,
+                 name_fr = NA_character_, name_nl = NA_character_)
     },
     NULL  # unsupported
   )

@@ -61,7 +61,7 @@ build_name_reference <- function(target, md, language = "both") {
   ref_list <- list()
 
   if (target == "NIS_COMMUNE_2019") {
-    comm <- md$communes_nis2019
+    comm <- md$communes[nis_version == "2019"]
     if (language %in% c("fr", "both")) {
       ref_list[["fr"]] <- comm[!is.na(tx_commune_fr),
                                 .(ref_name = tx_commune_fr, ref_code = cd_commune,
@@ -73,7 +73,7 @@ build_name_reference <- function(target, md, language = "both") {
                                   ref_language = "nl")]
     }
   } else if (target == "NIS_COMMUNE_2025") {
-    comm <- md$communes_nis2025
+    comm <- md$communes[nis_version == "2025"]
     if (language %in% c("fr", "both")) {
       ref_list[["fr"]] <- comm[!is.na(tx_commune_fr),
                                 .(ref_name = tx_commune_fr, ref_code = cd_commune,
@@ -85,8 +85,7 @@ build_name_reference <- function(target, md, language = "both") {
                                   ref_language = "nl")]
     }
   } else if (target == "POSTAL") {
-    # Use postal names from both NIS versions (they should be the same)
-    postal <- md$postal_to_nis2019
+    postal <- md$postal[nis_version == "2019"]
     if (language %in% c("fr", "both")) {
       ref_list[["fr"]] <- postal[!is.na(tx_postal_name_fr),
                                   .(ref_name = tx_postal_name_fr, ref_code = cd_postal,
@@ -98,7 +97,7 @@ build_name_reference <- function(target, md, language = "both") {
                                     ref_language = "nl")]
     }
   } else if (target == "NIS_ARRONDISSEMENT_2019") {
-    comm <- md$communes_nis2019
+    comm <- md$communes[nis_version == "2019"]
     arr <- unique(comm[!is.na(tx_arr_fr), .(ref_code = cd_arr, tx_arr_fr, tx_arr_nl)])
     if (language %in% c("fr", "both")) {
       ref_list[["fr"]] <- arr[, .(ref_name = tx_arr_fr, ref_code, ref_language = "fr")]
@@ -108,7 +107,7 @@ build_name_reference <- function(target, md, language = "both") {
                                .(ref_name = tx_arr_nl, ref_code, ref_language = "nl")]
     }
   } else if (target == "NIS_ARRONDISSEMENT_2025") {
-    comm <- md$communes_nis2025
+    comm <- md$communes[nis_version == "2025"]
     arr <- unique(comm[!is.na(tx_arr_fr), .(ref_code = cd_arr, tx_arr_fr, tx_arr_nl)])
     if (language %in% c("fr", "both")) {
       ref_list[["fr"]] <- arr[, .(ref_name = tx_arr_fr, ref_code, ref_language = "fr")]
@@ -118,7 +117,8 @@ build_name_reference <- function(target, md, language = "both") {
                                .(ref_name = tx_arr_nl, ref_code, ref_language = "nl")]
     }
   } else if (target == "NUTS3_2021") {
-    nuts3 <- md$nuts3_ref_2021
+    nuts3 <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts3),
+                                 .(cd_nuts3, tx_nuts3_fr, tx_nuts3_nl)])
     if (language %in% c("fr", "both")) {
       ref_list[["fr"]] <- nuts3[!is.na(tx_nuts3_fr),
                                  .(ref_name = tx_nuts3_fr, ref_code = cd_nuts3,
