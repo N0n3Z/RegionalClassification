@@ -121,7 +121,7 @@ FILE_MAPPING <- list(
 
   CONVERSION_NIS2025_NUTS2027 = list(
     filename    = "REFNIS_2025-NUTS_2027.xlsx",
-    description = "NIS 2025 communes mapped to NUTS 2027 — same hierarchical format as CONVERSION_NIS2019_NUTS2021.xlsx",
+    description = "NIS 2025 communes mapped to NUTS 2027 -- same hierarchical format as CONVERSION_NIS2019_NUTS2021.xlsx",
     sheet       = NULL,
     provides    = c("NIS_2025", "NUTS_2027"),
     filter      = NULL
@@ -312,7 +312,7 @@ get_processed_data_path <- function() {
   return(file.path("inst", "extdata"))
 }
 
-# --- NUTS 2021 → NUTS 2027 mapping ---
+# --- NUTS 2021 -> NUTS 2027 mapping ---
 # Source: EU Regulation 2026/195 (JO L 27.1.2026), applicable from 1 January 2027.
 # Only changed codes are listed; all others remain identical between versions.
 NUTS2021_TO_NUTS2027 <- data.table::data.table(

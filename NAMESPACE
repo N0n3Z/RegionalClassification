@@ -30,4 +30,5 @@ export(save_master_tables)
 # ----- Imports ----------------------------------------------------------------
 import(data.table)
 importFrom(here, here)
-importFrom(readxl, read_excel)
+importFrom(stats, na.omit)
+importFrom(utils, head)

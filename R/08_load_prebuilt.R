@@ -56,14 +56,14 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
   for (nm in MASTER_FLAT_TABLES) {
     path <- file.path(dir, paste0(nm, ".rds"))
     if (!file.exists(path)) {
-      message(sprintf("  [load_master_data] '%s.rds' not found — setting to NULL", nm))
+      message(sprintf("  [load_master_data] '%s.rds' not found -- setting to NULL", nm))
       result[[nm]] <- NULL
       next
     }
     result[[nm]] <- readRDS(path)
   }
 
-  # Hierarchy lists — not persisted, not needed at runtime
+  # Hierarchy lists -- not persisted, not needed at runtime
   result$nis_hierarchy_2019          <- NULL
   result$nis_hierarchy_2025          <- NULL
   result$nuts_hierarchy_2021         <- NULL
@@ -78,7 +78,7 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
       nrow(result$communes[nis_version == "BEFORE_2019"])
     ))
   } else {
-    message(sprintf("Master data loaded from '%s' (some tables missing — run rebuild_master_data())", dir))
+    message(sprintf("Master data loaded from '%s' (some tables missing -- run rebuild_master_data())", dir))
   }
 
   return(result)

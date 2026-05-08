@@ -166,7 +166,7 @@ convert_dataset <- function(
 #' Auto-detect geographic classification from a vector of codes
 #'
 #' Matches the supplied codes against known reference sets from master_data
-#' and returns the classification with the highest match rate (>= 80%).
+#' and returns the classification with the highest match rate (>= 80\%).
 #' Returns NULL when no confident match is found.
 #'
 #' @param codes     Vector of codes (character or integer/numeric)
@@ -551,6 +551,8 @@ list_split_weights <- function() {
 # ==============================================================================
 
 #' Default column name for a given classification
+#' @param classification Classification identifier string
+#' @keywords internal
 default_col_name <- function(classification) {
   mapping <- c(
     NIS_COMMUNE_BEFORE_2019  = "cd_nis_before2019",
@@ -576,9 +578,7 @@ default_col_name <- function(classification) {
   paste0("cd_", tolower(classification))
 }
 
-#' Resolve weights for ambiguous codes (internal)
-#'
-#' @return data.table(code_from, code_to, weight) for all ambiguous codes
+#' @noRd
 .resolve_weights <- function(ambig_codes, all_map, from, to, weights, normalize, verbose) {
 
   # Equal-weight fallback
@@ -638,6 +638,9 @@ default_col_name <- function(classification) {
 }
 
 #' Merge user/registry weights back onto the full mapping skeleton (internal)
+#' @param skeleton data.table of all code_from/code_to pairs
+#' @param reg data.table of registered weights
+#' @keywords internal
 .merge_weights <- function(skeleton, reg) {
   result <- merge(skeleton[, .(code_from, code_to)], reg,
                   by = c("code_from", "code_to"), all.x = TRUE)
@@ -972,7 +975,7 @@ diagnose_classification <- function(
 
 .print_check <- function(res, code_col, n_rows) {
   bar <- strrep("=", 64)
-  ver_str <- if (!is.na(res$version)) res$version else "—"
+  ver_str <- if (!is.na(res$version)) res$version else "--"
   cat(sprintf("\n%s\n", bar))
   cat("  CLASSIFICATION DIAGNOSTIC\n")
   cat(sprintf("%s\n", bar))
@@ -993,7 +996,7 @@ diagnose_classification <- function(
 
   # Missing codes
   if (res$n_missing > 0) {
-    cat(sprintf("  Missing codes (%d) — present in reference but absent from dataset:\n",
+    cat(sprintf("  Missing codes (%d) -- present in reference but absent from dataset:\n",
                 res$n_missing))
     .print_code_table(res$missing_codes)
     cat("\n")
@@ -1001,7 +1004,7 @@ diagnose_classification <- function(
 
   # Unknown codes
   if (res$n_unknown > 0) {
-    cat(sprintf("  Unknown codes (%d) — present in dataset but not in reference:\n",
+    cat(sprintf("  Unknown codes (%d) -- present in dataset but not in reference:\n",
                 res$n_unknown))
     .print_code_table(res$unknown_codes)
     cat("\n")
@@ -1022,8 +1025,8 @@ diagnose_classification <- function(
 
   # Status
   status_label <- switch(res$status,
-    COMPLETE                  = "OK  COMPLETE — all reference codes present",
-    INCOMPLETE                = "!!  INCOMPLETE — missing reference codes",
+    COMPLETE                  = "OK  COMPLETE -- all reference codes present",
+    INCOMPLETE                = "!!  INCOMPLETE -- missing reference codes",
     COMPLETE_WITH_UNKNOWNS    = "~~  COMPLETE (with unrecognised codes)",
     INCOMPLETE_WITH_UNKNOWNS  = "!!  INCOMPLETE + unrecognised codes"
   )
@@ -1033,7 +1036,7 @@ diagnose_classification <- function(
 
 .print_detect <- function(res, code_col, n_rows) {
   bar     <- strrep("=", 64)
-  ver_str <- if (!is.na(res$version)) res$version else "—"
+  ver_str <- if (!is.na(res$version)) res$version else "--"
 
   cat(sprintf("\n%s\n", bar))
   cat("  CLASSIFICATION AUTO-DETECTION\n")
@@ -1047,7 +1050,7 @@ diagnose_classification <- function(
   cat(sprintf("  %s\n", strrep("-", 66)))
   for (i in seq_len(nrow(top))) {
     marker  <- if (i == 1) " <-- best" else ""
-    ver_col <- if (!is.na(top$version[i])) top$version[i] else "—"
+    ver_col <- if (!is.na(top$version[i])) top$version[i] else "--"
     cat(sprintf("  %-24s  %-12s  %6.1f%%  %7.1f%%  %7.1f%%%s\n",
                 top$classification_type[i],
                 ver_col,
@@ -1100,9 +1103,7 @@ diagnose_classification <- function(
   else                                     ""
 }
 
-#' Parse a normalised classification identifier into type + version (internal)
-#'
-#' @return list(type, version) where version may be NA for timeless identifiers
+#' @noRd
 .parse_classification_id <- function(norm_id) {
   mapping <- list(
     NIS_COMMUNE_BEFORE_2019  = list(type = "NIS_COMMUNE",             version = "BEFORE_2019"),

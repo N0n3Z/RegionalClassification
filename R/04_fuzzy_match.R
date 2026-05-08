@@ -12,7 +12,7 @@
 #'   One of: "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", "POSTAL",
 #'   "NIS_ARRONDISSEMENT_2019", "NIS_ARRONDISSEMENT_2025", "NUTS3_2021"
 #' @param master_data Output from build_master_table()
-#' @param max_dist Maximum string distance for fuzzy matching (default 0.1 = 10%)
+#' @param max_dist Maximum string distance for fuzzy matching (default 0.1 = 10\%)
 #' @param method Matching method: "osa" (default), "lv", "dl", "hamming",
 #'   "lcs", "qgram", "cosine", "jaccard", "jw", "soundex"
 #' @param language Preferred language for matching: "fr", "nl", or "both" (default)

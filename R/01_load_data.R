@@ -86,7 +86,9 @@ load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
 #' @param code_col Name of the code column
 #' @param name_fr_col Name of the French name column
 #' @param name_nl_col Name of the Dutch name column
+#' @param lang_col Optional column distinguishing language variants (NULL = ignore)
 #' @return list of data.tables: communes, arrondissements, provinces, regions
+#' @noRd
 parse_refnis_hierarchy <- function(refnis_dt,
                                    code_col = "Code INS",
                                    name_fr_col = "Entit\u00e9s administratives",

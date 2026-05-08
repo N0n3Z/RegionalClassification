@@ -168,7 +168,7 @@ RegionalClassification/
 │   └── test_template.R          # Template for user-defined tests
 └── vignettes/
     ├── introduction.Rmd         # Detailed usage guide
-    ├── 02-conversions.Rmd       # Conversion examples
-    ├── 03-ambiguous-splits.Rmd  # Handling M:N conversions
-    └── 04-diagnostics.Rmd       # Diagnostic and auto-detection
+    ├── conversions.Rmd          # Conversion examples
+    ├── ambiguous-splits.Rmd     # Handling M:N conversions
+    └── diagnostics.Rmd          # Diagnostic and auto-detection
 ```

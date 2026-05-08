@@ -288,6 +288,9 @@ visualize_hierarchy <- function(classification, master_data,
 }
 
 #' Print NIS tree structure
+#' @param communes data.table of communes (filtered to one nis_version)
+#' @param max_communes Maximum communes to show per arrondissement
+#' @noRd
 print_nis_tree <- function(communes, max_communes = 3) {
 
   cat("\n")
@@ -351,6 +354,9 @@ print_nis_tree <- function(communes, max_communes = 3) {
 }
 
 #' Print NUTS tree structure
+#' @param master_data Output from load_master_data()
+#' @param max_communes Maximum communes to show per NUTS3 region
+#' @noRd
 print_nuts_tree <- function(master_data, max_communes = 3) {
 
   master <- master_data$communes[nis_version == "2019"]
