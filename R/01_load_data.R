@@ -160,20 +160,11 @@ parse_refnis_hierarchy <- function(refnis_dt,
   # derive region directly
   result$arrondissements <- arr
 
-  # Add region to provinces
+  # Add region to provinces using the centralised lookup table (see 00_config.R).
+  # Brabant (digit 2) stays NA; resolved per-commune in build_nis_commune_table().
   provs <- result$provinces
-  provs[, cd_region := fcase(
-    cd_refnis %/% 10000L == 1L, 2000L,  # Antwerp (10000) -> Flemish Region
-    cd_refnis %/% 10000L == 2L, NA_integer_,  # Brabant (20000) -> 3 regions; resolved by arrondissement
-    cd_refnis %/% 10000L == 3L, 2000L,  # Flanders: 30000, 40000, 70000
-    cd_refnis %/% 10000L == 4L, 2000L,
-    cd_refnis %/% 10000L == 7L, 2000L,
-    cd_refnis %/% 10000L == 5L, 3000L,  # Wallonia: 50000, 60000, 80000, 90000
-    cd_refnis %/% 10000L == 6L, 3000L,
-    cd_refnis %/% 10000L == 8L, 3000L,
-    cd_refnis %/% 10000L == 9L, 3000L,
-    default = NA_integer_
-  )]
+  digit_key <- as.character(provs$cd_refnis %/% 10000L)
+  provs[, cd_region := NIS_PROV_DIGIT_TO_REGION[digit_key]]
   result$provinces <- provs
 
   return(result)

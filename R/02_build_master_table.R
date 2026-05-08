@@ -249,24 +249,25 @@ build_nis_commune_table <- function(nis_parsed, version) {
                                  tx_region_nl = tx_descr_nl)]
   communes <- merge(communes, reg, by = "cd_region", all.x = TRUE)
 
-  # Brabant (province 20000) spans all three regions.
-  # Province→region is NA for 20000; resolve here by arrondissement.
-  bxl_reg <- nis_parsed$regions[cd_refnis == 4000L]
-  fl_reg  <- nis_parsed$regions[cd_refnis == 2000L]
-  wa_reg  <- nis_parsed$regions[cd_refnis == 3000L]
+  # Province 20000 (Brabant) spans all three regions; province->region is NA for it.
+  # Resolve here by arrondissement using the constants defined in 00_config.R.
+  bxl_reg <- nis_parsed$regions[cd_refnis == NIS_REGION_BRUSSELS]
+  fl_reg  <- nis_parsed$regions[cd_refnis == NIS_REGION_FLEMISH]
+  wa_reg  <- nis_parsed$regions[cd_refnis == NIS_REGION_WALLOON]
 
-  communes[cd_arr == 21000L & is.na(cd_region), cd_region := 4000L]  # Brussels
-  communes[cd_arr %in% c(23000L, 24000L) & is.na(cd_region), cd_region := 2000L]  # Flemish Brabant
-  communes[cd_arr == 25000L & is.na(cd_region), cd_region := 3000L]  # Walloon Brabant
+  communes[cd_arr == NIS_ARR_BRUSSELS     & is.na(cd_region), cd_region := NIS_REGION_BRUSSELS]
+  communes[cd_arr %in% c(NIS_ARR_HAL_VILVORDE, NIS_ARR_LOUVAIN) & is.na(cd_region),
+           cd_region := NIS_REGION_FLEMISH]
+  communes[cd_arr == NIS_ARR_NIVELLES     & is.na(cd_region), cd_region := NIS_REGION_WALLOON]
 
   if (nrow(bxl_reg) > 0)
-    communes[cd_region == 4000L & is.na(tx_region_fr),
+    communes[cd_region == NIS_REGION_BRUSSELS & is.na(tx_region_fr),
              `:=`(tx_region_fr = bxl_reg$tx_descr_fr, tx_region_nl = bxl_reg$tx_descr_nl)]
   if (nrow(fl_reg) > 0)
-    communes[cd_region == 2000L & is.na(tx_region_fr),
+    communes[cd_region == NIS_REGION_FLEMISH  & is.na(tx_region_fr),
              `:=`(tx_region_fr = fl_reg$tx_descr_fr, tx_region_nl = fl_reg$tx_descr_nl)]
   if (nrow(wa_reg) > 0)
-    communes[cd_region == 3000L & is.na(tx_region_fr),
+    communes[cd_region == NIS_REGION_WALLOON  & is.na(tx_region_fr),
              `:=`(tx_region_fr = wa_reg$tx_descr_fr, tx_region_nl = wa_reg$tx_descr_nl)]
 
   # Add 2-digit arrondissement code (for internal classification link)

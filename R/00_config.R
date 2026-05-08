@@ -286,6 +286,38 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS1_2027")
 )
 
+# --- Belgian NIS Administrative Code Constants ---
+# These structural codes are defined by Belgian law / Statbel and do not change
+# between NIS versions (regions and provinces predate the 2019/2025 commune fusions).
+# All build logic in 01_load_data.R and 02_build_master_table.R uses these names.
+# Never scatter these literals through the codebase — reference this block instead.
+
+NIS_REGION_FLEMISH  <- 2000L
+NIS_REGION_WALLOON  <- 3000L
+NIS_REGION_BRUSSELS <- 4000L
+
+NIS_PROVINCE_BRABANT    <- 20000L  # Spans all 3 regions; split by arrondissement
+
+NIS_ARR_BRUSSELS        <- 21000L  # Brussels-Capital arrondissement  -> Brussels region
+NIS_ARR_HAL_VILVORDE    <- 23000L  # Hal-Vilvorde                     -> Flemish region
+NIS_ARR_LOUVAIN         <- 24000L  # Louvain (Leuven)                 -> Flemish region
+NIS_ARR_NIVELLES        <- 25000L  # Nivelles                         -> Walloon  region
+
+# Province first-digit (cd_province %/% 10000) -> NIS region code.
+# Brabant (digit 2) is NA because province 20000 spans three regions;
+# region is resolved commune-by-commune via arrondissement (see 02_build_master_table.R).
+NIS_PROV_DIGIT_TO_REGION <- c(
+  "1" = 2000L,        # Antwerp      -> Flemish
+  "2" = NA_integer_,  # Brabant      -> split (resolved by arrondissement)
+  "3" = 2000L,        # East Flanders-> Flemish  (province code 30000... wait, 3x000)
+  "4" = 2000L,        # West Flanders-> Flemish
+  "5" = 3000L,        # Hainaut      -> Walloon
+  "6" = 3000L,        # Liege        -> Walloon
+  "7" = 2000L,        # Limburg      -> Flemish
+  "8" = 3000L,        # Luxembourg   -> Walloon
+  "9" = 3000L         # Namur        -> Walloon
+)
+
 # --- Flat tables persisted in inst/extdata/ ---
 # Three unified tables replace the previous 13 separate tables.
 # Each is keyed by a version discriminator column (nis_version / from_version).
