@@ -18,6 +18,7 @@
 #'   detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS3_2021"
 #'   detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
 #' }
+#' @export
 detect_classification <- function(codes, master_data) {
 
   codes_sample <- unique(na.omit(codes))

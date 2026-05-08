@@ -57,6 +57,7 @@
 #'                   weights    = weights,
 #'                   value_type = "additive")
 #' }
+#' @export
 split_ambiguous <- function(
   dt,
   code_col,
@@ -209,6 +210,7 @@ split_ambiguous <- function(
 #'     variable   = "population"
 #'   )
 #' }
+#' @export
 register_split_weights <- function(from, to, weights_dt, variable = "population") {
   from_norm  <- normalize_classification_id(from)
   to_norm    <- normalize_classification_id(to)
@@ -246,6 +248,7 @@ register_split_weights <- function(from, to, weights_dt, variable = "population"
 #'   )
 #'   get_split_weights("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
 #' }
+#' @export
 get_split_weights <- function(from, to, variable = "population") {
   from_norm <- normalize_classification_id(from)
   to_norm   <- normalize_classification_id(to)
@@ -263,6 +266,7 @@ get_split_weights <- function(from, to, variable = "population") {
 #' \donttest{
 #'   list_split_weights()  # returns NULL or data.table of registered weights
 #' }
+#' @export
 list_split_weights <- function() {
   keys <- ls(.split_weight_registry)
   if (length(keys) == 0) {
@@ -285,6 +289,7 @@ list_split_weights <- function() {
 #' @return Invisible NULL (called for side effect)
 #' @examples
 #' clear_split_weights()
+#' @export
 clear_split_weights <- function() {
   rm(list = ls(.split_weight_registry), envir = .split_weight_registry)
   invisible(NULL)

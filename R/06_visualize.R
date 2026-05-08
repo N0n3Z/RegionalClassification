@@ -24,6 +24,7 @@
 #'   # Save to file
 #'   visualize_classification_graph(output_file = "classification_graph.html")
 #' }
+#' @export
 visualize_classification_graph <- function(highlight_from = NULL,
                                            highlight_to = NULL,
                                            output_file = NULL) {
@@ -211,6 +212,7 @@ print_text_graph <- function() {
 #'   visualize_conversion_matrix()
 #'   visualize_conversion_matrix(output_file = "conversion_matrix.png")
 #' }
+#' @export
 visualize_conversion_matrix <- function(output_file = NULL) {
 
   mat <- get_conversion_matrix()
@@ -269,6 +271,7 @@ visualize_conversion_matrix <- function(output_file = NULL) {
 #'   visualize_hierarchy("NIS_2025",  master_data)
 #'   visualize_hierarchy("NUTS_2021", master_data)
 #' }
+#' @export
 visualize_hierarchy <- function(classification, master_data,
                                 max_communes = 3) {
 

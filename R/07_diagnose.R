@@ -57,6 +57,7 @@
 #'   # Detect mode
 #'   diagnose_classification(nuts3_data, "nuts3", master_data)
 #' }
+#' @export
 diagnose_classification <- function(
   dt,
   code_col,

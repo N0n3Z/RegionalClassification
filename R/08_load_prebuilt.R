@@ -40,6 +40,7 @@
 #'   master_data <- load_master_data()
 #'   # master_data now contains all lookup tables, ready for convert_codes() etc.
 #' }
+#' @export
 load_master_data <- function(dir = .get_prebuilt_dir()) {
 
   if (!dir.exists(dir)) {
@@ -99,6 +100,7 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
 #'   # Only needed when raw source files in data/raw/ change
 #'   master_data <- rebuild_master_data()
 #' }
+#' @export
 rebuild_master_data <- function(raw_dir = get_raw_data_path(),
                                 out_dir = get_processed_data_path()) {
 

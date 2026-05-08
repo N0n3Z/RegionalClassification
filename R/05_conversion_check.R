@@ -26,6 +26,7 @@
 #'
 #' # Multi-hop path via intermediate classification
 #' check_conversion_path("POSTAL", "NUTS3_2027")
+#' @export
 check_conversion_path <- function(from, to) {
 
   from_norm <- normalize_classification_id(from)
@@ -217,6 +218,7 @@ bfs_find_path <- function(from, to, graph, only_simple = FALSE) {
 #' print_conversion_check("NIS_COMMUNE_2019", "NUTS3_2021")
 #' print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
 #' print_conversion_check("POSTAL", "NUTS3_2027")
+#' @export
 print_conversion_check <- function(from, to) {
 
   result <- check_conversion_path(from, to)
@@ -236,6 +238,7 @@ print_conversion_check <- function(from, to) {
 #' Get all nodes in the conversion graph
 #'
 #' @return character vector of all classification node identifiers
+#' @export
 get_all_classification_nodes <- function() {
   nodes <- unique(c(
     sapply(CONVERSION_GRAPH_EDGES, function(e) e$from),
@@ -247,6 +250,7 @@ get_all_classification_nodes <- function() {
 #' Generate a full conversion feasibility matrix
 #'
 #' @return data.table with from, to, is_simple, relation_chain
+#' @export
 get_conversion_matrix <- function() {
 
   nodes <- get_all_classification_nodes()

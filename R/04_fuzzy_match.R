@@ -29,6 +29,7 @@
 #'   fuzzy_match_names(c("Bxl", "Anv"), "NIS_COMMUNE_2019", master_data,
 #'                     max_dist = 0.5, language = "fr")
 #' }
+#' @export
 fuzzy_match_names <- function(names, target_classification, master_data,
                               max_dist = 0.1, method = "jw",
                               language = "both") {
@@ -254,6 +255,7 @@ normalize_name <- function(name) {
 #'   master_data <- load_master_data()
 #'   identify_from_names(c("Bruxelles", "Antwerpen", "Gent", "Liège"), master_data)
 #' }
+#' @export
 identify_from_names <- function(names, master_data,
                                 possible_classifications = c(
                                   "POSTAL", "NIS_COMMUNE_2019", "NIS_COMMUNE_2025",

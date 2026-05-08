@@ -33,6 +33,7 @@
 #'   convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
 #'                 master_data, allow_ambiguous = TRUE)
 #' }
+#' @export
 convert_codes <- function(codes, from, to, master_data,
                           allow_ambiguous = FALSE) {
 
@@ -648,6 +649,7 @@ convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
 #' @return data.table describing available conversions
 #' @examples
 #' list_available_conversions()
+#' @export
 list_available_conversions <- function() {
   edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, as.data.table))
   edges[, .(from, to, relation, notes)]

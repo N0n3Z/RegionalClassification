@@ -43,6 +43,7 @@
 #'
 #' @param raw_data Named list of data.tables from load_all_raw_data()
 #' @return list with three unified flat tables plus build-time hierarchy intermediates
+#' @export
 build_master_table <- function(raw_data) {
 
   message("Building master classification table...")
@@ -331,6 +332,7 @@ add_nuts2027_columns <- function(master) {
 #' @param master_data Output from build_master_table()
 #' @param output_dir  Path to output directory (default: data/processed/)
 #' @return Invisible NULL (called for side effect)
+#' @export
 save_master_tables <- function(master_data, output_dir = get_processed_data_path()) {
 
   if (!dir.exists(output_dir)) {

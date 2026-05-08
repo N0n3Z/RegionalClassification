@@ -41,6 +41,7 @@
 #'   # Auto-detect source
 #'   convert_dataset(salaries, "commune", "NUTS3_2021", master_data)
 #' }
+#' @export
 convert_dataset <- function(
   dt,
   code_col,
