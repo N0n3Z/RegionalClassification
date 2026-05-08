@@ -25,7 +25,7 @@ Cette situation rend la conversion `NIS_ARRONDISSEMENT_2019 → NUTS3_2021` intr
 ## 1. Détection et erreur par défaut
 
 ```{r error-default}
-library(RegionalClassification)
+library(nbbbenuts)
 master_data <- load_master_data()
 
 # Par défaut : erreur explicite si conversion ambiguë

@@ -1,4 +1,4 @@
-# RegionalClassification (development version)
+# nbbbenuts (development version)
 
 ## New functions
 
@@ -40,6 +40,6 @@
 * `stringdist` and `readxl` confirmed as `Suggests`.
 * `rlang (>= 1.0.0)` added to `Imports`.
 
-# RegionalClassification 0.1.0
+# nbbbenuts 0.1.0
 
 * Initial release.

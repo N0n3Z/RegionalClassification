@@ -64,10 +64,10 @@ test_that("convert_codes identity conversion returns input unchanged", {
 
 # ── Test E10: normalize_classification_id alias round-trip ───────────────────
 test_that("normalize_classification_id maps common aliases to canonical names", {
-  expect_equal(RegionalClassification:::normalize_classification_id("NIS_COM_2019"),
+  expect_equal(nbbbenuts:::normalize_classification_id("NIS_COM_2019"),
                "NIS_COMMUNE_2019")
-  expect_equal(RegionalClassification:::normalize_classification_id("NUTS_2021"),
+  expect_equal(nbbbenuts:::normalize_classification_id("NUTS_2021"),
                "NUTS3_2021")
-  expect_equal(RegionalClassification:::normalize_classification_id("CP"),
+  expect_equal(nbbbenuts:::normalize_classification_id("CP"),
                "POSTAL")
 })

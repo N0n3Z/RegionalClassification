@@ -52,8 +52,8 @@ test_that("convert_codes raises rcl_data_missing when communes table missing", {
 # ── Test M8: graphe caché — build_conversion_graph ne se reconstruit pas ──────
 test_that("build_conversion_graph uses cached result on repeated calls", {
   # Invalidate cache then rebuild
-  g1 <- RegionalClassification:::build_conversion_graph()
-  g2 <- RegionalClassification:::build_conversion_graph()
+  g1 <- nbbbenuts:::build_conversion_graph()
+  g2 <- nbbbenuts:::build_conversion_graph()
   # Same object (pointer identity via identical)
   expect_identical(g1, g2)
 })

@@ -1,8 +1,8 @@
 ---
-title: "Introduction to RegionalClassification"
+title: "Introduction to nbbbenuts"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction to RegionalClassification}
+  %\VignetteIndexEntry{Introduction to nbbbenuts}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
 ## Overview
 
-The `RegionalClassification` package provides tools to convert Belgian geographic codes between classification systems and across time.
+The `nbbbenuts` package provides tools to convert Belgian geographic codes between classification systems and across time.
 
 Belgian administrative data can reference geography in many ways — NIS commune codes, NUTS regions, postal codes, internal arrondissement codes — and these change over time as communes merge or district borders shift. This package unifies all of them.
 

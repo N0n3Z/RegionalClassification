@@ -1,4 +1,4 @@
 library(testthat)
-library(RegionalClassification)
+library(nbbbenuts)
 
-test_check("RegionalClassification")
+test_check("nbbbenuts")

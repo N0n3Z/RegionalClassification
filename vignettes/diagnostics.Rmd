@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 ```{r load}
-library(RegionalClassification)
+library(nbbbenuts)
 library(data.table)
 master_data <- load_master_data()
 ```

@@ -1,5 +1,5 @@
 # ==============================================================================
-# main.R - Entry point for the RegionalClassification package
+# main.R - Entry point for the nbbbenuts package
 # ==============================================================================
 # By default, master_data is loaded instantly from pre-built CSV files in
 # data/processed/.  The raw XLSX/XLS source files are NOT required for normal
@@ -47,7 +47,7 @@ source(file.path("R", "07_dataset_convert.R"))
 source(file.path("R", "08_load_prebuilt.R"))
 
 # --- Load master data (fast path: pre-built CSV files) ---
-message("=== RegionalClassification Package ===")
+message("=== nbbbenuts Package ===")
 master_data <- load_master_data()
 
 message("\n=== Package ready! ===")

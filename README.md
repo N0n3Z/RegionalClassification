@@ -1,4 +1,4 @@
-# RegionalClassification
+# nbbbenuts
 
 R package for converting between Belgian geographic classification systems.
 
@@ -147,7 +147,7 @@ fuzzy_match_names(c("Bruxeles", "Antwerpn", "Vervirs"), "NIS_COMMUNE_2019",
 ## Structure
 
 ```
-RegionalClassification/
+nbbbenuts/
 ├── main.R                       # Entry point (loads from inst/extdata/ by default)
 ├── R/
 │   ├── 00_config.R              # Classification registry, file mappings, NUTS 2027 lookup

@@ -11,7 +11,7 @@
 #' @return Character path to the extdata directory
 .get_prebuilt_dir <- function() {
   pkg_dir <- tryCatch(
-    system.file("extdata", package = "RegionalClassification", mustWork = FALSE),
+    system.file("extdata", package = "nbbbenuts", mustWork = FALSE),
     error = function(e) ""
   )
   if (nchar(pkg_dir) > 0 && dir.exists(pkg_dir)) return(pkg_dir)

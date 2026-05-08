@@ -10,10 +10,10 @@ test_that("fuzzy_match_names throws rcl_invalid_input for unsupported classifica
 
 # ── Test F2: normalize_name supprime les accents et les préfixes ──────────────
 test_that("normalize_name strips accents and arrondissement prefix", {
-  expect_equal(RegionalClassification:::normalize_name("Liège"),    "liege")
-  expect_equal(RegionalClassification:::normalize_name("Bruxelles"), "bruxelles")
-  expect_equal(RegionalClassification:::normalize_name("Arrondissement de Liège"), "liege")
-  expect_equal(RegionalClassification:::normalize_name("arrondissement d'Anvers"), "anvers")
+  expect_equal(nbbbenuts:::normalize_name("Liège"),    "liege")
+  expect_equal(nbbbenuts:::normalize_name("Bruxelles"), "bruxelles")
+  expect_equal(nbbbenuts:::normalize_name("Arrondissement de Liège"), "liege")
+  expect_equal(nbbbenuts:::normalize_name("arrondissement d'Anvers"), "anvers")
 })
 
 # ── Test F3: correspondance exacte retourne distance = 0 ─────────────────────
