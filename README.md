@@ -58,10 +58,10 @@ install.packages(c("readxl", "stringdist"))
 
 ### Normal use — no raw files needed
 
-The package ships with a pre-built snapshot in `data/processed/`. Simply run:
+The package ships with a pre-built snapshot in `inst/extdata/`. Simply run:
 
 ```r
-source("main.R")   # loads from data/processed/ in milliseconds
+source("main.R")   # loads from inst/extdata/ in milliseconds
 ```
 
 ### Rebuilding the snapshot
@@ -87,7 +87,7 @@ Belgian communes are reorganized periodically through mergers and district trans
 
 ```
 BEFORE_2019  --[REFNIS_CHANGE_BEFORE2019]--> 2019 --[REFNIS_CHANGE_2025]--> 2025
-   591 communes                               583                             567
+   589 communes                               583                             567
 ```
 
 ## NUTS 2027
@@ -148,7 +148,7 @@ fuzzy_match_names(c("Bruxeles", "Antwerpn", "Vervirs"), "NIS_COMMUNE_2019",
 
 ```
 RegionalClassification/
-├── main.R                       # Entry point (loads from data/processed/ by default)
+├── main.R                       # Entry point (loads from inst/extdata/ by default)
 ├── R/
 │   ├── 00_config.R              # Classification registry, file mappings, NUTS 2027 lookup
 │   ├── 01_load_data.R           # Data loading and parsing functions
@@ -159,12 +159,16 @@ RegionalClassification/
 │   ├── 06_visualize.R           # Visualization utilities
 │   ├── 07_dataset_convert.R     # convert_dataset(), split_ambiguous(), diagnose_classification()
 │   └── 08_load_prebuilt.R       # load_master_data(), rebuild_master_data()
+├── inst/
+│   └── extdata/                 # Pre-built RDS snapshot: communes.rds, postal.rds, nis_changes.rds
 ├── data/
-│   ├── processed/               # Pre-built RDS snapshot (versioned)
 │   └── raw/                     # Source data files (not versioned)
 ├── tests/
 │   ├── test_conversions.R       # 13 automated conversion tests
 │   └── test_template.R          # Template for user-defined tests
 └── vignettes/
-    └── introduction.Rmd         # Detailed usage guide
+    ├── introduction.Rmd         # Detailed usage guide
+    ├── 02-conversions.Rmd       # Conversion examples
+    ├── 03-ambiguous-splits.Rmd  # Handling M:N conversions
+    └── 04-diagnostics.Rmd       # Diagnostic and auto-detection
 ```

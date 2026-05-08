@@ -72,7 +72,10 @@ res$missing_codes   # data.table avec les 42 codes absents du dataset
 
 ```{r diagnose-complete}
 # Dataset contenant tous les codes NUTS3 2021
-dt_full <- data.table(nuts3 = master_data$nuts3_ref_2021$cd_nuts3)
+dt_full <- data.table(
+  nuts3 = unique(master_data$communes[nis_version == "2019" & !is.na(cd_nuts3),
+                                       cd_nuts3])
+)
 
 res_full <- diagnose_classification(dt_full, "nuts3", master_data,
                                     classification = "NUTS3_2021")

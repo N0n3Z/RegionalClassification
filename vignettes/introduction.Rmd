@@ -24,10 +24,10 @@ source("main.R")
 # master_data is now available — it contains all lookup tables
 ```
 
-By default the package loads instantly from pre-built RDS files in `data/processed/` — no raw source files are needed. You'll see:
+By default the package loads instantly from pre-built RDS files in `inst/extdata/` — no raw source files are needed. You'll see:
 
 ```
-Master data loaded from 'data/processed': 583 communes NIS 2019, 567 communes NIS 2025, 589 communes NIS BEFORE_2019
+Master data loaded from '.../inst/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
 ```
 
 To rebuild the snapshot after updating raw source files:
@@ -280,7 +280,7 @@ diagnose_classification(nuts3_data, "nuts3", master_data)
 
 ## 10. Rebuilding from raw files
 
-The pre-built snapshot in `data/processed/` covers all supported conversions. If you update the raw source files in `data/raw/`, regenerate the snapshot with:
+The pre-built snapshot in `inst/extdata/` covers all supported conversions. If you update the raw source files in `data/raw/`, regenerate the snapshot with:
 
 ```{r rebuild2, eval=FALSE}
 source("main.R")
