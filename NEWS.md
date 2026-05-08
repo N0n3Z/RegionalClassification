@@ -1,10 +1,5 @@
 # RegionalClassification (development version)
 
-## Breaking changes
-
-* `route_conversion()` is no longer exported (it is an internal dispatch helper).
-  Use `convert_codes()` for all conversions.
-
 ## New functions
 
 * `detect_classification()` — auto-detects the geographic classification of a
@@ -14,6 +9,8 @@
 * `register_split_weights()` / `get_split_weights()` / `list_split_weights()` /
   `clear_split_weights()` — session-scoped registry for pre-registered split weights.
 * `diagnose_classification()` — comprehensive diagnostic report for a vector of codes.
+* `get_all_classification_nodes()` / `get_conversion_matrix()` — now exported;
+  allow programmatic inspection of the full conversion graph.
 
 ## Improvements
 
