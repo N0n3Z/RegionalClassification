@@ -101,10 +101,20 @@ check_conversion_path <- function(from, to) {
   ))
 }
 
+# Private cache environment — mutable after namespace lock
+.graph_cache <- new.env(parent = emptyenv())
+
 #' Build conversion graph from CONVERSION_GRAPH_EDGES
 #'
+#' Returns the cached graph after the first call (subsequent calls are O(1)).
+#'
 #' @return list (adjacency list) where each element is a list of edges
+#' @keywords internal
 build_conversion_graph <- function() {
+
+  if (exists("graph", envir = .graph_cache, inherits = FALSE)) {
+    return(get("graph", envir = .graph_cache))
+  }
 
   graph <- list()
 
@@ -132,7 +142,8 @@ build_conversion_graph <- function() {
     graph[[to]][[length(graph[[to]]) + 1]] <- reverse_edge
   }
 
-  return(graph)
+  assign("graph", graph, envir = .graph_cache)
+  graph
 }
 
 #' Find best conversion path using two-pass BFS

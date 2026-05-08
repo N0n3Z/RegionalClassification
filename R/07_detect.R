@@ -65,10 +65,13 @@ detect_classification <- function(codes, master_data) {
 
   best <- rates_dt[1]
   if (best$rate < 0.8) {
-    message(sprintf(
-      "Best match: %s (%.0f%%). Cannot auto-detect with confidence.",
-      best$classification, best$rate * 100
-    ))
+    warn(
+      sprintf("Cannot auto-detect classification with confidence (best match: %s at %.0f%%).",
+              best$classification, best$rate * 100),
+      class      = "rcl_detection_failed",
+      best_match = best$classification,
+      best_rate  = best$rate
+    )
     return(NULL)
   }
 

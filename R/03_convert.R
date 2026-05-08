@@ -73,6 +73,8 @@ convert_codes <- function(codes, from, to, master_data,
 #' @return data.table with code_from, code_to, and metadata
 execute_conversion <- function(codes, from, to, master_data) {
 
+  .validate_master_data(master_data)
+
   input_dt <- data.table(code_from = codes)
 
   # Normalize classification identifiers
@@ -653,4 +655,20 @@ convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
 list_available_conversions <- function() {
   edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, as.data.table))
   edges[, .(from, to, relation, notes)]
+}
+
+.validate_master_data <- function(master_data) {
+  if (!is.list(master_data))
+    abort("master_data must be a list produced by load_master_data() or build_master_table().",
+          class = "rcl_invalid_input")
+  missing <- setdiff(c("communes", "postal", "nis_changes"), names(master_data))
+  if (length(missing) > 0)
+    abort(
+      sprintf("master_data is missing required tables: %s. Run load_master_data() to rebuild.",
+              paste(missing, collapse = ", ")),
+      class = "rcl_data_missing", tables = missing
+    )
+  if (is.null(master_data$communes) || nrow(master_data$communes) == 0L)
+    abort("master_data$communes is empty. Run load_master_data() to rebuild.",
+          class = "rcl_data_missing")
 }
