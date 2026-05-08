@@ -15,10 +15,11 @@
   .find_col <- function(pattern, role) {
     col <- grep(pattern, names(dt), value = TRUE, ignore.case = TRUE)[1]
     if (is.na(col)) {
-      stop(sprintf(
-        "%s: cannot find column for '%s' (pattern: %s). Available columns: %s",
-        label, role, pattern, paste(names(dt), collapse = ", ")
-      ))
+      abort(
+        sprintf("%s: cannot find column for '%s' (pattern: %s). Available columns: %s",
+                label, role, pattern, paste(names(dt), collapse = ", ")),
+        class = "rcl_invalid_input"
+      )
     }
     col
   }
@@ -329,6 +330,7 @@ add_nuts2027_columns <- function(master) {
 #'
 #' @param master_data Output from build_master_table()
 #' @param output_dir  Path to output directory (default: data/processed/)
+#' @return Invisible NULL (called for side effect)
 save_master_tables <- function(master_data, output_dir = get_processed_data_path()) {
 
   if (!dir.exists(output_dir)) {

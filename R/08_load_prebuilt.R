@@ -43,11 +43,12 @@
 load_master_data <- function(dir = .get_prebuilt_dir()) {
 
   if (!dir.exists(dir)) {
-    stop(sprintf(
-      paste0("Pre-built data directory not found: '%s'.\n",
-             "Run rebuild_master_data() once to generate it from the raw source files."),
-      dir
-    ))
+    abort(
+      sprintf(paste0("Pre-built data directory not found: '%s'.\n",
+                     "Run rebuild_master_data() once to generate it from the raw source files."),
+              dir),
+      class = "rcl_data_missing", dir = dir
+    )
   }
 
   result <- vector("list", length(MASTER_FLAT_TABLES))
@@ -102,7 +103,10 @@ rebuild_master_data <- function(raw_dir = get_raw_data_path(),
                                 out_dir = get_processed_data_path()) {
 
   if (!requireNamespace("readxl", quietly = TRUE)) {
-    stop("Package 'readxl' is required to rebuild from raw files. Install it with: install.packages('readxl')")
+    abort(
+      "Package 'readxl' is required to rebuild from raw files. Install it with: install.packages('readxl')",
+      class = "rcl_missing_package"
+    )
   }
 
   message("=== Rebuilding master data from raw files ===")

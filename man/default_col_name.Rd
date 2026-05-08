@@ -9,6 +9,9 @@ default_col_name(classification)
 \arguments{
 \item{classification}{Classification identifier string}
 }
+\value{
+Character scalar: snake_case column name for the classification
+}
 \description{
 Default column name for a given classification
 }

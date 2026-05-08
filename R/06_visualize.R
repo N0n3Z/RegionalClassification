@@ -284,7 +284,11 @@ visualize_hierarchy <- function(classification, master_data,
     return(print_nuts_tree(master_data, max_communes))
   }
 
-  stop(sprintf("Hierarchy visualization not supported for '%s'", classification))
+  abort(
+    sprintf("Hierarchy visualization not supported for '%s'. Use 'NIS_2019', 'NIS_2025', or 'NUTS_2021'.",
+            classification),
+    class = "rcl_invalid_input"
+  )
 }
 
 #' Print NIS tree structure

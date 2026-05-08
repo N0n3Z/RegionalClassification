@@ -33,13 +33,23 @@ fuzzy_match_names <- function(names, target_classification, master_data,
                               max_dist = 0.1, method = "jw",
                               language = "both") {
 
+  if (!requireNamespace("stringdist", quietly = TRUE)) {
+    abort(
+      "Package 'stringdist' is required for fuzzy matching. Install with: install.packages('stringdist')",
+      class = "rcl_missing_package"
+    )
+  }
+
   target <- normalize_classification_id(target_classification)
 
   # Build reference table based on target
   ref <- build_name_reference(target, master_data, language)
 
   if (nrow(ref) == 0) {
-    stop(sprintf("No reference names found for classification '%s'", target))
+    abort(
+      sprintf("No reference names found for classification '%s'", target),
+      class = "rcl_invalid_input", classification = target
+    )
   }
 
   # Perform matching
@@ -130,7 +140,10 @@ build_name_reference <- function(target, md, language = "both") {
                                    ref_language = "nl")]
     }
   } else {
-    stop(sprintf("Fuzzy matching not supported for classification '%s'", target))
+    abort(
+      sprintf("Fuzzy matching not supported for classification '%s'", target),
+      class = "rcl_invalid_input", classification = target
+    )
   }
 
   ref <- rbindlist(ref_list, use.names = TRUE)
@@ -194,14 +207,32 @@ match_single_name <- function(name, ref, max_dist = 0.1, method = "jw") {
 normalize_name <- function(name) {
   n <- tolower(trimws(name))
 
-  # Remove accents
-  n <- iconv(n, from = "UTF-8", to = "ASCII//TRANSLIT")
+  # rawToChar(as.raw(...)) builds UTF-8 byte patterns that work in any locale.
+  # useBytes=TRUE matches byte sequences directly, avoiding encoding mismatch errors.
+  .s <- function(bytes, rep, s) gsub(rawToChar(as.raw(bytes)), rep, s, fixed = TRUE, useBytes = TRUE)
 
-  # Remove common prefixes for arrondissements
-  n <- gsub("^arrondissement\\s+(de\\s+|d'|van\\s+)", "", n)
+  n <- .s(c(0xC3,0xA0),"a",n); n <- .s(c(0xC3,0xA1),"a",n)  # a-grave, a-acute
+  n <- .s(c(0xC3,0xA2),"a",n); n <- .s(c(0xC3,0xA3),"a",n)  # a-circ,  a-tilde
+  n <- .s(c(0xC3,0xA4),"a",n); n <- .s(c(0xC3,0xA5),"a",n)  # a-uml,   a-ring
+  n <- .s(c(0xC3,0xA8),"e",n); n <- .s(c(0xC3,0xA9),"e",n)  # e-grave, e-acute
+  n <- .s(c(0xC3,0xAA),"e",n); n <- .s(c(0xC3,0xAB),"e",n)  # e-circ,  e-uml
+  n <- .s(c(0xC3,0xAC),"i",n); n <- .s(c(0xC3,0xAD),"i",n)  # i-grave, i-acute
+  n <- .s(c(0xC3,0xAE),"i",n); n <- .s(c(0xC3,0xAF),"i",n)  # i-circ,  i-uml
+  n <- .s(c(0xC3,0xB2),"o",n); n <- .s(c(0xC3,0xB3),"o",n)  # o-grave, o-acute
+  n <- .s(c(0xC3,0xB4),"o",n); n <- .s(c(0xC3,0xB5),"o",n)  # o-circ,  o-tilde
+  n <- .s(c(0xC3,0xB6),"o",n)                                # o-uml
+  n <- .s(c(0xC3,0xB9),"u",n); n <- .s(c(0xC3,0xBA),"u",n)  # u-grave, u-acute
+  n <- .s(c(0xC3,0xBB),"u",n); n <- .s(c(0xC3,0xBC),"u",n)  # u-circ,  u-uml
+  n <- .s(c(0xC3,0xA7),"c",n)                                # c-cedilla
+  n <- .s(c(0xC3,0xB1),"n",n)                                # n-tilde
+  n <- .s(c(0xC5,0x93),"oe",n)                               # oe-ligature
+  n <- .s(c(0xC3,0xA6),"ae",n)                               # ae-ligature
 
-  # Remove special characters but keep spaces and hyphens
-  n <- gsub("[^a-z0-9 -]", "", n)
+  # Remove arrondissement prefix (ASCII-safe after accent stripping above)
+  n <- gsub("^arrondissement\\s+(de\\s+|d'|van\\s+)", "", n, useBytes = TRUE)
+
+  # Strip remaining non-ASCII bytes and special characters
+  n <- gsub("[^a-z0-9 -]", "", n, useBytes = TRUE)
 
   # Normalize multiple spaces
   n <- gsub("\\s+", " ", n)
@@ -244,15 +275,26 @@ identify_from_names <- function(names, master_data,
     })
   }
 
-  if (length(all_results) == 0) {
-    warning("No matches found in any classification")
+  combined <- if (length(all_results) > 0)
+    rbindlist(all_results, use.names = TRUE, fill = TRUE)
+  else
+    data.table()
+
+  if (nrow(combined) == 0) {
+    warn("No matches found in any classification.", class = "rcl_unmatched_codes")
     return(data.table())
   }
 
-  combined <- rbindlist(all_results, use.names = TRUE, fill = TRUE)
-
-  # For each input name, find the best match across all classifications
+  # For each input name, pick the best (lowest-distance) match across all classifications
   best <- combined[, .SD[which.min(distance)], by = input_name]
+
+  unmatched <- best[is_confident == FALSE, input_name]
+  if (length(unmatched) > 0) {
+    warn(
+      sprintf("No confident match found for: %s", paste(unmatched, collapse = ", ")),
+      class = "rcl_unmatched_codes"
+    )
+  }
 
   return(best)
 }

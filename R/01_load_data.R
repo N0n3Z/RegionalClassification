@@ -18,7 +18,8 @@ load_all_raw_data <- function(data_dir = get_raw_data_path(),
     filepath <- file.path(data_dir, fm$filename)
 
     if (!file.exists(filepath)) {
-      warning(sprintf("File not found: %s (skipping %s)", filepath, name))
+      warn(sprintf("File not found: %s (skipping %s)", filepath, name),
+           class = "rcl_data_missing")
       next
     }
 
@@ -59,7 +60,8 @@ load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
     "csv" = {
       fread(filepath)
     },
-    stop(sprintf("Unsupported file extension: %s", ext))
+    abort(sprintf("Unsupported file extension: %s", ext),
+          class = "rcl_invalid_input")
   )
 
   # Apply filter if specified
@@ -70,7 +72,8 @@ load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
       dt <- dt[get(col) == val]
       message(sprintf("  -> Filtered on %s == %s: %d rows remaining", col, val, nrow(dt)))
     } else {
-      warning(sprintf("Filter column '%s' not found in data", col))
+      warn(sprintf("Filter column '%s' not found in data", col),
+           class = "rcl_invalid_input")
     }
   }
 
@@ -272,18 +275,20 @@ parse_nis2025_nuts2027 <- function(conv_dt,
   dt <- copy(conv_dt)
 
   if (!col_nis %in% names(dt)) {
-    stop(sprintf(
-      "Column '%s' not found in CONVERSION_NIS2025_NUTS2027. Available: %s\n%s",
-      col_nis, paste(names(dt), collapse = ", "),
-      "Update FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis in 00_config.R."
-    ))
+    abort(
+      sprintf("Column '%s' not found in CONVERSION_NIS2025_NUTS2027. Available: %s\n%s",
+              col_nis, paste(names(dt), collapse = ", "),
+              "Update FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis in 00_config.R."),
+      class = "rcl_invalid_input"
+    )
   }
   if (!col_nuts3 %in% names(dt)) {
-    stop(sprintf(
-      "Column '%s' not found in CONVERSION_NIS2025_NUTS2027. Available: %s\n%s",
-      col_nuts3, paste(names(dt), collapse = ", "),
-      "Update FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nuts3 in 00_config.R."
-    ))
+    abort(
+      sprintf("Column '%s' not found in CONVERSION_NIS2025_NUTS2027. Available: %s\n%s",
+              col_nuts3, paste(names(dt), collapse = ", "),
+              "Update FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nuts3 in 00_config.R."),
+      class = "rcl_invalid_input"
+    )
   }
 
   result <- dt[, .(cd_commune_2025 = as.integer(get(col_nis)),
@@ -309,12 +314,13 @@ parse_refnis_change_before2019 <- function(
 
   for (col in c(col_old, col_new)) {
     if (!col %in% names(dt)) {
-      stop(sprintf(
-        "Column '%s' not found in REFNIS_CHANGE_BEFORE2019. Available: %s\n%s",
-        col, paste(names(dt), collapse = ", "),
-        sprintf("Update FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$%s in 00_config.R.",
-                ifelse(col == col_old, "col_nis_old", "col_nis_new"))
-      ))
+      abort(
+        sprintf("Column '%s' not found in REFNIS_CHANGE_BEFORE2019. Available: %s\n%s",
+                col, paste(names(dt), collapse = ", "),
+                sprintf("Update FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$%s in 00_config.R.",
+                        ifelse(col == col_old, "col_nis_old", "col_nis_new"))),
+        class = "rcl_invalid_input"
+      )
     }
   }
 
@@ -356,10 +362,11 @@ parse_nis_changes <- function(change_dt) {
 
   missing_req <- setdiff(unname(required), names(dt))
   if (length(missing_req) > 0) {
-    stop(sprintf(
-      "REFNIS_CHANGE_2025: required column(s) not found: %s\nAvailable: %s",
-      paste(missing_req, collapse = ", "), paste(names(change_dt), collapse = ", ")
-    ))
+    abort(
+      sprintf("REFNIS_CHANGE_2025: required column(s) not found: %s\nAvailable: %s",
+              paste(missing_req, collapse = ", "), paste(names(change_dt), collapse = ", ")),
+      class = "rcl_invalid_input"
+    )
   }
 
   dt[, cd_refnis_old := as.integer(cd_refnis_old)]

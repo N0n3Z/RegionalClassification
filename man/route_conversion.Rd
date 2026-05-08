@@ -19,5 +19,6 @@ route_conversion(input_dt, from, to, md)
 data.table with code_from, code_to
 }
 \description{
-Route conversion to the appropriate handler
+Looks up the "FROM__TO" key in .ROUTE_TABLE. For POSTAL multi-hop and
+NIS_COMMUNE_2025->NUTS2027 multi-hop, falls back to chained helpers.
 }

@@ -11,6 +11,9 @@ save_master_tables(master_data, output_dir = get_processed_data_path())
 
 \item{output_dir}{Path to output directory (default: data/processed/)}
 }
+\value{
+Invisible NULL (called for side effect)
+}
 \description{
 Saves every flat data.table in master_data as an RDS file, preserving all
 R types exactly.  Call this after build_master_table() to update the
