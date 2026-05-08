@@ -315,7 +315,7 @@ print_nis_tree <- function(communes, max_communes = 3) {
       prov_label <- if (!is.na(prov$tx_prov_fr)) prov$tx_prov_fr else "(pas de province)"
       cat(sprintf("%sProvince: %s (%s)\n", prefix_p, prov_label, prov$cd_province))
 
-      arrs <- unique(communes[cd_province == prov$cd_province,
+      arrs <- unique(communes[cd_province == prov$cd_province & cd_region == reg$cd_region,
                                .(cd_arr, tx_arr_fr)])
       arrs <- arrs[!is.na(cd_arr)]
 

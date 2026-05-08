@@ -170,3 +170,18 @@ test_that("split_ambiguous splits Verviers correctly with additive weights", {
   expect_lt(abs(r[cd_nuts3_2021 == "BE335", total_wage] - 857e6), 1e3)
   expect_lt(abs(r[cd_nuts3_2021 == "BE336", total_wage] - 143e6), 1e3)
 })
+
+# ── Test 14: NIS_REGION conversion correctness (regression for province mapping bug) ─
+test_that("NIS_COMMUNE_2019 -> NIS_REGION_2019 assigns regions correctly", {
+  # Antwerp was previously mis-assigned to region 4000 (Brussels) due to a
+  # fcase() error in parse_refnis_hierarchy() that mapped province 10000 to 4000.
+  codes  <- c(11002L, 44021L, 21001L, 62063L, 23002L, 25005L)
+  result <- convert_codes(codes, "NIS_COMMUNE_2019", "NIS_REGION_2019", master_data)
+
+  expect_equal(result[code_from == 11002L]$code_to, 2000L)  # Antwerp -> Flemish
+  expect_equal(result[code_from == 44021L]$code_to, 2000L)  # Gent -> Flemish
+  expect_equal(result[code_from == 21001L]$code_to, 4000L)  # Brussels -> Brussels
+  expect_equal(result[code_from == 62063L]$code_to, 3000L)  # Liege -> Walloon
+  expect_equal(result[code_from == 23002L]$code_to, 2000L)  # Flemish Brabant -> Flemish
+  expect_equal(result[code_from == 25005L]$code_to, 3000L)  # Walloon Brabant -> Walloon
+})

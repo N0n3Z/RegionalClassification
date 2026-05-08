@@ -249,17 +249,25 @@ build_nis_commune_table <- function(nis_parsed, version) {
                                  tx_region_nl = tx_descr_nl)]
   communes <- merge(communes, reg, by = "cd_region", all.x = TRUE)
 
-  # Handle Brussels: arrondissement 21000 has no province 20000
-  # Brussels communes should have region = 4000
-  communes[cd_arr == 21000L & is.na(cd_region), cd_region := 4000L]
-  if (nrow(communes[cd_arr == 21000L & is.na(tx_region_fr)]) > 0) {
-    bxl_reg <- nis_parsed$regions[cd_refnis == 4000L]
-    if (nrow(bxl_reg) > 0) {
-      communes[cd_arr == 21000L & is.na(tx_region_fr),
-               `:=`(tx_region_fr = bxl_reg$tx_descr_fr,
-                    tx_region_nl = bxl_reg$tx_descr_nl)]
-    }
-  }
+  # Brabant (province 20000) spans all three regions.
+  # Province→region is NA for 20000; resolve here by arrondissement.
+  bxl_reg <- nis_parsed$regions[cd_refnis == 4000L]
+  fl_reg  <- nis_parsed$regions[cd_refnis == 2000L]
+  wa_reg  <- nis_parsed$regions[cd_refnis == 3000L]
+
+  communes[cd_arr == 21000L & is.na(cd_region), cd_region := 4000L]  # Brussels
+  communes[cd_arr %in% c(23000L, 24000L) & is.na(cd_region), cd_region := 2000L]  # Flemish Brabant
+  communes[cd_arr == 25000L & is.na(cd_region), cd_region := 3000L]  # Walloon Brabant
+
+  if (nrow(bxl_reg) > 0)
+    communes[cd_region == 4000L & is.na(tx_region_fr),
+             `:=`(tx_region_fr = bxl_reg$tx_descr_fr, tx_region_nl = bxl_reg$tx_descr_nl)]
+  if (nrow(fl_reg) > 0)
+    communes[cd_region == 2000L & is.na(tx_region_fr),
+             `:=`(tx_region_fr = fl_reg$tx_descr_fr, tx_region_nl = fl_reg$tx_descr_nl)]
+  if (nrow(wa_reg) > 0)
+    communes[cd_region == 3000L & is.na(tx_region_fr),
+             `:=`(tx_region_fr = wa_reg$tx_descr_fr, tx_region_nl = wa_reg$tx_descr_nl)]
 
   # Add 2-digit arrondissement code (for internal classification link)
   communes[, cd_arr_2digit := cd_arr %/% 1000L]

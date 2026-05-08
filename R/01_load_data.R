@@ -163,9 +163,9 @@ parse_refnis_hierarchy <- function(refnis_dt,
   # Add region to provinces
   provs <- result$provinces
   provs[, cd_region := fcase(
-    cd_refnis %/% 10000L == 1L, 4000L,  # Brussels (province 10000 doesn't exist)
-    cd_refnis %/% 10000L == 2L, 2000L,  # Flanders: 20000, 30000, 40000, 70000
-    cd_refnis %/% 10000L == 3L, 2000L,
+    cd_refnis %/% 10000L == 1L, 2000L,  # Antwerp (10000) -> Flemish Region
+    cd_refnis %/% 10000L == 2L, NA_integer_,  # Brabant (20000) -> 3 regions; resolved by arrondissement
+    cd_refnis %/% 10000L == 3L, 2000L,  # Flanders: 30000, 40000, 70000
     cd_refnis %/% 10000L == 4L, 2000L,
     cd_refnis %/% 10000L == 7L, 2000L,
     cd_refnis %/% 10000L == 5L, 3000L,  # Wallonia: 50000, 60000, 80000, 90000
