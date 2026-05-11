@@ -102,3 +102,41 @@ test_that("get_crosswalk errors for invalid classification", {
     class = "rcl_invalid_classification"
   )
 })
+
+# ── get_crosswalk with weights ────────────────────────────────────────────────
+
+test_that("get_crosswalk weights=TRUE adds weight column with value 1 for simple pair", {
+  result <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data, weights = TRUE)
+  expect_true("weight" %in% names(result))
+  expect_true(all(result$weight == 1, na.rm = TRUE))
+})
+
+test_that("get_crosswalk weights=TRUE uses equal weights for ambiguous pair", {
+  clear_split_weights()
+  result <- get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data, weights = TRUE)
+  expect_true("weight" %in% names(result))
+  verviers <- result[NIS_ARRONDISSEMENT_2019 == "63000"]
+  expect_equal(nrow(verviers), 2L)
+  expect_equal(sum(verviers$weight), 1, tolerance = 1e-9)
+  expect_equal(verviers$weight[1], 0.5, tolerance = 1e-9)
+})
+
+test_that("get_crosswalk weights=TRUE uses registered weights when available", {
+  clear_split_weights()
+  register_split_weights(
+    "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+    data.table(code_from = c(63000L, 63000L),
+               code_to   = c("BE335", "BE336"),
+               weight    = c(0.857, 0.143))
+  )
+  result <- get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data, weights = TRUE)
+  verviers <- result[NIS_ARRONDISSEMENT_2019 == "63000"]
+  expect_equal(verviers[NUTS3_2021 == "BE335", weight], 0.857, tolerance = 1e-9)
+  expect_equal(verviers[NUTS3_2021 == "BE336", weight], 0.143, tolerance = 1e-9)
+  clear_split_weights()
+})
+
+test_that("get_crosswalk weights=FALSE produces no weight column", {
+  result <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data, weights = FALSE)
+  expect_false("weight" %in% names(result))
+})

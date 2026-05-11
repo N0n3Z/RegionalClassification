@@ -154,16 +154,24 @@ get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) 
 #' @param from Source classification identifier (see [classification_reference]).
 #' @param to Target classification identifier.
 #' @param master_data Output from [load_master_data()].
-#' @return A `data.table` with two columns named after `from` and `to`
-#'   respectively.
+#' @param weights Logical (default `FALSE`). When `TRUE`, a `weight` column is
+#'   added. Unambiguous codes receive `weight = 1`. Ambiguous (1:N) codes use
+#'   population weights from the session registry (see
+#'   [register_split_weights()]) when available, otherwise equal weights.
+#' @return A `data.table` with columns named after `from` and `to`. When
+#'   `weights = TRUE`, an additional numeric `weight` column is included.
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
 #'   get_crosswalk("POSTAL", "NIS_COMMUNE_2019", master_data)
+#'
+#'   # With weights for the ambiguous Verviers split
+#'   get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data,
+#'                 weights = TRUE)
 #' }
 #' @export
-get_crosswalk <- function(from, to, master_data) {
+get_crosswalk <- function(from, to, master_data, weights = FALSE) {
   from_norm <- normalize_classification_id(from)
   to_norm   <- normalize_classification_id(to)
   .validate_master_data(master_data)
@@ -174,6 +182,32 @@ get_crosswalk <- function(from, to, master_data) {
                   allow_ambiguous = TRUE)
   )
 
+  if (weights) {
+    result[, weight := 1.0]
+
+    n_per  <- result[!is.na(code_to), .N, by = code_from]
+    ambig  <- n_per[N > 1L, code_from]
+
+    if (length(ambig) > 0L) {
+      # Equal weights as baseline for ambiguous codes
+      result[code_from %in% ambig, weight := 1 / .N, by = code_from]
+
+      # Override with registered population weights when available
+      reg <- get_split_weights(from_norm, to_norm, variable = "population")
+      if (!is.null(reg)) {
+        wdt <- reg[, .(code_from = as.character(code_from),
+                       code_to   = as.character(code_to),
+                       w         = as.numeric(weight))]
+        result[, code_from := as.character(code_from)]
+        result[, code_to   := as.character(code_to)]
+        result <- merge(result, wdt, by = c("code_from", "code_to"), all.x = TRUE)
+        result[!is.na(w), weight := w]
+        result[, w := NULL]
+      }
+    }
+  }
+
   setnames(result, c("code_from", "code_to"), c(from_norm, to_norm))
+  if (weights) setcolorder(result, c(from_norm, to_norm, "weight"))
   result
 }

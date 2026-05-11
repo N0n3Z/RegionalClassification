@@ -286,17 +286,66 @@ diagnose_classification <- function(
       data.table(code = dt$cd_arr_internal,
                  name_fr = NA_character_, name_nl = NA_character_)
     },
+    NIS_ARRONDISSEMENT_BEFORE_2019 = {
+      dt <- unique(md$communes[nis_version == "BEFORE_2019" & !is.na(cd_arr),
+                                .(cd_arr, tx_arr_fr, tx_arr_nl)])
+      data.table(code = dt$cd_arr,
+                 name_fr = dt$tx_arr_fr, name_nl = dt$tx_arr_nl)
+    },
+    NIS_PROVINCE_BEFORE_2019 = {
+      dt <- unique(md$communes[nis_version == "BEFORE_2019" & !is.na(cd_province),
+                                .(cd_province, tx_prov_fr, tx_prov_nl)])
+      data.table(code = dt$cd_province,
+                 name_fr = dt$tx_prov_fr, name_nl = dt$tx_prov_nl)
+    },
+    NIS_REGION_BEFORE_2019 = {
+      dt <- unique(md$communes[nis_version == "BEFORE_2019" & !is.na(cd_region),
+                                .(cd_region, tx_region_fr, tx_region_nl)])
+      data.table(code = dt$cd_region,
+                 name_fr = dt$tx_region_fr, name_nl = dt$tx_region_nl)
+    },
+    NUTS_LAU_2021 = {
+      dt <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts_lau),
+                                .(cd_nuts_lau)])
+      data.table(code = dt$cd_nuts_lau,
+                 name_fr = NA_character_, name_nl = NA_character_)
+    },
+    NUTS2_2021 = {
+      dt <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts2),
+                                .(cd_nuts2)])
+      data.table(code = dt$cd_nuts2,
+                 name_fr = NA_character_, name_nl = NA_character_)
+    },
+    NUTS1_2021 = {
+      dt <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts1),
+                                .(cd_nuts1)])
+      data.table(code = dt$cd_nuts1,
+                 name_fr = NA_character_, name_nl = NA_character_)
+    },
+    NUTS0 = {
+      dt <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts0),
+                                .(cd_nuts0)])
+      data.table(code = dt$cd_nuts0,
+                 name_fr = NA_character_, name_nl = NA_character_)
+    },
+    NUTS2_2027 = {
+      dt <- unique(md$communes[nis_version == "2025" & !is.na(cd_nuts2_2027),
+                                .(cd_nuts2_2027)])
+      data.table(code = dt$cd_nuts2_2027,
+                 name_fr = NA_character_, name_nl = NA_character_)
+    },
+    NUTS1_2027 = {
+      dt <- unique(md$communes[nis_version == "2025" & !is.na(cd_nuts1_2027),
+                                .(cd_nuts1_2027)])
+      data.table(code = dt$cd_nuts1_2027,
+                 name_fr = NA_character_, name_nl = NA_character_)
+    },
     NULL  # unsupported
   )
 }
 
 .supported_classifications <- function() {
-  c("NIS_COMMUNE_2019", "NIS_COMMUNE_2025", "NIS_COMMUNE_BEFORE_2019",
-    "NIS_ARRONDISSEMENT_2019", "NIS_ARRONDISSEMENT_2025",
-    "NIS_PROVINCE_2019", "NIS_PROVINCE_2025",
-    "NIS_REGION_2019", "NIS_REGION_2025",
-    "NUTS3_2021", "NUTS3_2027",
-    "POSTAL", "INTERNAL_ARRONDISSEMENT")
+  sort(VALID_CLASSIFICATIONS)
 }
 
 .annotate_codes <- function(codes, ref) {

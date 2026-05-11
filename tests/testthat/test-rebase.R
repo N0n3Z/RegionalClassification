@@ -313,3 +313,64 @@ test_that("split_weights_template errors for invalid classification", {
     class = "rcl_invalid_classification"
   )
 })
+
+# ── Tests value_type = "ratio" ─────────────────────────────────────────────────
+
+# ── Test R14: 1:N split with ratio — values replicated unchanged ──────────────
+test_that("rebase_series replicates ratio values unchanged for 1:N splits", {
+  data <- data.table(year = 2022L, arr = 63000L, rate = 0.42)
+  result <- rebase_series(
+    data,
+    period_col  = "year",
+    code_col    = "arr",
+    value_cols  = "rate",
+    version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
+    to          = "NUTS3_2021",
+    master_data = master_data,
+    value_type  = "ratio"
+  )
+  # Both targets receive the original rate unchanged
+  expect_equal(result[arr == "BE335", rate], 0.42)
+  expect_equal(result[arr == "BE336", rate], 0.42)
+})
+
+# ── Test R15: N:1 merge with ratio and fun = mean ─────────────────────────────
+test_that("rebase_series averages ratio values for N:1 merges with fun=mean", {
+  data <- data.table(
+    year    = c(2022L, 2022L),
+    commune = c(11002L, 11007L),
+    rate    = c(0.30, 0.50)
+  )
+  result <- suppressWarnings(
+    rebase_series(
+      data,
+      period_col  = "year",
+      code_col    = "commune",
+      value_cols  = "rate",
+      version_map = list("NIS_COMMUNE_2019" = 2022L),
+      to          = "NIS_COMMUNE_2025",
+      master_data = master_data,
+      fun         = mean,
+      value_type  = "ratio"
+    )
+  )
+  expect_equal(result[commune == "11002", rate], mean(c(0.30, 0.50)))
+})
+
+# ── Test R16: value_type="ratio" with fun=sum emits a warning ─────────────────
+test_that("rebase_series warns when value_type='ratio' combined with fun=sum", {
+  data <- data.table(year = 2022L, commune = 11002L, rate = 0.5)
+  expect_warning(
+    rebase_series(
+      data,
+      period_col  = "year",
+      code_col    = "commune",
+      value_cols  = "rate",
+      version_map = list("NIS_COMMUNE_2019" = 2022L),
+      to          = "NIS_COMMUNE_2025",
+      master_data = master_data,
+      value_type  = "ratio"
+    ),
+    class = "rcl_invalid_input"
+  )
+})

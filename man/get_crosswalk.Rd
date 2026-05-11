@@ -4,7 +4,7 @@
 \alias{get_crosswalk}
 \title{Build a full correspondence table between two classifications}
 \usage{
-get_crosswalk(from, to, master_data)
+get_crosswalk(from, to, master_data, weights = FALSE)
 }
 \arguments{
 \item{from}{Source classification identifier (see [classification_reference]).}
@@ -12,10 +12,15 @@ get_crosswalk(from, to, master_data)
 \item{to}{Target classification identifier.}
 
 \item{master_data}{Output from [load_master_data()].}
+
+\item{weights}{Logical (default `FALSE`). When `TRUE`, a `weight` column is
+added. Unambiguous codes receive `weight = 1`. Ambiguous (1:N) codes use
+population weights from the session registry (see
+[register_split_weights()]) when available, otherwise equal weights.}
 }
 \value{
-A `data.table` with two columns named after `from` and `to`
-  respectively.
+A `data.table` with columns named after `from` and `to`. When
+  `weights = TRUE`, an additional numeric `weight` column is included.
 }
 \description{
 Returns every (from, to) pair that exists in the reference data. For simple
@@ -27,5 +32,9 @@ ambiguous (M:N) conversions a source code may appear in multiple rows.
   master_data <- load_master_data()
   get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
   get_crosswalk("POSTAL", "NIS_COMMUNE_2019", master_data)
+
+  # With weights for the ambiguous Verviers split
+  get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data,
+                weights = TRUE)
 }
 }
