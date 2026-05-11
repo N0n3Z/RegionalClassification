@@ -296,6 +296,89 @@ clear_split_weights <- function() {
 }
 
 
+#' Build a split weights template for an ambiguous conversion pair
+#'
+#' Returns a `data.table(code_from, code_to, weight)` pre-filled with equal
+#' weights for every ambiguous (1:N) code in the `from -> to` conversion.
+#' Edit the `weight` column and pass the result to [register_split_weights()]
+#' or directly to the `split` argument of [rebase_series()].
+#'
+#' Only codes that actually produce multiple target codes appear in the template;
+#' unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
+#'
+#' @param from Source classification identifier (see [classification_reference]).
+#' @param to   Target classification identifier.
+#' @param master_data Output from [load_master_data()].
+#' @return A `data.table` with columns `code_from` (character), `code_to`
+#'   (character), and `weight` (numeric, equal weights summing to 1 per
+#'   `code_from`). Returns an empty table (with a message) when no ambiguous
+#'   codes exist for the pair.
+#'
+#' @examples
+#' \donttest{
+#'   master_data <- load_master_data()
+#'
+#'   # 1. Inspect the template — equal weights are the starting point
+#'   tpl <- split_weights_template(
+#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
+#'   )
+#'   #    code_from code_to weight
+#'   # 1:     63000   BE335    0.5
+#'   # 2:     63000   BE336    0.5
+#'
+#'   # 2. Replace equal weights with population-based values
+#'   #    (Verviers: ~85.7 % francophone / ~14.3 % germanophone)
+#'   tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
+#'   tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
+#'
+#'   # 3a. Register for repeated use
+#'   register_split_weights(
+#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
+#'   )
+#'
+#'   # 3b. Or pass directly to rebase_series / split_ambiguous
+#'   rebase_series(
+#'     data       = my_data,
+#'     period_col = "year",
+#'     code_col   = "arrondissement",
+#'     value_cols = "emploi",
+#'     version_map = list("NIS_ARRONDISSEMENT_2019" = 2010:2024),
+#'     to          = "NUTS3_2021",
+#'     master_data = master_data,
+#'     split       = tpl
+#'   )
+#' }
+#' @seealso [register_split_weights()], [rebase_series()], [split_ambiguous()]
+#' @export
+split_weights_template <- function(from, to, master_data) {
+  from_norm <- normalize_classification_id(from)
+  to_norm   <- normalize_classification_id(to)
+  .validate_master_data(master_data)
+
+  all_codes  <- .list_codes_for(from_norm, master_data)
+  mapping_dt <- suppressWarnings(
+    convert_codes(all_codes, from_norm, to_norm, master_data, allow_ambiguous = TRUE)
+  )
+  mapping_dt[, code_from := as.character(code_from)]
+  mapping_dt[, code_to   := as.character(code_to)]
+
+  n_per_from  <- mapping_dt[!is.na(code_to), .N, by = code_from]
+  ambig_codes <- n_per_from[N > 1L, code_from]
+
+  if (length(ambig_codes) == 0L) {
+    message(sprintf("No ambiguous (1:N) codes for %s -> %s: no template needed.",
+                    from_norm, to_norm))
+    return(invisible(
+      data.table(code_from = character(0L), code_to = character(0L), weight = numeric(0L))
+    ))
+  }
+
+  template <- mapping_dt[code_from %in% ambig_codes & !is.na(code_to)]
+  template[, weight := 1 / .N, by = code_from]
+  template[, .(code_from, code_to, weight)]
+}
+
+
 # ==============================================================================
 # Internal helpers
 # ==============================================================================

@@ -257,3 +257,59 @@ test_that("rebase_series output contains exactly period, code, value columns", {
   )
   expect_equal(sort(names(result)), sort(c("year", "commune", "population")))
 })
+
+# ── Tests for split_weights_template() ────────────────────────────────────────
+
+# ── Test T1: template has correct structure for ambiguous pair ────────────────
+test_that("split_weights_template returns correct structure for ambiguous pair", {
+  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  expect_true(is.data.table(tpl))
+  expect_equal(sort(names(tpl)), sort(c("code_from", "code_to", "weight")))
+  expect_true(is.character(tpl$code_from))
+  expect_true(is.character(tpl$code_to))
+  expect_true(is.numeric(tpl$weight))
+})
+
+# ── Test T2: template only contains ambiguous (1:N) codes ────────────────────
+test_that("split_weights_template only includes codes that split into multiple targets", {
+  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  # All codes in the template must appear more than once (each maps to ≥2 targets)
+  counts <- tpl[, .N, by = code_from]
+  expect_true(all(counts$N >= 2L))
+})
+
+# ── Test T3: equal weights initialised and sum to 1 per source code ───────────
+test_that("split_weights_template initialises equal weights summing to 1", {
+  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  weight_sums <- tpl[, .(total = sum(weight)), by = code_from]
+  expect_true(all(abs(weight_sums$total - 1) < 1e-9))
+})
+
+# ── Test T4: Verviers (63000) is present with 2 targets ──────────────────────
+test_that("split_weights_template includes Verviers arrondissement with two NUTS3 codes", {
+  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  verviers <- tpl[code_from == "63000"]
+  expect_equal(nrow(verviers), 2L)
+  expect_true("BE335" %in% verviers$code_to)
+  expect_true("BE336" %in% verviers$code_to)
+  expect_equal(sum(verviers$weight), 1, tolerance = 1e-9)
+})
+
+# ── Test T5: non-ambiguous pair returns empty table with message ──────────────
+test_that("split_weights_template returns empty table when no ambiguous codes exist", {
+  expect_message(
+    tpl <- split_weights_template("NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data),
+    regexp = "no template needed"
+  )
+  expect_true(is.data.table(tpl))
+  expect_equal(nrow(tpl), 0L)
+  expect_equal(sort(names(tpl)), sort(c("code_from", "code_to", "weight")))
+})
+
+# ── Test T6: errors for invalid classification ────────────────────────────────
+test_that("split_weights_template errors for invalid classification", {
+  expect_error(
+    split_weights_template("MAUVAISE_CLASSIF", "NUTS3_2021", master_data),
+    class = "rcl_invalid_classification"
+  )
+})

@@ -93,6 +93,53 @@
 #'     to          = "NIS_COMMUNE_2025",
 #'     master_data = master_data
 #'   )
+#'
+#'   # ── Custom weights for a 1:N split ────────────────────────────────────────
+#'   # Arrondissement Verviers (63000) splits into two NUTS3 regions.
+#'   # Use split_weights_template() to get the right structure, then fill in
+#'   # your own weights before passing them to rebase_series().
+#'
+#'   arr_data <- data.table::data.table(
+#'     year  = c(2020L, 2021L),
+#'     arr   = c(63000L, 63000L),
+#'     emploi = c(120000, 122000)
+#'   )
+#'
+#'   # Step 1: get the template (equal weights, correct structure)
+#'   tpl <- split_weights_template(
+#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
+#'   )
+#'
+#'   # Step 2: replace with population-based weights
+#'   tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
+#'   tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
+#'
+#'   # Step 3a: pass weights directly (one-off use)
+#'   rebase_series(
+#'     arr_data,
+#'     period_col  = "year",
+#'     code_col    = "arr",
+#'     value_cols  = "emploi",
+#'     version_map = list("NIS_ARRONDISSEMENT_2019" = 2020:2021),
+#'     to          = "NUTS3_2021",
+#'     master_data = master_data,
+#'     split       = tpl
+#'   )
+#'
+#'   # Step 3b: register for repeated use across the session
+#'   register_split_weights(
+#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
+#'   )
+#'   rebase_series(
+#'     arr_data,
+#'     period_col  = "year",
+#'     code_col    = "arr",
+#'     value_cols  = "emploi",
+#'     version_map = list("NIS_ARRONDISSEMENT_2019" = 2020:2021),
+#'     to          = "NUTS3_2021",
+#'     master_data = master_data
+#'     # split = "population" is the default
+#'   )
 #' }
 #' @export
 rebase_series <- function(data, period_col, code_col, value_cols,
