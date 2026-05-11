@@ -1,5 +1,14 @@
 library(data.table)
 
+# Helper: arrondissement data where Verviers (63000) splits into BE335 + BE336
+make_arr_panel <- function() {
+  data.table(
+    year = c(2022L, 2022L),
+    arr  = c(63000L, 11000L),
+    pop  = c(100000, 50000)
+  )
+}
+
 # Helper: synthetic panel spanning 2022-2025 with communes 11002, 11007, 21004.
 # In 2025, communes 11002 and 11007 merged into 11002 (NIS 2025).
 make_panel <- function() {
@@ -144,7 +153,97 @@ test_that("rebase_series errors when column not found in data", {
   )
 })
 
-# ── Test R9: output column order and types ────────────────────────────────────
+# ── Test R9: split = NULL replicates values and emits rcl_ambiguous_split ─────
+test_that("rebase_series with split=NULL replicates split values and warns", {
+  expect_warning(
+    result <- rebase_series(
+      make_arr_panel(),
+      period_col  = "year",
+      code_col    = "arr",
+      value_cols  = "pop",
+      version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
+      to          = "NUTS3_2021",
+      master_data = master_data,
+      split       = NULL
+    ),
+    class = "rcl_ambiguous_split"
+  )
+  # Both targets receive the full original value (replicated)
+  expect_equal(result[arr == "BE335", pop], 100000)
+  expect_equal(result[arr == "BE336", pop], 100000)
+})
+
+# ── Test R10: split = "population" uses equal weights when none registered ────
+test_that("rebase_series split='population' falls back to equal weights with warning", {
+  clear_split_weights()
+  expect_warning(
+    result <- rebase_series(
+      make_arr_panel(),
+      period_col  = "year",
+      code_col    = "arr",
+      value_cols  = "pop",
+      version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
+      to          = "NUTS3_2021",
+      master_data = master_data,
+      split       = "population"
+    ),
+    class = "rcl_unmatched_codes"
+  )
+  # Equal split: 100000 / 2 = 50000 each
+  expect_equal(result[arr == "BE335", pop], 50000)
+  expect_equal(result[arr == "BE336", pop], 50000)
+})
+
+# ── Test R11: split with registered population weights ────────────────────────
+test_that("rebase_series uses registered population weights for splits", {
+  clear_split_weights()
+  register_split_weights(
+    from       = "NIS_ARRONDISSEMENT_2019",
+    to         = "NUTS3_2021",
+    weights_dt = data.table(
+      code_from = c(63000L, 63000L),
+      code_to   = c("BE335", "BE336"),
+      weight    = c(0.857, 0.143)
+    ),
+    variable = "population"
+  )
+  result <- rebase_series(
+    make_arr_panel(),
+    period_col  = "year",
+    code_col    = "arr",
+    value_cols  = "pop",
+    version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
+    to          = "NUTS3_2021",
+    master_data = master_data,
+    split       = "population"
+  )
+  expect_equal(result[arr == "BE335", pop], 100000 * 0.857)
+  expect_equal(result[arr == "BE336", pop], 100000 * 0.143)
+  clear_split_weights()
+})
+
+# ── Test R12: split with explicit weight data.table ───────────────────────────
+test_that("rebase_series accepts explicit weight data.table for splits", {
+  w <- data.table(
+    code_from = c(63000L, 63000L),
+    code_to   = c("BE335", "BE336"),
+    weight    = c(0.7, 0.3)
+  )
+  result <- rebase_series(
+    make_arr_panel(),
+    period_col  = "year",
+    code_col    = "arr",
+    value_cols  = "pop",
+    version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
+    to          = "NUTS3_2021",
+    master_data = master_data,
+    split       = w
+  )
+  expect_equal(result[arr == "BE335", pop], 70000)
+  expect_equal(result[arr == "BE336", pop], 30000)
+})
+
+# ── Test R13: output column order and types ───────────────────────────────────
 test_that("rebase_series output contains exactly period, code, value columns", {
   result <- rebase_series(
     make_panel(),
