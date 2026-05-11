@@ -11,7 +11,7 @@ Description: Tools to convert Belgian geographic codes between classification
     diagnostics.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: false
+LazyData: true
 URL: https://github.com/n0n3z/regionalclassification
 BugReports: https://github.com/n0n3z/regionalclassification/issues
 Imports:

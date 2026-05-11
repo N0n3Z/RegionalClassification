@@ -16,7 +16,7 @@ ggplot object if ggplot2 available, otherwise text matrix
 Visualize the conversion feasibility matrix as a heatmap
 }
 \examples{
-\donttest{
+\dontrun{
   visualize_conversion_matrix()
   visualize_conversion_matrix(output_file = "conversion_matrix.png")
 }

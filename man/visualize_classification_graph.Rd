@@ -26,14 +26,9 @@ their versions, and the relationships between them.
 Green edges = simple (1:1 or N:1), red edges = ambiguous (M:N or 1:N).
 }
 \examples{
-\donttest{
-  # Full graph
+\dontrun{
   visualize_classification_graph()
-
-  # Highlight paths from NIS communes
   visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
-
-  # Save to file
   visualize_classification_graph(output_file = "classification_graph.html")
 }
 }

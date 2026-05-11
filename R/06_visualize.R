@@ -14,14 +14,9 @@
 #' @param output_file Optional: save to HTML file
 #' @return visNetwork object (if visNetwork is available), otherwise a text summary
 #' @examples
-#' \donttest{
-#'   # Full graph
+#' \dontrun{
 #'   visualize_classification_graph()
-#'
-#'   # Highlight paths from NIS communes
 #'   visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
-#'
-#'   # Save to file
 #'   visualize_classification_graph(output_file = "classification_graph.html")
 #' }
 #' @export
@@ -208,7 +203,7 @@ print_text_graph <- function() {
 #' @param output_file Optional: save plot to file
 #' @return ggplot object if ggplot2 available, otherwise text matrix
 #' @examples
-#' \donttest{
+#' \dontrun{
 #'   visualize_conversion_matrix()
 #'   visualize_conversion_matrix(output_file = "conversion_matrix.png")
 #' }

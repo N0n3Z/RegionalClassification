@@ -1,3 +1,4 @@
+^\.github$
 ^main\.R$
 ^data/raw
 ^data/processed
