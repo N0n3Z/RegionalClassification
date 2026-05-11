@@ -286,6 +286,15 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS1_2027")
 )
 
+# --- Valid classification identifiers ---
+# Derived from CONVERSION_GRAPH_EDGES: every 'from'/'to' node that appears in
+# at least one conversion edge is a valid classification identifier.
+# normalize_classification_id() enforces membership in this set.
+VALID_CLASSIFICATIONS <- unique(c(
+  vapply(CONVERSION_GRAPH_EDGES, `[[`, character(1L), "from"),
+  vapply(CONVERSION_GRAPH_EDGES, `[[`, character(1L), "to")
+))
+
 # --- Belgian NIS Administrative Code Constants ---
 # These structural codes are defined by Belgian law / Statbel and do not change
 # between NIS versions (regions and provinces predate the 2019/2025 commune fusions).

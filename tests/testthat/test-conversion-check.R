@@ -22,11 +22,12 @@ test_that("check_conversion_path returns simple=TRUE for same classification", {
   expect_equal(r$relations, character(0))
 })
 
-# ── Test CC4: aucun chemin possible ──────────────────────────────────────────
-test_that("check_conversion_path returns is_simple=FALSE and NULL path for unknown pair", {
-  r <- check_conversion_path("POSTAL", "UNKNOWN_CLASSIFICATION_XYZ")
-  expect_false(r$is_simple)
-  expect_null(r$path)
+# ── Test CC4: identifiant inconnu → erreur rcl_invalid_classification ─────────
+test_that("check_conversion_path errors for unrecognised classification", {
+  expect_error(
+    check_conversion_path("POSTAL", "UNKNOWN_CLASSIFICATION_XYZ"),
+    class = "rcl_invalid_classification"
+  )
 })
 
 # ── Test CC5: get_all_classification_nodes retourne les noeuds attendus ───────
@@ -54,12 +55,12 @@ test_that("print_conversion_check prints without error", {
   expect_output(print_conversion_check("POSTAL", "NUTS3_2027"))
 })
 
-# ── Test CC8: alias d'entrée normalisés ──────────────────────────────────────
-test_that("check_conversion_path accepts common aliases", {
-  r1 <- check_conversion_path("NIS_COM_2019",  "NUTS_2021")
-  r2 <- check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
-  expect_equal(r1$is_simple, r2$is_simple)
-  expect_equal(r1$path,      r2$path)
+# ── Test CC8: identifiant non-canonique → erreur rcl_invalid_classification ──
+test_that("check_conversion_path errors for non-canonical identifiers", {
+  expect_error(check_conversion_path("NIS_COM_2019", "NUTS3_2021"),
+               class = "rcl_invalid_classification")
+  expect_error(check_conversion_path("NIS_COMMUNE_2019", "NUTS_2021"),
+               class = "rcl_invalid_classification")
 })
 
 # ── Test CC9: rcl_ambiguous_conversion class ──────────────────────────────────
@@ -71,10 +72,19 @@ test_that("convert_codes raises rcl_ambiguous_conversion with allow_ambiguous=FA
   )
 })
 
-# ── Test CC10: rcl_no_route class ─────────────────────────────────────────────
-test_that("convert_codes raises rcl_no_route for unsupported pair", {
+# ── Test CC10: rcl_no_route pour paire valide mais sans chemin ────────────────
+test_that("convert_codes raises rcl_no_route for valid but unroutable pair", {
+  # NIS_COMMUNE_2019 -> NIS_COMMUNE_BEFORE_2019 has no route (only the reverse exists)
+  expect_error(
+    convert_codes(21004L, "NIS_COMMUNE_2019", "NIS_COMMUNE_BEFORE_2019", master_data),
+    class = "rcl_no_route"
+  )
+})
+
+# ── Test CC11: rcl_invalid_classification pour identifiant inconnu ────────────
+test_that("convert_codes raises rcl_invalid_classification for unknown identifier", {
   expect_error(
     convert_codes(1L, "NIS_COMMUNE_2019", "TOTALLY_UNKNOWN", master_data),
-    class = "rcl_no_route"
+    class = "rcl_invalid_classification"
   )
 })

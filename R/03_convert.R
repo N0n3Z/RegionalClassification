@@ -87,63 +87,24 @@ execute_conversion <- function(codes, from, to, master_data) {
   return(result)
 }
 
-#' Normalize classification identifiers to standard format
-#'
-#' @param class_id User-supplied classification identifier
-#' @return Normalized identifier
+#' @noRd
 normalize_classification_id <- function(class_id) {
-  # Convert to uppercase and standardize
   id <- toupper(trimws(class_id))
-
-  # Common aliases
-  aliases <- list(
-    "NIS_COMMUNE_BEFORE_2019"       = "NIS_COMMUNE_BEFORE_2019",
-    "NIS_COM_BEFORE_2019"           = "NIS_COMMUNE_BEFORE_2019",
-    "NIS_ARRONDISSEMENT_BEFORE_2019" = "NIS_ARRONDISSEMENT_BEFORE_2019",
-    "NIS_ARR_BEFORE_2019"           = "NIS_ARRONDISSEMENT_BEFORE_2019",
-    "NIS_PROVINCE_BEFORE_2019"      = "NIS_PROVINCE_BEFORE_2019",
-    "NIS_REGION_BEFORE_2019"        = "NIS_REGION_BEFORE_2019",
-    "NIS_COMMUNE_2019" = "NIS_COMMUNE_2019",
-    "NIS_COM_2019" = "NIS_COMMUNE_2019",
-    "COMMUNE_2019" = "NIS_COMMUNE_2019",
-    "NIS_COMMUNE_2025" = "NIS_COMMUNE_2025",
-    "NIS_COM_2025" = "NIS_COMMUNE_2025",
-    "COMMUNE_2025" = "NIS_COMMUNE_2025",
-    "NIS_ARRONDISSEMENT_2019" = "NIS_ARRONDISSEMENT_2019",
-    "NIS_ARR_2019" = "NIS_ARRONDISSEMENT_2019",
-    "NIS_ARRONDISSEMENT_2025" = "NIS_ARRONDISSEMENT_2025",
-    "NIS_ARR_2025" = "NIS_ARRONDISSEMENT_2025",
-    "NIS_PROVINCE_2019" = "NIS_PROVINCE_2019",
-    "NIS_PROVINCE_2025" = "NIS_PROVINCE_2025",
-    "NIS_REGION_2019" = "NIS_REGION_2019",
-    "NIS_REGION_2025" = "NIS_REGION_2025",
-    "NUTS3_2021" = "NUTS3_2021",
-    "NUTS_2021" = "NUTS3_2021",
-    "NUTS2_2021" = "NUTS2_2021",
-    "NUTS1_2021" = "NUTS1_2021",
-    "NUTS0" = "NUTS0",
-    "NUTS3_2027" = "NUTS3_2027",
-    "NUTS_2027" = "NUTS3_2027",
-    "NUTS2_2027" = "NUTS2_2027",
-    "NUTS1_2027" = "NUTS1_2027",
-    "NUTS_LAU_2027" = "NUTS_LAU_2027",
-    "NUTS_LAU_2021" = "NUTS_LAU_2021",
-    "LAU_2021" = "NUTS_LAU_2021",
-    "POSTAL" = "POSTAL",
-    "CODE_POSTAL" = "POSTAL",
-    "CP" = "POSTAL",
-    "INTERNAL" = "INTERNAL_ARRONDISSEMENT",
-    "INTERNAL_ARRONDISSEMENT" = "INTERNAL_ARRONDISSEMENT",
-    "INTERNAL_ARR" = "INTERNAL_ARRONDISSEMENT",
-    "INTERNE" = "INTERNAL_ARRONDISSEMENT"
+  if (id %in% VALID_CLASSIFICATIONS) return(id)
+  abort(
+    sprintf(
+      paste0(
+        "Classification '%s' is not recognised.\n",
+        "Valid identifiers (case-insensitive):\n  %s\n",
+        "See ?classification_reference."
+      ),
+      class_id,
+      paste(sort(VALID_CLASSIFICATIONS), collapse = ", ")
+    ),
+    class = "rcl_invalid_classification",
+    classification = class_id,
+    valid = VALID_CLASSIFICATIONS
   )
-
-  if (id %in% names(aliases)) {
-    return(aliases[[id]])
-  }
-
-  # If no alias found, return as-is
-  return(id)
 }
 
 # Dispatch table: maps "FROM__TO" to a handler function(input_dt, md).

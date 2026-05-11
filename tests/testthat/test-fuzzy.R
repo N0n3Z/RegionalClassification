@@ -1,10 +1,10 @@
 library(data.table)
 
 # ── Test F1: classe d'erreur pour classification non supportée ────────────────
-test_that("fuzzy_match_names throws rcl_invalid_input for unsupported classification", {
+test_that("fuzzy_match_names throws rcl_invalid_classification for unknown classification", {
   expect_error(
     fuzzy_match_names("Bruxelles", "UNKNOWN_CLASSIFICATION", master_data),
-    class = "rcl_invalid_input"
+    class = "rcl_invalid_classification"
   )
 })
 

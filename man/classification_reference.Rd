@@ -8,9 +8,9 @@
 \description{
 All functions that accept a classification name (`from`, `to`, `classification`,
 etc.) use a **single string** identifier — not two separate `system`/`version`
-parameters. Identifiers are **case-insensitive** and trimmed of whitespace
-before use; they are converted to their canonical uppercase form internally by
-`normalize_classification_id()`.
+parameters. Identifiers are **case-insensitive** (converted to uppercase
+internally) but must match a canonical name exactly; unrecognised identifiers
+raise an error of class `rcl_invalid_classification`.
 
 ## Naming pattern
 
@@ -22,46 +22,45 @@ Canonical identifiers follow the pattern `{SYSTEM}_{LEVEL}_{VERSION}`:
 | LEVEL     | `COMMUNE`, `ARRONDISSEMENT`, `PROVINCE`, `REGION`, `LAU`, `3`, `2`, `1`, `0` |
 | VERSION   | `2019`, `2025`, `2021`, `2027`, `BEFORE_2019` |
 
-When the level is unambiguous (e.g. `POSTAL` has only one level, `NUTS0` has
-no version variants), the extra parts are omitted.
+When the level is unambiguous (`POSTAL` has only one level, `NUTS0` has no
+version variants), the extra parts are omitted.
 
 ## NIS classifications (Statbel)
 
-| Canonical identifier          | Accepted aliases                                |
-|-------------------------------|-------------------------------------------------|
-| `NIS_COMMUNE_BEFORE_2019`     | `NIS_COM_BEFORE_2019`                           |
-| `NIS_ARRONDISSEMENT_BEFORE_2019` | `NIS_ARR_BEFORE_2019`                        |
-| `NIS_PROVINCE_BEFORE_2019`    | *(none)*                                        |
-| `NIS_REGION_BEFORE_2019`      | *(none)*                                        |
-| `NIS_COMMUNE_2019`            | `NIS_COM_2019`, `COMMUNE_2019`                  |
-| `NIS_ARRONDISSEMENT_2019`     | `NIS_ARR_2019`                                  |
-| `NIS_PROVINCE_2019`           | *(none)*                                        |
-| `NIS_REGION_2019`             | *(none)*                                        |
-| `NIS_COMMUNE_2025`            | `NIS_COM_2025`, `COMMUNE_2025`                  |
-| `NIS_ARRONDISSEMENT_2025`     | `NIS_ARR_2025`                                  |
-| `NIS_PROVINCE_2025`           | *(none)*                                        |
-| `NIS_REGION_2025`             | *(none)*                                        |
+| Canonical identifier             | Description                     |
+|----------------------------------|---------------------------------|
+| `NIS_COMMUNE_BEFORE_2019`        | Communes before 2019 fusions    |
+| `NIS_ARRONDISSEMENT_BEFORE_2019` | Arrondissements (pre-2019)      |
+| `NIS_PROVINCE_BEFORE_2019`       | Provinces (pre-2019)            |
+| `NIS_REGION_BEFORE_2019`         | Regions (pre-2019)              |
+| `NIS_COMMUNE_2019`               | Communes (2019 version)         |
+| `NIS_ARRONDISSEMENT_2019`        | Arrondissements (2019)          |
+| `NIS_PROVINCE_2019`              | Provinces (2019)                |
+| `NIS_REGION_2019`                | Regions (2019)                  |
+| `NIS_COMMUNE_2025`               | Communes (2025 version)         |
+| `NIS_ARRONDISSEMENT_2025`        | Arrondissements (2025)          |
+| `NIS_PROVINCE_2025`              | Provinces (2025)                |
+| `NIS_REGION_2025`                | Regions (2025)                  |
 
 ## NUTS classifications (Eurostat)
 
-| Canonical identifier   | Accepted aliases          |
-|------------------------|---------------------------|
-| `NUTS_LAU_2021`        | `LAU_2021`                |
-| `NUTS3_2021`           | `NUTS_2021`               |
-| `NUTS2_2021`           | *(none)*                  |
-| `NUTS1_2021`           | *(none)*                  |
-| `NUTS0`                | *(none)*                  |
-| `NUTS3_2027`           | `NUTS_2027`               |
-| `NUTS2_2027`           | *(none)*                  |
-| `NUTS1_2027`           | *(none)*                  |
-| `NUTS_LAU_2027`        | *(none)*                  |
+| Canonical identifier | Description                            |
+|----------------------|----------------------------------------|
+| `NUTS_LAU_2021`      | Local Administrative Units (2021)      |
+| `NUTS3_2021`         | NUTS level 3 (2021)                    |
+| `NUTS2_2021`         | NUTS level 2 (2021)                    |
+| `NUTS1_2021`         | NUTS level 1 (2021)                    |
+| `NUTS0`              | Country level (BE) — version-invariant |
+| `NUTS3_2027`         | NUTS level 3 (2027)                    |
+| `NUTS2_2027`         | NUTS level 2 (2027)                    |
+| `NUTS1_2027`         | NUTS level 1 (2027)                    |
 
 ## Other classifications
 
-| Canonical identifier     | Accepted aliases                            | Description                                  |
-|--------------------------|---------------------------------------------|----------------------------------------------|
-| `POSTAL`                 | `CODE_POSTAL`, `CP`                         | Belgian postal codes (bpost)                 |
-| `INTERNAL_ARRONDISSEMENT`| `INTERNAL`, `INTERNAL_ARR`, `INTERNE`       | 2-digit internal code; Verviers split: 65=FR, 66=DE |
+| Canonical identifier     | Description                                          |
+|--------------------------|------------------------------------------------------|
+| `POSTAL`                 | Belgian postal codes (bpost)                         |
+| `INTERNAL_ARRONDISSEMENT`| 2-digit internal code; Verviers split: 65=FR, 66=DE  |
 
 ## Available conversions
 
@@ -69,52 +68,50 @@ The table below lists all supported conversion paths. **Simple** (✓) means a
 deterministic N:1 or 1:1 mapping; **Ambiguous** (⚠) means a M:N mapping that
 requires weighted splitting (use [split_ambiguous_weights()]).
 
-| From                          | To                            | Type      |
-|-------------------------------|-------------------------------|-----------|
+| From                          | To                               | Type   |
+|-------------------------------|----------------------------------|--------|
 | `NIS_COMMUNE_BEFORE_2019`     | `NIS_ARRONDISSEMENT_BEFORE_2019` | ✓ N:1  |
-| `NIS_ARRONDISSEMENT_BEFORE_2019` | `NIS_PROVINCE_BEFORE_2019` | ✓ N:1   |
-| `NIS_PROVINCE_BEFORE_2019`    | `NIS_REGION_BEFORE_2019`      | ✓ N:1    |
-| `NIS_COMMUNE_BEFORE_2019`     | `NIS_COMMUNE_2019`            | ⚠ M:N    |
-| `NIS_COMMUNE_BEFORE_2019`     | `NUTS3_2021`                  | ✓ 1:1    |
-| `NIS_COMMUNE_BEFORE_2019`     | `NUTS3_2027`                  | ✓ 1:1    |
-| `NIS_COMMUNE_2019`            | `NIS_ARRONDISSEMENT_2019`     | ✓ N:1    |
-| `NIS_ARRONDISSEMENT_2019`     | `NIS_PROVINCE_2019`           | ✓ N:1    |
-| `NIS_PROVINCE_2019`           | `NIS_REGION_2019`             | ✓ N:1    |
-| `NIS_COMMUNE_2019`            | `NIS_COMMUNE_2025`            | ⚠ M:N    |
-| `NIS_COMMUNE_2019`            | `NUTS_LAU_2021`               | ✓ 1:1    |
-| `NIS_COMMUNE_2019`            | `NUTS3_2027`                  | ✓ 1:1    |
-| `NIS_ARRONDISSEMENT_2019`     | `NUTS3_2021`                  | ⚠ M:N    |
-| `NIS_ARRONDISSEMENT_2019`     | `INTERNAL_ARRONDISSEMENT`     | ⚠ M:N    |
-| `NIS_COMMUNE_2025`            | `NIS_ARRONDISSEMENT_2025`     | ✓ N:1    |
-| `NIS_ARRONDISSEMENT_2025`     | `NIS_PROVINCE_2025`           | ✓ N:1    |
-| `NIS_PROVINCE_2025`           | `NIS_REGION_2025`             | ✓ N:1    |
-| `NIS_COMMUNE_2025`            | `NUTS3_2027`                  | ✓ N:1    |
-| `NIS_COMMUNE_2025`            | `NUTS2_2027`                  | ✓ N:1    |
-| `NIS_COMMUNE_2025`            | `NUTS1_2027`                  | ✓ N:1    |
-| `NUTS_LAU_2021`               | `NUTS3_2021`                  | ✓ N:1    |
-| `NUTS3_2021`                  | `NUTS2_2021`                  | ✓ N:1    |
-| `NUTS2_2021`                  | `NUTS1_2021`                  | ✓ N:1    |
-| `NUTS1_2021`                  | `NUTS0`                       | ✓ N:1    |
-| `NUTS3_2021`                  | `NUTS3_2027`                  | ✓ 1:1    |
-| `NUTS3_2027`                  | `NUTS2_2027`                  | ✓ N:1    |
-| `NUTS2_2027`                  | `NUTS1_2027`                  | ✓ N:1    |
-| `NUTS1_2027`                  | `NUTS0`                       | ✓ N:1    |
-| `NUTS3_2021`                  | `INTERNAL_ARRONDISSEMENT`     | ✓ 1:1    |
-| `NUTS3_2027`                  | `INTERNAL_ARRONDISSEMENT`     | ✓ 1:1    |
-| `POSTAL`                      | `NIS_COMMUNE_2019`            | ✓ N:1    |
-| `POSTAL`                      | `NIS_COMMUNE_2025`            | ✓ N:1    |
-| `POSTAL`                      | `NUTS3_2027`                  | ✓ N:1    |
+| `NIS_ARRONDISSEMENT_BEFORE_2019` | `NIS_PROVINCE_BEFORE_2019`    | ✓ N:1  |
+| `NIS_PROVINCE_BEFORE_2019`    | `NIS_REGION_BEFORE_2019`         | ✓ N:1  |
+| `NIS_COMMUNE_BEFORE_2019`     | `NIS_COMMUNE_2019`               | ⚠ M:N  |
+| `NIS_COMMUNE_BEFORE_2019`     | `NUTS3_2021`                     | ✓ 1:1  |
+| `NIS_COMMUNE_BEFORE_2019`     | `NUTS3_2027`                     | ✓ 1:1  |
+| `NIS_COMMUNE_2019`            | `NIS_ARRONDISSEMENT_2019`        | ✓ N:1  |
+| `NIS_ARRONDISSEMENT_2019`     | `NIS_PROVINCE_2019`              | ✓ N:1  |
+| `NIS_PROVINCE_2019`           | `NIS_REGION_2019`                | ✓ N:1  |
+| `NIS_COMMUNE_2019`            | `NIS_COMMUNE_2025`               | ⚠ M:N  |
+| `NIS_COMMUNE_2019`            | `NUTS_LAU_2021`                  | ✓ 1:1  |
+| `NIS_COMMUNE_2019`            | `NUTS3_2027`                     | ✓ 1:1  |
+| `NIS_ARRONDISSEMENT_2019`     | `NUTS3_2021`                     | ⚠ M:N  |
+| `NIS_ARRONDISSEMENT_2019`     | `INTERNAL_ARRONDISSEMENT`        | ⚠ M:N  |
+| `NIS_COMMUNE_2025`            | `NIS_ARRONDISSEMENT_2025`        | ✓ N:1  |
+| `NIS_ARRONDISSEMENT_2025`     | `NIS_PROVINCE_2025`              | ✓ N:1  |
+| `NIS_PROVINCE_2025`           | `NIS_REGION_2025`                | ✓ N:1  |
+| `NIS_COMMUNE_2025`            | `NUTS3_2027`                     | ✓ N:1  |
+| `NIS_COMMUNE_2025`            | `NUTS2_2027`                     | ✓ N:1  |
+| `NIS_COMMUNE_2025`            | `NUTS1_2027`                     | ✓ N:1  |
+| `NUTS_LAU_2021`               | `NUTS3_2021`                     | ✓ N:1  |
+| `NUTS3_2021`                  | `NUTS2_2021`                     | ✓ N:1  |
+| `NUTS2_2021`                  | `NUTS1_2021`                     | ✓ N:1  |
+| `NUTS1_2021`                  | `NUTS0`                          | ✓ N:1  |
+| `NUTS3_2021`                  | `NUTS3_2027`                     | ✓ 1:1  |
+| `NUTS3_2027`                  | `NUTS2_2027`                     | ✓ N:1  |
+| `NUTS2_2027`                  | `NUTS1_2027`                     | ✓ N:1  |
+| `NUTS1_2027`                  | `NUTS0`                          | ✓ N:1  |
+| `NUTS3_2021`                  | `INTERNAL_ARRONDISSEMENT`        | ✓ 1:1  |
+| `NUTS3_2027`                  | `INTERNAL_ARRONDISSEMENT`        | ✓ 1:1  |
+| `POSTAL`                      | `NIS_COMMUNE_2019`               | ✓ N:1  |
+| `POSTAL`                      | `NIS_COMMUNE_2025`               | ✓ N:1  |
+| `POSTAL`                      | `NUTS3_2027`                     | ✓ N:1  |
 
 Multi-step paths (e.g. `POSTAL` -> `NIS_REGION_2019`) are resolved
-automatically by chaining the edges above — you do not need to specify
-intermediate steps.
+automatically by chaining the edges above.
 
 ## Quick reference
 
 ```r
-# Inspect the full aliases table programmatically:
-nbbbenuts:::normalize_classification_id("nuts_2021")  # -> "NUTS3_2021"
-nbbbenuts:::normalize_classification_id("cp")         # -> "POSTAL"
+# List all valid identifiers programmatically:
+sort(nbbbenuts:::VALID_CLASSIFICATIONS)
 
 # Check whether a conversion path exists and whether it is simple:
 check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
