@@ -1,4 +1,5 @@
 ^\.github$
+^vignettes$
 ^main\.R$
 ^data/raw
 ^data/processed
