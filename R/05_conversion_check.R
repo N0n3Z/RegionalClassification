@@ -251,11 +251,7 @@ print_conversion_check <- function(from, to) {
 #' @return character vector of all classification node identifiers
 #' @export
 get_all_classification_nodes <- function() {
-  nodes <- unique(c(
-    sapply(CONVERSION_GRAPH_EDGES, function(e) e$from),
-    sapply(CONVERSION_GRAPH_EDGES, function(e) e$to)
-  ))
-  sort(nodes)
+  sort(VALID_CLASSIFICATIONS)
 }
 
 #' Generate a full conversion feasibility matrix
