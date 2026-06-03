@@ -107,117 +107,102 @@ normalize_classification_id <- function(class_id) {
   )
 }
 
+# ------------------------------------------------------------------------------
+# Single-hop handler factories
+# ------------------------------------------------------------------------------
+# The vast majority of conversions are a single column lookup in the communes
+# master, filtered to one NIS version. These factories capture that pattern so
+# each route entry below is a one-line declaration of (version, from, to) rather
+# than a copy-pasted closure body. Adding a future NIS/NUTS version becomes a
+# matter of adding declarations, not rewriting bodies.
+
+# NIS-commune-keyed hop: coerce input to integer, look up `to_col` in the
+# communes master for one NIS version.
+.master_hop <- function(version, from_col, to_col) {
+  force(version); force(from_col); force(to_col)
+  function(i, md) {
+    i[, code_from := as.integer(code_from)]
+    convert_via_master(i, md$communes[nis_version == version], from_col, to_col)
+  }
+}
+
+# Same as .master_hop but sources the NIS BEFORE_2019 slice, erroring clearly
+# (via .get_master_b19) when that optional data is not loaded.
+.b19_hop <- function(from_col, to_col) {
+  force(from_col); force(to_col)
+  function(i, md) {
+    m <- .get_master_b19(md)
+    i[, code_from := as.integer(code_from)]
+    convert_via_master(i, m, from_col, to_col)
+  }
+}
+
+# Distinct-pair lookup inside the communes master, for non-commune keys (e.g.
+# province->region, NUTS hierarchy hops). `version = NULL` uses all rows.
+# `drop_na` removes rows whose "to" or "from" column is NA before building the
+# lookup (mirrors the explicit !is.na(...) filters of the original handlers).
+.master_pair_hop <- function(version, from_col, to_col,
+                             drop_na = c("none", "to", "from")) {
+  force(version); force(from_col); force(to_col)
+  drop_na <- match.arg(drop_na)
+  function(i, md) {
+    sub <- if (is.null(version)) md$communes else md$communes[nis_version == version]
+    if (drop_na == "to")   sub <- sub[!is.na(get(to_col))]
+    if (drop_na == "from") sub <- sub[!is.na(get(from_col))]
+    lkp <- unique(sub[, .SD, .SDcols = c(from_col, to_col)])
+    convert_via_lookup(i, lkp, from_col, to_col)
+  }
+}
+
 # Dispatch table: maps "FROM__TO" to a handler function(input_dt, md).
-# Defined at package level so it is built once at load time.
-# Each handler receives input_dt (data.table with code_from) and md (master data).
+# Defined at package level so it is built once at load time. Each handler
+# receives input_dt (data.table with code_from) and md (master data) and returns
+# a data.table(code_from, code_to). Multi-hop conversions are composed
+# automatically from these single hops by route_conversion() / .compose_via_handlers().
 .ROUTE_TABLE <- list(
 
   # --- POSTAL -> NIS (direct) ---
   "POSTAL__NIS_COMMUNE_2019" = function(i, md)
     convert_via_lookup(i, md$postal[nis_version == "2019"], "cd_postal", "cd_commune_nis"),
-
   "POSTAL__NIS_COMMUNE_2025" = function(i, md)
     convert_via_lookup(i, md$postal[nis_version == "2025"], "cd_postal", "cd_commune_nis"),
 
   # --- NIS_COMMUNE_2019 -> * ---
-  "NIS_COMMUNE_2019__NIS_ARRONDISSEMENT_2019" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_arr")
-  },
-  "NIS_COMMUNE_2019__NIS_PROVINCE_2019" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_province")
-  },
-  "NIS_COMMUNE_2019__NIS_REGION_2019" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_region")
-  },
-  "NIS_COMMUNE_2019__NUTS_LAU_2021" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts_lau")
-  },
-  "NIS_COMMUNE_2019__NUTS3_2021" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts3")
-  },
-  "NIS_COMMUNE_2019__NUTS2_2021" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts2")
-  },
-  "NIS_COMMUNE_2019__NUTS1_2021" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts1")
-  },
+  "NIS_COMMUNE_2019__NIS_ARRONDISSEMENT_2019" = .master_hop("2019", "cd_commune", "cd_arr"),
+  "NIS_COMMUNE_2019__NIS_PROVINCE_2019"       = .master_hop("2019", "cd_commune", "cd_province"),
+  "NIS_COMMUNE_2019__NIS_REGION_2019"         = .master_hop("2019", "cd_commune", "cd_region"),
+  "NIS_COMMUNE_2019__NUTS_LAU_2021"           = .master_hop("2019", "cd_commune", "cd_nuts_lau"),
+  "NIS_COMMUNE_2019__NUTS3_2021"              = .master_hop("2019", "cd_commune", "cd_nuts3"),
+  "NIS_COMMUNE_2019__NUTS2_2021"              = .master_hop("2019", "cd_commune", "cd_nuts2"),
+  "NIS_COMMUNE_2019__NUTS1_2021"              = .master_hop("2019", "cd_commune", "cd_nuts1"),
   "NIS_COMMUNE_2019__NUTS0" = function(i, md)
     data.table(code_from = i$code_from, code_to = "BE"),
-  "NIS_COMMUNE_2019__NUTS3_2027" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts3_2027")
-  },
-  "NIS_COMMUNE_2019__NUTS2_2027" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts2_2027")
-  },
-  "NIS_COMMUNE_2019__NUTS1_2027" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_nuts1_2027")
-  },
-  "NIS_COMMUNE_2019__INTERNAL_ARRONDISSEMENT" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2019"], "cd_commune", "cd_arr_internal")
-  },
+  "NIS_COMMUNE_2019__NUTS3_2027"              = .master_hop("2019", "cd_commune", "cd_nuts3_2027"),
+  "NIS_COMMUNE_2019__NUTS2_2027"              = .master_hop("2019", "cd_commune", "cd_nuts2_2027"),
+  "NIS_COMMUNE_2019__NUTS1_2027"              = .master_hop("2019", "cd_commune", "cd_nuts1_2027"),
+  "NIS_COMMUNE_2019__INTERNAL_ARRONDISSEMENT" = .master_hop("2019", "cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_2019__NIS_COMMUNE_2025" = function(i, md) {
     i[, code_from := as.integer(code_from)]
     convert_nis2019_to_nis2025(i, md)
   },
 
   # --- NIS_COMMUNE_BEFORE_2019 -> * ---
-  "NIS_COMMUNE_BEFORE_2019__NIS_ARRONDISSEMENT_BEFORE_2019" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_arr")
-  },
-  "NIS_COMMUNE_BEFORE_2019__NIS_PROVINCE_BEFORE_2019" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_province")
-  },
-  "NIS_COMMUNE_BEFORE_2019__NIS_REGION_BEFORE_2019" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_region")
-  },
-  "NIS_COMMUNE_BEFORE_2019__NUTS3_2021" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_nuts3")
-  },
-  "NIS_COMMUNE_BEFORE_2019__NUTS2_2021" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_nuts2")
-  },
-  "NIS_COMMUNE_BEFORE_2019__NUTS3_2027" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_nuts3_2027")
-  },
-  "NIS_COMMUNE_BEFORE_2019__INTERNAL_ARRONDISSEMENT" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
-    convert_via_master(i, m, "cd_commune", "cd_arr_internal")
-  },
+  "NIS_COMMUNE_BEFORE_2019__NIS_ARRONDISSEMENT_BEFORE_2019" = .b19_hop("cd_commune", "cd_arr"),
+  "NIS_COMMUNE_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"       = .b19_hop("cd_commune", "cd_province"),
+  "NIS_COMMUNE_BEFORE_2019__NIS_REGION_BEFORE_2019"         = .b19_hop("cd_commune", "cd_region"),
+  "NIS_COMMUNE_BEFORE_2019__NUTS3_2021"                     = .b19_hop("cd_commune", "cd_nuts3"),
+  "NIS_COMMUNE_BEFORE_2019__NUTS2_2021"                     = .b19_hop("cd_commune", "cd_nuts2"),
+  "NIS_COMMUNE_BEFORE_2019__NUTS3_2027"                     = .b19_hop("cd_commune", "cd_nuts3_2027"),
+  "NIS_COMMUNE_BEFORE_2019__INTERNAL_ARRONDISSEMENT"        = .b19_hop("cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_BEFORE_2019__NIS_COMMUNE_2019" = function(i, md) {
     i[, code_from := as.integer(code_from)]
     convert_nis_before2019_to_nis2019(i, md)
   },
 
   # --- NIS_COMMUNE_2025 -> * ---
-  "NIS_COMMUNE_2025__NIS_ARRONDISSEMENT_2025" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2025"], "cd_commune", "cd_arr")
-  },
-  "NIS_COMMUNE_2025__NIS_PROVINCE_2025" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2025"], "cd_commune", "cd_province")
-  },
-  "NIS_COMMUNE_2025__NIS_REGION_2025" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
-    convert_via_master(i, md$communes[nis_version == "2025"], "cd_commune", "cd_region")
-  },
+  "NIS_COMMUNE_2025__NIS_ARRONDISSEMENT_2025" = .master_hop("2025", "cd_commune", "cd_arr"),
+  "NIS_COMMUNE_2025__NIS_PROVINCE_2025"       = .master_hop("2025", "cd_commune", "cd_province"),
+  "NIS_COMMUNE_2025__NIS_REGION_2025"         = .master_hop("2025", "cd_commune", "cd_region"),
   "NIS_COMMUNE_2025__NIS_COMMUNE_2019" = function(i, md) {
     i[, code_from := as.integer(code_from)]
     convert_nis2025_to_nis2019(i, md)
@@ -254,21 +239,24 @@ normalize_classification_id <- function(class_id) {
     arr_prov <- unique(md$communes[nis_version == "2025", .(cd_arr, cd_province)])
     convert_via_lookup(i, arr_prov, "cd_arr", "cd_province")
   },
+  "NIS_ARRONDISSEMENT_BEFORE_2019__NIS_PROVINCE_BEFORE_2019" = function(i, md) {
+    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
+    convert_via_lookup(i, unique(m[, .(cd_arr, cd_province)]), "cd_arr", "cd_province")
+  },
+
+  # --- NIS PROVINCE -> NIS REGION ---
+  # (Simple per the conversion graph, but previously had no executable handler.)
+  "NIS_PROVINCE_2019__NIS_REGION_2019"               = .master_pair_hop("2019", "cd_province", "cd_region"),
+  "NIS_PROVINCE_2025__NIS_REGION_2025"               = .master_pair_hop("2025", "cd_province", "cd_region"),
+  "NIS_PROVINCE_BEFORE_2019__NIS_REGION_BEFORE_2019" = function(i, md) {
+    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
+    convert_via_lookup(i, unique(m[, .(cd_province, cd_region)]), "cd_province", "cd_region")
+  },
 
   # --- NUTS3_2021 -> * ---
-  "NUTS3_2021__NUTS2_2021" = function(i, md) {
-    lkp <- unique(md$communes[nis_version == "2019", .(cd_nuts3, cd_nuts2)])
-    convert_via_lookup(i, lkp, "cd_nuts3", "cd_nuts2")
-  },
-  "NUTS3_2021__INTERNAL_ARRONDISSEMENT" = function(i, md) {
-    lkp <- unique(md$communes[nis_version == "2019" & !is.na(cd_arr_internal),
-                               .(cd_nuts3, cd_arr_internal)])
-    convert_via_lookup(i, lkp, "cd_nuts3", "cd_arr_internal")
-  },
-  "NUTS3_2021__NIS_ARRONDISSEMENT_2019" = function(i, md) {
-    lkp <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts3), .(cd_nuts3, cd_arr)])
-    convert_via_lookup(i, lkp, "cd_nuts3", "cd_arr")
-  },
+  "NUTS3_2021__NUTS2_2021"              = .master_pair_hop("2019", "cd_nuts3", "cd_nuts2"),
+  "NUTS3_2021__INTERNAL_ARRONDISSEMENT" = .master_pair_hop("2019", "cd_nuts3", "cd_arr_internal", "to"),
+  "NUTS3_2021__NIS_ARRONDISSEMENT_2019" = .master_pair_hop("2019", "cd_nuts3", "cd_arr", "from"),
   "NUTS3_2021__NUTS3_2027" = function(i, md) {
     nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
     result <- merge(i, nuts3_map, by.x = "code_from", by.y = "nuts_2021", all.x = TRUE)
@@ -276,6 +264,13 @@ normalize_classification_id <- function(class_id) {
     result[is.na(code_to), code_to := code_from]
     result[, .(code_from, code_to)]
   },
+
+  # --- NUTS upward aggregation (2021) ---
+  # (Simple per the conversion graph, but previously had no executable handler;
+  #  this is what made convert_codes(<NUTS3>, ..., "NUTS1_2021") fail the parity
+  #  with check_conversion_path().)
+  "NUTS2_2021__NUTS1_2021" = .master_pair_hop("2019", "cd_nuts2", "cd_nuts1", "to"),
+  "NUTS1_2021__NUTS0"      = .master_pair_hop("2019", "cd_nuts1", "cd_nuts0", "to"),
 
   # --- NUTS_LAU_2021 -> * ---
   "NUTS_LAU_2021__NIS_COMMUNE_2019" = function(i, md) {
@@ -288,11 +283,7 @@ normalize_classification_id <- function(class_id) {
   },
 
   # --- INTERNAL_ARRONDISSEMENT -> * ---
-  "INTERNAL_ARRONDISSEMENT__NUTS3_2021" = function(i, md) {
-    lkp <- unique(md$communes[nis_version == "2019" & !is.na(cd_arr_internal),
-                               .(cd_nuts3, cd_arr_internal)])
-    convert_via_lookup(i, lkp, "cd_arr_internal", "cd_nuts3")
-  },
+  "INTERNAL_ARRONDISSEMENT__NUTS3_2021" = .master_pair_hop("2019", "cd_arr_internal", "cd_nuts3", "from"),
   "INTERNAL_ARRONDISSEMENT__NUTS3_2027" = function(i, md) {
     r21 <- route_conversion(i, "INTERNAL_ARRONDISSEMENT", "NUTS3_2021", md)
     r27 <- route_conversion(data.table(code_from = r21$code_to), "NUTS3_2021", "NUTS3_2027", md)
@@ -318,22 +309,21 @@ normalize_classification_id <- function(class_id) {
     data.table(code_from = r21$code_from,
                code_to   = ri$code_to[match(r21$code_to, ri$code_from)])
   },
-  "NUTS3_2027__NUTS2_2027" = function(i, md) {
-    lkp <- unique(md$communes[!is.na(cd_nuts3_2027), .(cd_nuts3_2027, cd_nuts2_2027)])
-    convert_via_lookup(i, lkp, "cd_nuts3_2027", "cd_nuts2_2027")
-  },
+  "NUTS3_2027__NUTS2_2027" = .master_pair_hop(NULL, "cd_nuts3_2027", "cd_nuts2_2027", "from"),
 
-  # --- NUTS2_2027 -> * ---
-  "NUTS2_2027__NUTS1_2027" = function(i, md) {
-    lkp <- unique(md$communes[!is.na(cd_nuts2_2027), .(cd_nuts2_2027, cd_nuts1_2027)])
-    convert_via_lookup(i, lkp, "cd_nuts2_2027", "cd_nuts1_2027")
-  }
+  # --- NUTS upward aggregation (2027) ---
+  "NUTS2_2027__NUTS1_2027" = .master_pair_hop(NULL, "cd_nuts2_2027", "cd_nuts1_2027", "from"),
+  "NUTS1_2027__NUTS0"      = .master_pair_hop(NULL, "cd_nuts1_2027", "cd_nuts0_2027", "from")
 )
 
 #' Route conversion to the appropriate handler
 #'
-#' Looks up the "FROM__TO" key in .ROUTE_TABLE. For POSTAL multi-hop and
-#' NIS_COMMUNE_2025->NUTS2027 multi-hop, falls back to chained helpers.
+#' Looks up the "FROM__TO" key in .ROUTE_TABLE for a direct single-hop handler.
+#' When no direct handler exists, composes existing single-hop handlers along a
+#' path in the handler graph (.compose_via_handlers). This keeps execution in
+#' lock-step with what check_conversion_path() declares reachable: there is a
+#' single source of truth for topology (the graph), and execution covers every
+#' multi-hop path the graph supports without a hand-written handler per pair.
 #'
 #' @param input_dt data.table with code_from column
 #' @param from Normalized source classification
@@ -344,27 +334,91 @@ route_conversion <- function(input_dt, from, to, md) {
 
   if (from == to) return(input_dt[, .(code_from, code_to = code_from)])
 
-  key     <- paste0(from, "__", to)
-  handler <- .ROUTE_TABLE[[key]]
-
+  handler <- .ROUTE_TABLE[[paste0(from, "__", to)]]
   if (!is.null(handler)) return(handler(copy(input_dt), md))
 
-  # --- Multi-hop: POSTAL -> any NIS/NUTS/INTERNAL via NIS_COMMUNE_2019 ---
-  if (from == "POSTAL" && (grepl("^NIS_", to) || grepl("^NUTS", to) ||
-                           to == "INTERNAL_ARRONDISSEMENT")) {
-    p2c <- convert_via_lookup(copy(input_dt), md$postal[nis_version == "2019"],
-                              "cd_postal", "cd_commune_nis")
-    if (to == "NIS_COMMUNE_2019") return(p2c)
-    nxt <- route_conversion(data.table(code_from = p2c$code_to), "NIS_COMMUNE_2019", to, md)
-    return(data.table(code_from = p2c$code_from,
-                      code_to   = nxt$code_to[match(p2c$code_to, nxt$code_from)]))
-  }
+  composed <- .compose_via_handlers(copy(input_dt), from, to, md)
+  if (!is.null(composed)) return(composed)
 
   abort(
     sprintf("No conversion route from '%s' to '%s'. Use list_available_conversions() to see all supported paths.",
             from, to),
     class = "rcl_no_route", from = from, to = to
   )
+}
+
+# Mutable cache (filled after namespace lock) for the handler-edge adjacency.
+.route_cache <- new.env(parent = emptyenv())
+
+# Adjacency list of directly-executable single hops, derived from the keys of
+# .ROUTE_TABLE ("A__B" => edge A -> B). Classification ids never contain the
+# "__" separator, so splitting on it yields exactly two nodes.
+.handler_graph <- function() {
+  if (exists("graph", envir = .route_cache, inherits = FALSE))
+    return(get("graph", envir = .route_cache))
+  g <- list()
+  for (key in names(.ROUTE_TABLE)) {
+    parts <- strsplit(key, "__", fixed = TRUE)[[1]]
+    g[[parts[1]]] <- c(g[[parts[1]]], parts[2])
+  }
+  assign("graph", g, envir = .route_cache)
+  g
+}
+
+# Shortest path between two classifications using only executable single hops
+# (BFS over the handler graph). Returns a character vector of nodes, or NULL.
+# Because it only ever traverses edges that have a handler, every hop of the
+# returned path is guaranteed executable.
+.handler_path <- function(from, to) {
+  g <- .handler_graph()
+  if (is.null(g[[from]])) return(NULL)
+  queue   <- list(list(node = from, path = from))
+  visited <- from
+  while (length(queue) > 0) {
+    cur   <- queue[[1]]; queue <- queue[-1]
+    for (nb in g[[cur$node]]) {
+      if (nb == to) return(c(cur$path, nb))
+      if (!nb %in% visited) {
+        visited <- c(visited, nb)
+        queue[[length(queue) + 1L]] <- list(node = nb, path = c(cur$path, nb))
+      }
+    }
+  }
+  NULL
+}
+
+# TRUE if `from` -> `to` is executable (identity, direct handler, or composable
+# path). Used by the test suite to assert parity with check_conversion_path():
+# every conversion the graph reports as simple must be executable here.
+.route_is_executable <- function(from, to) {
+  if (from == to) return(TRUE)
+  if (!is.null(.ROUTE_TABLE[[paste0(from, "__", to)]])) return(TRUE)
+  !is.null(.handler_path(from, to))
+}
+
+# Compose single-hop handlers along the handler-graph path from `from` to `to`.
+# Joins by code value (not position), so M:N hops fan out correctly and input
+# order is restored at the end. Returns data.table(code_from, code_to) or NULL.
+.compose_via_handlers <- function(input_dt, from, to, md) {
+  path <- .handler_path(from, to)
+  if (is.null(path) || length(path) < 2L) return(NULL)
+
+  mapping <- data.table(.ord = seq_len(nrow(input_dt)),
+                        code_from = input_dt$code_from,
+                        cur       = input_dt$code_from)
+
+  for (k in seq_len(length(path) - 1L)) {
+    handler <- .ROUTE_TABLE[[paste0(path[k], "__", path[k + 1L])]]
+    hop     <- handler(data.table(code_from = unique(mapping$cur)), md)
+    hop     <- hop[, .(.k = as.character(code_from), .nxt = code_to)]
+    mapping[, .k := as.character(cur)]
+    mapping <- merge(mapping, hop, by = ".k", all.x = TRUE, allow.cartesian = TRUE)
+    mapping[, cur := .nxt]
+    mapping[, c(".k", ".nxt") := NULL]
+  }
+
+  setorder(mapping, .ord)
+  mapping[, .(code_from, code_to = cur)]
 }
 
 # Helper: retrieve NIS BEFORE_2019 master table, erroring clearly if absent

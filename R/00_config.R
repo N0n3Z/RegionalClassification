@@ -338,6 +338,31 @@ MASTER_FLAT_TABLES <- c(
   "nis_changes"  # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (from_version)
 )
 
+# --- Schema of the unified `communes` table ---
+# The communes table is the rbindlist() of one sub-table per NIS version, which
+# do NOT all carry the same columns (e.g. NIS 2025 carries only the 2027 NUTS
+# columns, not the 2021 ones). rbindlist(fill = TRUE) tolerates that by design,
+# but it would also silently mask a renamed or dropped column with all-NA.
+# .validate_commune_schema() (02_build_master_table.R) uses the two sets below
+# to turn such silent drift into an explicit build-time error:
+#   - CORE: columns every per-version sub-table MUST provide.
+#   - KNOWN: the full set a sub-table is ALLOWED to contain (a version may omit
+#     version-specific columns, but may not introduce an unknown one).
+MASTER_COMMUNE_CORE_COLS <- c(
+  "cd_commune", "tx_commune_fr", "tx_commune_nl",
+  "cd_arr", "cd_province", "cd_region", "nis_version"
+)
+
+MASTER_COMMUNE_KNOWN_COLS <- c(
+  MASTER_COMMUNE_CORE_COLS,
+  "tx_arr_fr", "tx_arr_nl", "cd_arr_2digit",
+  "tx_prov_fr", "tx_prov_nl", "tx_region_fr", "tx_region_nl",
+  "cd_nuts_lau", "cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
+  "tx_nuts3_fr", "tx_nuts3_nl",
+  "cd_nuts3_2027", "cd_nuts2_2027", "cd_nuts1_2027", "cd_nuts0_2027",
+  "cd_arr_internal"
+)
+
 # --- Helper: get data directory path ---
 get_raw_data_path <- function() {
   if (requireNamespace("here", quietly = TRUE)) {
