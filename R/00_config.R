@@ -143,12 +143,22 @@ CONVERSION_GRAPH_EDGES <- list(
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_ARRONDISSEMENT_BEFORE_2019",
        relation = "N:1", via = "hierarchy",
        notes = "Derived from commune code: first 2 digits * 1000"),
+  # Direct commune->region edge (N:1): every commune, including Brabant communes,
+  # belongs to exactly one region.  Without this direct edge the BFS would find
+  # the path via province->region which is M:N due to Brabant.
+  list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_REGION_BEFORE_2019",
+       relation = "N:1", via = "hierarchy",
+       notes = "Each commune belongs to exactly one region (N:1, direct column lookup)."),
   list(from = "NIS_ARRONDISSEMENT_BEFORE_2019", to = "NIS_PROVINCE_BEFORE_2019",
        relation = "N:1", via = "hierarchy",
        notes = "Derived from REFNIS hierarchy"),
+  # Province 20000 (Brabant) spans Brussels, Flemish, and Walloon regions => M:N.
+  # Every other province maps 1:1 to its region, but the M:N declaration is
+  # required to surface the Brabant ambiguity.  Use commune-level paths instead.
   list(from = "NIS_PROVINCE_BEFORE_2019", to = "NIS_REGION_BEFORE_2019",
-       relation = "N:1", via = "hierarchy",
-       notes = "Derived from REFNIS hierarchy"),
+       relation = "M:N", via = "hierarchy",
+       notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
+                      "All other provinces are N:1.  Prefer commune-level paths.")),
 
   # --- NIS BEFORE_2019 to NUTS 2021 (pre-2019 assignments) ---
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2021",
@@ -160,37 +170,53 @@ CONVERSION_GRAPH_EDGES <- list(
        )),
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2027",
        relation = "N:1", via = "derived",
-       notes = "Many communes per NUTS3 (N:1). Via NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+       notes = paste0("N:1 (same as BEFORE_2019->NUTS3_2021). ",
+                      "Path: NIS_COMMUNE_BEFORE_2019 -> NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 -> NUTS3_2027. ",
+                      "Uses the official REFNIS_2025-NUTS_2027 mapping, not a code-rename table.")),
 
-  # --- NIS BEFORE_2019 -> NIS 2019 (requires REFNIS_CHANGE_BEFORE2019.xlsx for merged communes) ---
+  # --- NIS BEFORE_2019 -> NIS 2019 ---
+  # Forward N:1: each BEFORE_2019 commune maps to exactly one 2019 commune.
+  # Belgian commune reforms only involve mergers (multiple old -> one new), never
+  # splits.  Empirically confirmed: 0 old communes with multiple new codes in
+  # nis_changes[from_version=="BEFORE_2019"].
+  # Reverse (2019->BEFORE_2019) is auto-generated as 1:N.
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_COMMUNE_2019",
-       relation = "M:N", via = "REFNIS_CHANGE_BEFORE2019",
+       relation = "N:1", via = "REFNIS_CHANGE_BEFORE2019",
        notes = paste0(
          "Unchanged communes: 1:1 (same code). ",
-         "Merged communes resolved via REFNIS_CHANGE_BEFORE2019.xlsx."
+         "Merged communes resolved via REFNIS_CHANGE_BEFORE2019.xlsx. ",
+         "N:1 forward (no splits); reverse is 1:N (ambiguous)."
        )),
 
   # --- Within NIS 2019 hierarchy ---
   list(from = "NIS_COMMUNE_2019", to = "NIS_ARRONDISSEMENT_2019",
        relation = "N:1", via = "hierarchy",
        notes = "Derived from commune code: first 2 digits * 1000"),
+  list(from = "NIS_COMMUNE_2019", to = "NIS_REGION_2019",
+       relation = "N:1", via = "hierarchy",
+       notes = "Each commune belongs to exactly one region (N:1, direct column lookup)."),
   list(from = "NIS_ARRONDISSEMENT_2019", to = "NIS_PROVINCE_2019",
        relation = "N:1", via = "hierarchy",
        notes = "Derived from REFNIS hierarchy"),
   list(from = "NIS_PROVINCE_2019", to = "NIS_REGION_2019",
-       relation = "N:1", via = "hierarchy",
-       notes = "Derived from REFNIS hierarchy"),
+       relation = "M:N", via = "hierarchy",
+       notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
+                      "All other provinces are N:1.  Prefer commune-level paths.")),
 
   # --- Within NIS 2025 hierarchy ---
   list(from = "NIS_COMMUNE_2025", to = "NIS_ARRONDISSEMENT_2025",
        relation = "N:1", via = "hierarchy",
        notes = "Derived from commune code: first 2 digits * 1000"),
+  list(from = "NIS_COMMUNE_2025", to = "NIS_REGION_2025",
+       relation = "N:1", via = "hierarchy",
+       notes = "Each commune belongs to exactly one region (N:1, direct column lookup)."),
   list(from = "NIS_ARRONDISSEMENT_2025", to = "NIS_PROVINCE_2025",
        relation = "N:1", via = "hierarchy",
        notes = "Derived from REFNIS hierarchy"),
   list(from = "NIS_PROVINCE_2025", to = "NIS_REGION_2025",
-       relation = "N:1", via = "hierarchy",
-       notes = "Derived from REFNIS hierarchy"),
+       relation = "M:N", via = "hierarchy",
+       notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
+                      "All other provinces are N:1.  Prefer commune-level paths.")),
 
   # --- NIS 2019 to NUTS 2021 ---
   list(from = "NIS_COMMUNE_2019", to = "NUTS_LAU_2021",
@@ -209,13 +235,16 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "N:1", via = "CONVERSION_NIS2019_NUTS2021",
        notes = "Hierarchical"),
 
-  # --- NIS arrondissement to NUTS3 (problematic!) ---
+  # --- NIS arrondissement to NUTS3 ---
+  # Empirically 1:N: exactly ONE arrondissement (63000 Verviers) maps to 2 NUTS3
+  # regions (BE335 FR + BE336 DE).  All NUTS3 regions map to exactly one
+  # arrondissement (rev-multi=0) => the reverse NUTS3->arr is N:1 (simple).
   list(from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
-       relation = "M:N", via = "CONVERSION_NIS2019_NUTS2021",
+       relation = "1:N", via = "CONVERSION_NIS2019_NUTS2021",
        notes = paste0(
-         "NOT a simple 1:1 mapping! NIS arrondissement 63000 (Verviers) maps to ",
-         "both BE335 (francophone) and BE336 (germanophone) in NUTS 2021. ",
-         "All other arrondissements have a 1:1 relationship."
+         "Verviers (63000) maps to BE335 (francophone) AND BE336 (germanophone). ",
+         "All other arrondissements are 1:1.  Overall: 1:N (not M:N). ",
+         "Reverse NUTS3->arrondissement is N:1 (simple)."
        )),
 
   # --- Postal to NIS ---
@@ -251,21 +280,25 @@ CONVERSION_GRAPH_EDGES <- list(
        )),
 
   # --- NIS arrondissement to Internal (special case) ---
+  # 1:N for the same reason as arrondissement->NUTS3: only Verviers (63000)
+  # maps to two internal codes (65 FR + 66 DE).  All INTERNAL codes map to
+  # exactly one arrondissement (reverse is N:1 = simple).
   list(from = "NIS_ARRONDISSEMENT_2019", to = "INTERNAL_ARRONDISSEMENT",
-       relation = "M:N", via = "derived",
+       relation = "1:N", via = "derived",
        notes = paste0(
-         "Generally first 2 digits of NIS arrondissement = internal code, ",
-         "EXCEPT for Verviers: NIS 63000 -> internal 65 (FR) + 66 (DE)."
+         "Verviers (63000) -> internal 65 (FR) + 66 (DE). ",
+         "All other arrondissements are 1:1.  Reverse INTERNAL->arr is N:1."
        )),
 
-  # --- NUTS 2021 <-> NUTS 2027 ---
-  list(from = "NUTS3_2021", to = "NUTS3_2027",
-       relation = "1:1", via = "derived",
-       notes = paste0(
-         "Direct 1:1 remapping per EU regulation 2026/195. Changed: ",
-         "Antwerpen BE21x->BE26x, Oost-Vlaanderen BE23x->BE27x, ",
-         "Limburg BE223->BE226 and BE224->BE227."
-       )),
+  # --- NUTS 2027 hierarchy (within-2027 only) ---
+  # NOTE: there is NO direct NUTS3_2021 <-> NUTS3_2027 edge.
+  # The two NUTS3 systems cover DIFFERENT geographic areas: 3 communes changed
+  # province/arrondissement between 2019 and 2025, shifting their NUTS3 region
+  # (e.g. commune 11056: BE211 in 2021 -> BE276 in 2027).  A pure code-rename
+  # table (NUTS2021_TO_NUTS2027) is therefore incorrect for these communes.
+  # The correct path for any 2019-based data is:
+  #   NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 -> NUTS3_2027
+  # using the authoritative REFNIS_2025-NUTS_2027.xlsx file.
   list(from = "NUTS3_2027", to = "NUTS2_2027",
        relation = "N:1", via = "derived",
        notes = "Hierarchical (first 4 chars of NUTS3 2027 code)"),
@@ -277,13 +310,15 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Hierarchical"),
   list(from = "NIS_COMMUNE_2019", to = "NUTS3_2027",
        relation = "N:1", via = "derived",
-       notes = "Many communes per NUTS3 (N:1). Via NUTS 2021: NIS_COMMUNE_2019 -> NUTS3_2021 -> NUTS3_2027"),
-  list(from = "NUTS3_2027", to = "INTERNAL_ARRONDISSEMENT",
-       relation = "1:1", via = "derived",
-       notes = "Via NUTS 2021: NUTS3_2027 -> NUTS3_2021 -> INTERNAL_ARRONDISSEMENT"),
+       notes = paste0(
+         "Path: NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 -> NUTS3_2027. ",
+         "Uses the official REFNIS_2025-NUTS_2027.xlsx mapping. ",
+         "NOT via a NUTS3_2021 code-rename table (would be wrong for 3 communes ",
+         "that changed province between 2019 and 2025)."
+       )),
   list(from = "POSTAL", to = "NUTS3_2027",
        relation = "N:1", via = "derived",
-       notes = "Via POSTAL -> NIS_COMMUNE_2019 -> NUTS3_2027"),
+       notes = "Via POSTAL -> NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 -> NUTS3_2027"),
 
   # --- NIS 2025 -> NUTS 2027 ---
   list(from = "NIS_COMMUNE_2025", to = "NUTS3_2027",

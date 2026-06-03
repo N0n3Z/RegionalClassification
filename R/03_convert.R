@@ -175,9 +175,12 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_2019__NUTS1_2021"              = .master_hop("2019", "cd_commune", "cd_nuts1"),
   "NIS_COMMUNE_2019__NUTS0" = function(i, md)
     data.table(code_from = i$code_from, code_to = "BE"),
-  "NIS_COMMUNE_2019__NUTS3_2027"              = .master_hop("2019", "cd_commune", "cd_nuts3_2027"),
-  "NIS_COMMUNE_2019__NUTS2_2027"              = .master_hop("2019", "cd_commune", "cd_nuts2_2027"),
-  "NIS_COMMUNE_2019__NUTS1_2027"              = .master_hop("2019", "cd_commune", "cd_nuts1_2027"),
+  # NIS_COMMUNE_2019 -> NUTS3/2/1_2027: NO direct handlers.
+  # The cd_nuts3_2027 column in the 2019 master was derived from a code-rename
+  # table (NUTS2021_TO_NUTS2027) and is WRONG for the 3 communes that changed
+  # province/arrondissement between 2019 and 2025.
+  # The composer builds the correct path: 2019 -> 2025 -> NUTS3_2027 (or NUTS2/1)
+  # using the authoritative REFNIS_2025-NUTS_2027 data in the 2025 master.
   "NIS_COMMUNE_2019__INTERNAL_ARRONDISSEMENT" = .master_hop("2019", "cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_2019__NIS_COMMUNE_2025" = function(i, md) {
     convert_nis2019_to_nis2025(i, md)
@@ -189,7 +192,8 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_BEFORE_2019__NIS_REGION_BEFORE_2019"         = .b19_hop("cd_commune", "cd_region"),
   "NIS_COMMUNE_BEFORE_2019__NUTS3_2021"                     = .b19_hop("cd_commune", "cd_nuts3"),
   "NIS_COMMUNE_BEFORE_2019__NUTS2_2021"                     = .b19_hop("cd_commune", "cd_nuts2"),
-  "NIS_COMMUNE_BEFORE_2019__NUTS3_2027"                     = .b19_hop("cd_commune", "cd_nuts3_2027"),
+  # NIS_COMMUNE_BEFORE_2019__NUTS3_2027: NO direct handler (same issue as 2019->2027).
+  # Composer builds: BEFORE_2019 -> 2019 -> 2025 -> NUTS3_2027.
   "NIS_COMMUNE_BEFORE_2019__INTERNAL_ARRONDISSEMENT"        = .b19_hop("cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_BEFORE_2019__NIS_COMMUNE_2019" = function(i, md) {
     convert_nis_before2019_to_nis2019(i, md)
@@ -245,13 +249,11 @@ normalize_classification_id <- function(class_id) {
   "NUTS3_2021__NUTS2_2021"              = .master_pair_hop("2019", "cd_nuts3", "cd_nuts2"),
   "NUTS3_2021__INTERNAL_ARRONDISSEMENT" = .master_pair_hop("2019", "cd_nuts3", "cd_arr_internal", "to"),
   "NUTS3_2021__NIS_ARRONDISSEMENT_2019" = .master_pair_hop("2019", "cd_nuts3", "cd_arr", "from"),
-  "NUTS3_2021__NUTS3_2027" = function(i, md) {
-    nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
-    result <- merge(i, nuts3_map, by.x = "code_from", by.y = "nuts_2021", all.x = TRUE)
-    setnames(result, "nuts_2027", "code_to")
-    result[is.na(code_to), code_to := code_from]
-    result[, .(code_from, code_to)]
-  },
+  # NUTS3_2021__NUTS3_2027: deliberately absent.
+  # A code-rename table (NUTS2021_TO_NUTS2027) is wrong for 3 communes that
+  # changed province between 2019 and 2025, giving them a different NUTS3_2027
+  # region.  The graph has no NUTS3_2021 <-> NUTS3_2027 edge; there is no
+  # direct conversion between these two versions of NUTS3.
 
   # --- NUTS upward aggregation (2021) ---
   # (Simple per the conversion graph, but previously had no executable handler;
@@ -272,31 +274,14 @@ normalize_classification_id <- function(class_id) {
 
   # --- INTERNAL_ARRONDISSEMENT -> * ---
   "INTERNAL_ARRONDISSEMENT__NUTS3_2021" = .master_pair_hop("2019", "cd_arr_internal", "cd_nuts3", "from"),
-  "INTERNAL_ARRONDISSEMENT__NUTS3_2027" = function(i, md) {
-    r21 <- route_conversion(i, "INTERNAL_ARRONDISSEMENT", "NUTS3_2021", md)
-    r27 <- route_conversion(data.table(code_from = r21$code_to), "NUTS3_2021", "NUTS3_2027", md)
-    data.table(code_from = r21$code_from,
-               code_to   = r27$code_to[match(r21$code_to, r27$code_from)])
-  },
+  # INTERNAL_ARRONDISSEMENT__NUTS3_2027: absent.  INTERNAL codes correspond to
+  # the 2021 NUTS3 structure.  There is no direct NUTS3_2021 <-> NUTS3_2027
+  # edge, so this path is not supported.
 
   # --- NUTS3_2027 -> * ---
-  "NUTS3_2027__NUTS3_2021" = function(i, md) {
-    nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
-    i[, .row_order := .I]
-    result <- merge(i, nuts3_map, by.x = "code_from", by.y = "nuts_2027", all.x = TRUE)
-    setnames(result, "nuts_2021", "code_to")
-    result[is.na(code_to), code_to := code_from]
-    setorder(result, .row_order)
-    result[, .row_order := NULL]
-    result[, .(code_from, code_to)]
-  },
-  "NUTS3_2027__INTERNAL_ARRONDISSEMENT" = function(i, md) {
-    r21 <- route_conversion(i, "NUTS3_2027", "NUTS3_2021", md)
-    ri  <- route_conversion(data.table(code_from = r21$code_to),
-                            "NUTS3_2021", "INTERNAL_ARRONDISSEMENT", md)
-    data.table(code_from = r21$code_from,
-               code_to   = ri$code_to[match(r21$code_to, ri$code_from)])
-  },
+  # NUTS3_2027__NUTS3_2021 and NUTS3_2027__INTERNAL_ARRONDISSEMENT: absent.
+  # NUTS3_2021 and NUTS3_2027 have different geographic perimeters (3 communes
+  # changed province between 2019 and 2025).  No direct conversion between them.
   "NUTS3_2027__NUTS2_2027" = .master_pair_hop(NULL, "cd_nuts3_2027", "cd_nuts2_2027", "from"),
 
   # --- NUTS upward aggregation (2027) ---
