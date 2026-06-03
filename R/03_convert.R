@@ -121,7 +121,6 @@ normalize_classification_id <- function(class_id) {
 .master_hop <- function(version, from_col, to_col) {
   force(version); force(from_col); force(to_col)
   function(i, md) {
-    i[, code_from := as.integer(code_from)]
     convert_via_master(i, md$communes[nis_version == version], from_col, to_col)
   }
 }
@@ -132,7 +131,6 @@ normalize_classification_id <- function(class_id) {
   force(from_col); force(to_col)
   function(i, md) {
     m <- .get_master_b19(md)
-    i[, code_from := as.integer(code_from)]
     convert_via_master(i, m, from_col, to_col)
   }
 }
@@ -182,7 +180,6 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_2019__NUTS1_2027"              = .master_hop("2019", "cd_commune", "cd_nuts1_2027"),
   "NIS_COMMUNE_2019__INTERNAL_ARRONDISSEMENT" = .master_hop("2019", "cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_2019__NIS_COMMUNE_2025" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     convert_nis2019_to_nis2025(i, md)
   },
 
@@ -195,7 +192,6 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_BEFORE_2019__NUTS3_2027"                     = .b19_hop("cd_commune", "cd_nuts3_2027"),
   "NIS_COMMUNE_BEFORE_2019__INTERNAL_ARRONDISSEMENT"        = .b19_hop("cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_BEFORE_2019__NIS_COMMUNE_2019" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     convert_nis_before2019_to_nis2019(i, md)
   },
 
@@ -204,43 +200,35 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_2025__NIS_PROVINCE_2025"       = .master_hop("2025", "cd_commune", "cd_province"),
   "NIS_COMMUNE_2025__NIS_REGION_2025"         = .master_hop("2025", "cd_commune", "cd_region"),
   "NIS_COMMUNE_2025__NIS_COMMUNE_2019" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     convert_nis2025_to_nis2019(i, md)
   },
   "NIS_COMMUNE_2025__NUTS3_2027" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     .route_nis2025_nuts2027(i, "NUTS3_2027", md)
   },
   "NIS_COMMUNE_2025__NUTS2_2027" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     .route_nis2025_nuts2027(i, "NUTS2_2027", md)
   },
   "NIS_COMMUNE_2025__NUTS1_2027" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     .route_nis2025_nuts2027(i, "NUTS1_2027", md)
   },
 
   # --- NIS ARRONDISSEMENT -> * ---
   "NIS_ARRONDISSEMENT_2019__NUTS3_2021" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     convert_arr_to_nuts3(i, md$communes[nis_version == "2019"])
   },
   "NIS_ARRONDISSEMENT_2019__INTERNAL_ARRONDISSEMENT" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     convert_arr_to_internal(i, md$communes[nis_version == "2019"])
   },
   "NIS_ARRONDISSEMENT_2019__NIS_PROVINCE_2019" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     arr_prov <- unique(md$communes[nis_version == "2019", .(cd_arr, cd_province)])
     convert_via_lookup(i, arr_prov, "cd_arr", "cd_province")
   },
   "NIS_ARRONDISSEMENT_2025__NIS_PROVINCE_2025" = function(i, md) {
-    i[, code_from := as.integer(code_from)]
     arr_prov <- unique(md$communes[nis_version == "2025", .(cd_arr, cd_province)])
     convert_via_lookup(i, arr_prov, "cd_arr", "cd_province")
   },
   "NIS_ARRONDISSEMENT_BEFORE_2019__NIS_PROVINCE_BEFORE_2019" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
+    m <- .get_master_b19(md)
     convert_via_lookup(i, unique(m[, .(cd_arr, cd_province)]), "cd_arr", "cd_province")
   },
 
@@ -249,7 +237,7 @@ normalize_classification_id <- function(class_id) {
   "NIS_PROVINCE_2019__NIS_REGION_2019"               = .master_pair_hop("2019", "cd_province", "cd_region"),
   "NIS_PROVINCE_2025__NIS_REGION_2025"               = .master_pair_hop("2025", "cd_province", "cd_region"),
   "NIS_PROVINCE_BEFORE_2019__NIS_REGION_BEFORE_2019" = function(i, md) {
-    m <- .get_master_b19(md); i[, code_from := as.integer(code_from)]
+    m <- .get_master_b19(md)
     convert_via_lookup(i, unique(m[, .(cd_province, cd_region)]), "cd_province", "cd_region")
   },
 
@@ -334,8 +322,11 @@ route_conversion <- function(input_dt, from, to, md) {
 
   if (from == to) return(input_dt[, .(code_from, code_to = code_from)])
 
+  input_dt <- copy(input_dt)
+  input_dt[, code_from := .node_coerce(code_from, from)]
+
   handler <- .ROUTE_TABLE[[paste0(from, "__", to)]]
-  if (!is.null(handler)) return(handler(copy(input_dt), md))
+  if (!is.null(handler)) return(handler(input_dt, md))
 
   composed <- .compose_via_handlers(copy(input_dt), from, to, md)
   if (!is.null(composed)) return(composed)
@@ -409,7 +400,8 @@ route_conversion <- function(input_dt, from, to, md) {
 
   for (k in seq_len(length(path) - 1L)) {
     handler <- .ROUTE_TABLE[[paste0(path[k], "__", path[k + 1L])]]
-    hop     <- handler(data.table(code_from = unique(mapping$cur)), md)
+    hop_input <- data.table(code_from = .node_coerce(unique(mapping$cur), path[k]))
+    hop     <- handler(hop_input, md)
     hop     <- hop[, .(.k = as.character(code_from), .nxt = code_to)]
     mapping[, .k := as.character(cur)]
     mapping <- merge(mapping, hop, by = ".k", all.x = TRUE, allow.cartesian = TRUE)
