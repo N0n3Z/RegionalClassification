@@ -19,7 +19,11 @@ convert_codes(codes, from, to, master_data, allow_ambiguous = FALSE)
 If TRUE, returns all possible mappings.}
 }
 \value{
-data.table with columns: code_from, code_to (and optionally notes)
+data.table with columns \code{code_from}, \code{code_to}, \code{nature}.
+  \code{nature} is \code{NA} for most conversions; for NIS temporal conversions
+  (2019 \eqn{\leftrightarrow} 2025 / BEFORE_2019 \eqn{\to} 2019) it carries the
+  change reason: \code{"UNCHANGED"}, \code{"FUSION"}, \code{"CHANGE_DSTR"}, or
+  \code{"CHANGE_PROV"}.
 }
 \description{
 This is the main conversion function. It automatically determines the

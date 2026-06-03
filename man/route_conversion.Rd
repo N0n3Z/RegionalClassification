@@ -16,7 +16,7 @@ route_conversion(input_dt, from, to, md)
 \item{md}{Master data (output from build_master_table)}
 }
 \value{
-data.table with code_from, code_to
+data.table with code_from, code_to, nature
 }
 \description{
 Looks up the "FROM__TO" key in .ROUTE_TABLE for a direct single-hop handler.

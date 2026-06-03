@@ -14,7 +14,7 @@ raise an error of class `rcl_invalid_classification`.
 
 ## Naming pattern
 
-Canonical identifiers follow the pattern `{SYSTEM}_{LEVEL}_{VERSION}`:
+Canonical identifiers follow the pattern `SYSTEM_LEVEL_VERSION`:
 
 | Part      | Examples                                 |
 |-----------|------------------------------------------|

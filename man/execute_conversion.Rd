@@ -16,7 +16,8 @@ execute_conversion(codes, from, to, master_data)
 \item{master_data}{Output from build_master_table()}
 }
 \value{
-data.table with code_from, code_to, and metadata
+data.table with columns \code{code_from}, \code{code_to}, \code{nature}
+  (see \code{\link{convert_codes}}).
 }
 \description{
 Execute the actual conversion between two classifications
