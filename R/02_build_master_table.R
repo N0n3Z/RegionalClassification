@@ -196,6 +196,9 @@ build_master_table <- function(raw_data) {
     message(sprintf("  NIS 2025 -> NUTS 2027: %d communes mapped", nrow(comm2025_nuts27)))
   }
 
+  # --- 7b. Backfill NUTS 2021 columns onto NIS 2025 master ---
+  master_2025 <- add_nuts2021_columns_2025(master_2025, master_2019, nis_changes)
+
   # --- 8. NIS change mapping (2019 -> 2025) ---
   nis_change_map <- nis_changes[, .(cd_refnis_old, cd_refnis_new, nature)]
   nis_change_map[, from_version := "2019"]
@@ -329,6 +332,95 @@ build_nis_commune_table <- function(nis_parsed, version) {
   setcolorder(communes, existing_cols)
 
   return(communes)
+}
+
+#' Backfill NUTS 2021 columns onto NIS 2025 communes (build-time only)
+#'
+#' Derives cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0, cd_nuts_lau, and
+#' cd_arr_internal for NIS 2025 communes from the NIS 2019 master:
+#' - Unchanged communes (same code in 2019 and 2025): copy directly.
+#' - Changed communes (in nis_changes[from_version=="2019"]):
+#'   collect the NUTS3_2021 of all constituent 2019 communes and assign it
+#'   only if all constituents share the same NUTS3; else NA +
+#'   rcl_ambiguous_backfill warning. cd_nuts_lau stays NA for fusions (LAU
+#'   is a 1:1 commune identifier and is undefined after a merge).
+#'
+#' The 2025 master must already carry cd_nuts3_2027 etc. (added by
+#' add_nuts2027_columns before this call, via the NIS 2025 NUTS 2027 file).
+#'
+#' @param master_2025 data.table for NIS 2025 communes (from build_master_table)
+#' @param master_2019 data.table for NIS 2019 communes (fully enriched)
+#' @param nis_changes data.table with columns cd_refnis_old, cd_refnis_new,
+#'   nature, from_version
+#' @return data.table master_2025 with NUTS 2021 columns added
+add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
+
+  nuts_cols <- c("cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
+                 "cd_nuts_lau", "cd_arr_internal")
+  # nis_changes here is the raw 2019->2025 output from parse_nis_changes()
+  # (from_version has not been added yet); select only the two code columns.
+  changes   <- nis_changes[, .(cd_refnis_old, cd_refnis_new)]
+  lkp_2019  <- unique(master_2019[, c("cd_commune", nuts_cols), with = FALSE])
+
+  codes_2025    <- unique(master_2025$cd_commune)
+  changed_codes <- unique(changes$cd_refnis_new)
+  unchanged     <- setdiff(codes_2025, changed_codes)
+
+  # --- Unchanged communes: direct lookup from 2019 master ---
+  unch_lkp <- lkp_2019[cd_commune %in% unchanged]
+
+  # --- Changed communes: expand via constituent 2019 codes, aggregate ---
+  constituents <- merge(changes, lkp_2019, by.x = "cd_refnis_old", by.y = "cd_commune",
+                        all.x = TRUE)
+
+  # If all non-NA constituent values are identical -> return that value; else NA
+  .uniq1 <- function(x) {
+    u <- unique(na.omit(x))
+    if (length(u) == 1L) u else NA_character_
+  }
+
+  # Aggregate scalar cols (not cd_nuts_lau which needs special logic)
+  scalar_cols <- setdiff(nuts_cols, "cd_nuts_lau")
+  agg <- constituents[, c(
+    lapply(setNames(scalar_cols, scalar_cols), function(col) .uniq1(get(col))),
+    list(n_constituents   = .N,
+         n_nuts3_distinct = uniqueN(na.omit(cd_nuts3)))
+  ), by = .(cd_commune_2025 = cd_refnis_new)]
+
+  # cd_nuts_lau: only copy for 1:1 changes (single constituent)
+  lau_singles <- constituents[, {
+    if (.N == 1L) .(cd_nuts_lau = cd_nuts_lau) else .(cd_nuts_lau = NA_character_)
+  }, by = .(cd_commune_2025 = cd_refnis_new)]
+  agg <- merge(agg, lau_singles, by = "cd_commune_2025", all.x = TRUE)
+
+  # Warn for ambiguous fusions (cross-NUTS3 mergers)
+  ambig <- agg[n_nuts3_distinct > 1L]
+  if (nrow(ambig) > 0L) {
+    warn(
+      sprintf(
+        paste0("%d NIS 2025 commune(s) fuse localities from multiple NUTS3_2021 regions; ",
+               "cd_nuts3 set to NA for: %s"),
+        nrow(ambig), paste(sort(ambig$cd_commune_2025), collapse = ", ")
+      ),
+      class = "rcl_ambiguous_backfill"
+    )
+  }
+
+  # --- Assemble full lookup: 2025 commune -> NUTS 2021 columns ---
+  changed_lkp <- agg[, c("cd_commune_2025", nuts_cols), with = FALSE]
+  setnames(changed_lkp, "cd_commune_2025", "cd_commune")
+
+  lookup <- rbindlist(list(unch_lkp, changed_lkp), use.names = TRUE)
+
+  # --- Merge back ---
+  result <- copy(master_2025)
+  result <- merge(result, lookup, by = "cd_commune", all.x = TRUE)
+
+  n_nuts3 <- sum(!is.na(result$cd_nuts3))
+  message(sprintf("  NIS 2025 -> NUTS 2021: %d/%d communes with cd_nuts3 (%d ambiguous)",
+                  n_nuts3, nrow(result), nrow(ambig)))
+
+  result
 }
 
 #' Derive NUTS 2027 columns for NIS 2019 / BEFORE_2019 communes (build-time only)

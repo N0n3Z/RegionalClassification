@@ -208,6 +208,10 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_2025__NIS_ARRONDISSEMENT_2025" = .master_hop("2025", "cd_commune", "cd_arr"),
   "NIS_COMMUNE_2025__NIS_PROVINCE_2025"       = .master_hop("2025", "cd_commune", "cd_province"),
   "NIS_COMMUNE_2025__NIS_REGION_2025"         = .master_hop("2025", "cd_commune", "cd_region"),
+  # NUTS 2021 paths: backfilled by add_nuts2021_columns_2025() at build time.
+  # NIS_COMMUNE_2025__NUTS_LAU_2021 is intentionally absent: see 00_config.R note.
+  "NIS_COMMUNE_2025__NUTS3_2021"              = .master_hop("2025", "cd_commune", "cd_nuts3"),
+  "NIS_COMMUNE_2025__INTERNAL_ARRONDISSEMENT" = .master_hop("2025", "cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_2025__NIS_COMMUNE_2019" = function(i, md) {
     convert_nis2025_to_nis2019(i, md)
   },

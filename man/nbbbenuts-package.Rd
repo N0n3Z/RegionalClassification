@@ -19,5 +19,10 @@ Useful links:
 \author{
 \strong{Maintainer}: N0n3Z \email{n0n3z@users.noreply.github.com}
 
+Authors:
+\itemize{
+  \item N0n3Z \email{n0n3z@users.noreply.github.com}
+}
+
 }
 \keyword{internal}

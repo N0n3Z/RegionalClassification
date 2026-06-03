@@ -233,3 +233,47 @@ test_that("convert_dataset does not expose the nature column", {
                          from = "NIS_COMMUNE_2019", verbose = FALSE)
   expect_false("nature" %in% names(out))
 })
+
+# ── Tests Phase 4: NIS_COMMUNE_2025 -> NUTS3_2021 / INTERNAL_ARRONDISSEMENT ───
+
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021 is a simple (direct) conversion", {
+  r <- check_conversion_path("NIS_COMMUNE_2025", "NUTS3_2021")
+  expect_true(r[["is_simple"]])
+})
+
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021 converts unchanged communes correctly", {
+  # Brussels communes 21001-21019 are unchanged between 2019 and 2025
+  codes  <- c(21001L, 21004L, 11002L)
+  result <- convert_codes(codes, "NIS_COMMUNE_2025", "NUTS3_2021", master_data)
+  expect_equal(nrow(result), 3L)
+  expect_equal(result[code_from == 21001L]$code_to, "BE100")
+  expect_equal(result[code_from == 21004L]$code_to, "BE100")
+  expect_true(all(!is.na(result$code_to)))
+})
+
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021 returns NA for cross-NUTS3 fusions (46029, 46030, 71072)", {
+  # These 3 communes fuse localities from different NUTS3_2021 regions
+  expect_warning(
+    convert_codes(c(46029L, 46030L, 71072L), "NIS_COMMUNE_2025", "NUTS3_2021", master_data),
+    class = "rcl_unmatched_codes"
+  )
+  result <- suppressWarnings(
+    convert_codes(c(46029L, 46030L, 71072L), "NIS_COMMUNE_2025", "NUTS3_2021", master_data)
+  )
+  expect_true(all(is.na(result$code_to)))
+})
+
+test_that("NIS_COMMUNE_2025 -> INTERNAL_ARRONDISSEMENT is a simple conversion", {
+  r <- check_conversion_path("NIS_COMMUNE_2025", "INTERNAL_ARRONDISSEMENT")
+  expect_true(r[["is_simple"]])
+  result <- convert_codes(c(21001L, 11002L), "NIS_COMMUNE_2025", "INTERNAL_ARRONDISSEMENT",
+                          master_data)
+  expect_equal(nrow(result), 2L)
+  expect_true(all(!is.na(result$code_to)))
+})
+
+test_that("NIS_COMMUNE_2025 -> NUTS2_2021 is reachable (multi-hop via NUTS3_2021)", {
+  result <- convert_codes(21001L, "NIS_COMMUNE_2025", "NUTS2_2021", master_data)
+  expect_equal(nrow(result), 1L)
+  expect_false(is.na(result$code_to))
+})
