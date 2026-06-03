@@ -8,3 +8,6 @@
 ^\.Rproj\.user$
 ^.*\.Rproj$
 ^README\.md$
+^_pkgdown\.yml$
+^docs$
+^demo$

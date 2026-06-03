@@ -10,6 +10,9 @@
 # Generated package docs (kept in repo via devtools::document())
 # man/ — intentionally tracked
 
+# pkgdown site — built by CI and deployed to gh-pages branch
+docs/
+
 # Raw data (large, not versioned)
 data/raw/
 Rplots.pdf
