@@ -4,7 +4,7 @@
 ## usethis namespace: start
 #' @import data.table
 #' @importFrom rlang abort warn inform
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit setNames
 #' @importFrom utils head
 ## usethis namespace: end
 NULL
@@ -40,5 +40,11 @@ utils::globalVariables(c(
   "tx_postal_name_fr", "tx_postal_name_nl",
   "tx_prov_fr", "tx_prov_nl",
   "tx_region_fr", "tx_region_nl",
-  "unknown_pct", "weight"
+  "unknown_pct", "weight",
+  # data.table working columns used in .compose_via_handlers and add_nuts2021_columns_2025
+  ".k", ".nxt", ".ord", "cur", "n_nuts3_distinct",
+  # data.table working columns used in rebase_series / split_ambiguous
+  ".old_code", ".target_code",
+  # used in get_crosswalk and get_label via data.table NSE
+  "label", "w"
 ))

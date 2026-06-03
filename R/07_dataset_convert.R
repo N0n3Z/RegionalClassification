@@ -101,7 +101,7 @@ convert_dataset <- function(
   # --- Run conversion ---
   codes  <- dt[[code_col]]
   result <- convert_codes(codes, from_norm, to_norm, master_data,
-                          allow_ambiguous = allow_ambiguous)
+                          allow_ambiguous = allow_ambiguous)[, .(code_from, code_to)]
 
   # --- M:N case: result has more rows than input ---
   if (nrow(result) > length(codes)) {

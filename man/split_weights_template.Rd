@@ -51,17 +51,13 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
   )
 
-  # 3b. Or pass directly to rebase_series / split_ambiguous
-  rebase_series(
-    data       = my_data,
-    period_col = "year",
-    code_col   = "arrondissement",
-    value_cols = "emploi",
-    version_map = list("NIS_ARRONDISSEMENT_2019" = 2010:2024),
-    to          = "NUTS3_2021",
-    master_data = master_data,
-    split       = tpl
+  # 3b. Or pass directly to split_ambiguous
+  arr_data <- data.table::data.table(
+    year = c(2020L, 2021L), arr = c(63000L, 63000L), emploi = c(120000, 122000)
   )
+  split_ambiguous(arr_data, "arr", value_cols = "emploi",
+                  from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+                  master_data = master_data, weights = tpl, verbose = FALSE)
 }
 }
 \seealso{

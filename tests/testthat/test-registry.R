@@ -175,3 +175,41 @@ test_that(".node_coerce() coerces to character for NUTS nodes", {
   expect_type(result, "character")
   expect_equal(result, "21004")
 })
+
+# ── Phase 5: CLASSIFICATION_REGISTRY consistency with CLASSIFICATION_NODES ────
+# CLASSIFICATION_REGISTRY is a system-level grouping (NIS, NUTS, POSTAL, INTERNAL).
+# CLASSIFICATION_NODES is the granular per-node truth. The registry must cover
+# every system and level that a node declares.
+
+test_that("CLASSIFICATION_REGISTRY covers every system in CLASSIFICATION_NODES", {
+  node_systems <- unique(vapply(CLASSIFICATION_NODES, function(n) n$system, character(1)))
+  missing_sys  <- setdiff(node_systems, names(CLASSIFICATION_REGISTRY))
+  expect_equal(length(missing_sys), 0L,
+               info = paste("Systems in CLASSIFICATION_NODES but not in CLASSIFICATION_REGISTRY:",
+                            paste(missing_sys, collapse = ", ")))
+})
+
+test_that("CLASSIFICATION_REGISTRY levels cover every level in CLASSIFICATION_NODES", {
+  for (id in names(CLASSIFICATION_NODES)) {
+    n       <- CLASSIFICATION_NODES[[id]]
+    reg_lvl <- tolower(CLASSIFICATION_REGISTRY[[n$system]]$levels)
+    expect_true(tolower(n$level) %in% reg_lvl,
+                info = sprintf(
+                  "%s: level '%s' not in CLASSIFICATION_REGISTRY$%s$levels (%s)",
+                  id, n$level, n$system, paste(reg_lvl, collapse = ", ")
+                ))
+  }
+})
+
+test_that("CLASSIFICATION_REGISTRY versions cover every non-NA version in CLASSIFICATION_NODES", {
+  for (id in names(CLASSIFICATION_NODES)) {
+    n <- CLASSIFICATION_NODES[[id]]
+    if (is.na(n$version)) next   # NA -> "current" in the registry; skip
+    reg_ver <- CLASSIFICATION_REGISTRY[[n$system]]$versions
+    expect_true(n$version %in% reg_ver,
+                info = sprintf(
+                  "%s: version '%s' not in CLASSIFICATION_REGISTRY$%s$versions (%s)",
+                  id, n$version, n$system, paste(reg_ver, collapse = ", ")
+                ))
+  }
+})

@@ -329,7 +329,29 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS2_2027"),
   list(from = "NIS_COMMUNE_2025", to = "NUTS1_2027",
        relation = "N:1", via = "CONVERSION_NIS2025_NUTS2027",
-       notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS1_2027")
+       notes = "Via NIS_COMMUNE_2025 -> NUTS3_2027 -> NUTS1_2027"),
+
+  # --- NIS 2025 -> NUTS 2021 (Phase 4) ---
+  # cd_nuts3 / cd_nuts_lau / cd_arr_internal backfilled onto the 2025 master via
+  # add_nuts2021_columns_2025(): unchanged communes inherit from 2019; fused communes
+  # are unambiguous when all constituents share the same NUTS3, else NA + warning.
+  list(from = "NIS_COMMUNE_2025", to = "NUTS3_2021",
+       relation = "N:1", via = "derived",
+       notes = paste0("cd_nuts3 backfilled onto 2025 master from constituent 2019 communes. ",
+                      "N:1 because all 2025 communes map to at most one NUTS3_2021 region; ",
+                      "ambiguous fusions get NA (rcl_ambiguous_backfill warning at build time).")),
+  # NIS_COMMUNE_2025 -> NUTS_LAU_2021: deliberately absent.
+  # LAU (Local Administrative Unit) is a 1:1 identifier for NIS 2019 communes.
+  # Fused communes in NIS 2025 do not have a single LAU code (LAU is undefined
+  # after a merge of two or more communes). Adding this edge would create a
+  # spurious simple path NIS_COMMUNE_2025 -> NUTS_LAU_2021 -> NIS_COMMUNE_2019
+  # that silently gives NA for fused communes instead of their 2019 constituents.
+  # Users who need LAU codes for 2025 communes should convert via NIS 2019 and
+  # filter for unchanged communes.
+  list(from = "NIS_COMMUNE_2025", to = "INTERNAL_ARRONDISSEMENT",
+       relation = "N:1", via = "derived",
+       notes = paste0("cd_arr_internal backfilled onto 2025 master from constituent 2019 communes. ",
+                      "Same uniqueness logic as NUTS3_2021 backfill."))
 )
 
 # --- Valid classification identifiers ---
