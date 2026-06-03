@@ -29,9 +29,11 @@ head(rc_nuts3_2021)
 \donttest{
   master_data <- load_master_data()
 
-  # Convert NUTS3 2021 codes to NUTS3 2027
+  # Aggregate NUTS3 2021 to NUTS2 2021
+  # Note: NUTS3_2021 and NUTS3_2027 cover different geographic areas;
+  # there is no direct conversion between them (see ?classification_reference).
   convert_dataset(rc_nuts3_2021, "cd_nuts3",
-                  from = "NUTS3_2021", to = "NUTS3_2027", master_data)
+                  from = "NUTS3_2021", to = "NUTS2_2021", master_data)
 }
 }
 \keyword{datasets}
