@@ -1,5 +1,44 @@
 # nbbbenuts (development version)
 
+## Bug fixes
+
+* Corrected the cardinality of three commune -> NUTS3 edges in the conversion
+  graph (`NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021`, `NIS_COMMUNE_BEFORE_2019 ->
+  NUTS3_2027`, `NIS_COMMUNE_2019 -> NUTS3_2027`) from `1:1` to `N:1`: many
+  communes share one NUTS3 region. They were previously labelled `1:1`, which
+  made their reverse appear `1:1` too, so `check_conversion_path()` wrongly
+  reported descents such as `NUTS3 -> commune`, `NUTS3 -> NUTS_LAU` and
+  `* -> *_BEFORE_2019` as lossless "simple" conversions when they are in fact
+  ambiguous (`1:N`). The forward direction stays `N:1` (still simple).
+* `convert_codes()` now executes **every** multi-hop conversion that
+  `check_conversion_path()` reports as reachable. Previously the path checker
+  did a generic graph BFS while the executor only knew hand-written single-hop
+  handlers (plus a POSTAL special case), so conversions such as
+  `NUTS3_2021 -> NUTS1_2021`, `NUTS3_2021 -> NUTS0` or `NUTS1_2021 -> NUTS0`
+  validated as "simple" but then failed with `rcl_no_route`. The executor now
+  composes single-hop handlers along a path in the handler graph, keeping the
+  graph as the single source of truth for topology.
+* Added the previously-missing simple single-hop handlers
+  `NIS_PROVINCE_* -> NIS_REGION_*`, `NIS_ARRONDISSEMENT_BEFORE_2019 ->
+  NIS_PROVINCE_BEFORE_2019`, `NUTS2_2021 -> NUTS1_2021`, `NUTS1_2021 -> NUTS0`
+  and `NUTS1_2027 -> NUTS0`.
+
+## Improvements
+
+* The unified `communes` master table is now schema-validated at build time
+  (`build_master_table()`): each per-version sub-table is checked against
+  `MASTER_COMMUNE_CORE_COLS` / `MASTER_COMMUNE_KNOWN_COLS` before being stacked,
+  turning a silently NA-filled renamed/dropped column into an explicit
+  `rcl_schema_error`.
+* `R/03_convert.R`: the repetitive per-version dispatch closures are now built
+  from small handler factories (`.master_hop`, `.b19_hop`, `.master_pair_hop`),
+  so adding a future NIS/NUTS version is a matter of declaring hops rather than
+  copy-pasting closure bodies. The POSTAL multi-hop special case is gone, handled
+  by the generic composer.
+* New test (`test-route-parity.R`) asserts that every conversion the graph
+  reports as simple is actually executable, guarding the graph/executor parity
+  against future drift.
+
 ## New functions
 
 * `detect_classification()` — auto-detects the geographic classification of a

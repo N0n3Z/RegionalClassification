@@ -319,7 +319,9 @@ test_that("split_weights_template errors for invalid classification", {
 # ── Test R14: 1:N split with ratio — values replicated unchanged ──────────────
 test_that("rebase_series replicates ratio values unchanged for 1:N splits", {
   data <- data.table(year = 2022L, arr = 63000L, rate = 0.42)
-  result <- rebase_series(
+  # Verviers split with equal weights + ratio replication: the advisory warnings
+  # (ratio/fun, unregistered 'population' weights) are expected here.
+  result <- suppressWarnings(rebase_series(
     data,
     period_col  = "year",
     code_col    = "arr",
@@ -328,7 +330,7 @@ test_that("rebase_series replicates ratio values unchanged for 1:N splits", {
     to          = "NUTS3_2021",
     master_data = master_data,
     value_type  = "ratio"
-  )
+  ))
   # Both targets receive the original rate unchanged
   expect_equal(result[arr == "BE335", rate], 0.42)
   expect_equal(result[arr == "BE336", rate], 0.42)

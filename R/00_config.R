@@ -152,11 +152,15 @@ CONVERSION_GRAPH_EDGES <- list(
 
   # --- NIS BEFORE_2019 to NUTS 2021 (pre-2019 assignments) ---
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2021",
-       relation = "1:1", via = "CONVERSION_NIS2019_NUTS2021",
-       notes = "Uses historical NUTS assignments (DT_VLDT_STOP = 2019-01-01 for changed codes)"),
+       relation = "N:1", via = "CONVERSION_NIS2019_NUTS2021",
+       notes = paste0(
+         "Many communes share one NUTS3 (N:1); the reverse NUTS3 -> commune is ",
+         "ambiguous. Uses historical NUTS assignments (DT_VLDT_STOP = 2019-01-01 ",
+         "for changed codes)."
+       )),
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2027",
-       relation = "1:1", via = "derived",
-       notes = "Via NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+       relation = "N:1", via = "derived",
+       notes = "Many communes per NUTS3 (N:1). Via NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021 -> NUTS3_2027"),
 
   # --- NIS BEFORE_2019 -> NIS 2019 (requires REFNIS_CHANGE_BEFORE2019.xlsx for merged communes) ---
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_COMMUNE_2019",
@@ -265,8 +269,8 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "N:1", via = "derived",
        notes = "Hierarchical"),
   list(from = "NIS_COMMUNE_2019", to = "NUTS3_2027",
-       relation = "1:1", via = "derived",
-       notes = "Via NUTS 2021: NIS_COMMUNE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+       relation = "N:1", via = "derived",
+       notes = "Many communes per NUTS3 (N:1). Via NUTS 2021: NIS_COMMUNE_2019 -> NUTS3_2021 -> NUTS3_2027"),
   list(from = "NUTS3_2027", to = "INTERNAL_ARRONDISSEMENT",
        relation = "1:1", via = "derived",
        notes = "Via NUTS 2021: NUTS3_2027 -> NUTS3_2021 -> INTERNAL_ARRONDISSEMENT"),
@@ -336,6 +340,31 @@ MASTER_FLAT_TABLES <- c(
   "communes",    # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
   "postal",      # postal -> NIS mappings for all versions (nis_version discriminator)
   "nis_changes"  # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (from_version)
+)
+
+# --- Schema of the unified `communes` table ---
+# The communes table is the rbindlist() of one sub-table per NIS version, which
+# do NOT all carry the same columns (e.g. NIS 2025 carries only the 2027 NUTS
+# columns, not the 2021 ones). rbindlist(fill = TRUE) tolerates that by design,
+# but it would also silently mask a renamed or dropped column with all-NA.
+# .validate_commune_schema() (02_build_master_table.R) uses the two sets below
+# to turn such silent drift into an explicit build-time error:
+#   - CORE: columns every per-version sub-table MUST provide.
+#   - KNOWN: the full set a sub-table is ALLOWED to contain (a version may omit
+#     version-specific columns, but may not introduce an unknown one).
+MASTER_COMMUNE_CORE_COLS <- c(
+  "cd_commune", "tx_commune_fr", "tx_commune_nl",
+  "cd_arr", "cd_province", "cd_region", "nis_version"
+)
+
+MASTER_COMMUNE_KNOWN_COLS <- c(
+  MASTER_COMMUNE_CORE_COLS,
+  "tx_arr_fr", "tx_arr_nl", "cd_arr_2digit",
+  "tx_prov_fr", "tx_prov_nl", "tx_region_fr", "tx_region_nl",
+  "cd_nuts_lau", "cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
+  "tx_nuts3_fr", "tx_nuts3_nl",
+  "cd_nuts3_2027", "cd_nuts2_2027", "cd_nuts1_2027", "cd_nuts0_2027",
+  "cd_arr_internal"
 )
 
 # --- Helper: get data directory path ---

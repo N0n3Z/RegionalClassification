@@ -9,7 +9,8 @@ save_master_tables(master_data, output_dir = get_processed_data_path())
 \arguments{
 \item{master_data}{Output from build_master_table()}
 
-\item{output_dir}{Path to output directory (default: data/processed/)}
+\item{output_dir}{Path to output directory (default: inst/extdata/, via
+get_processed_data_path())}
 }
 \value{
 Invisible NULL (called for side effect)

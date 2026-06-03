@@ -35,6 +35,41 @@
   result
 }
 
+#' Validate a per-version communes sub-table against the expected schema
+#'
+#' Guards the unified communes table against silent column drift before the
+#' version sub-tables are stacked. See MASTER_COMMUNE_CORE_COLS /
+#' MASTER_COMMUNE_KNOWN_COLS in 00_config.R.
+#'
+#' @param tbl   A per-version communes data.table
+#' @param label Human-readable version label used in error messages
+#' @return Invisibly TRUE; aborts with class \code{rcl_schema_error} otherwise
+#' @noRd
+.validate_commune_schema <- function(tbl, label) {
+  cols <- names(tbl)
+
+  missing <- setdiff(MASTER_COMMUNE_CORE_COLS, cols)
+  if (length(missing) > 0L) {
+    abort(
+      sprintf("communes sub-table '%s' is missing required column(s): %s",
+              label, paste(missing, collapse = ", ")),
+      class = "rcl_schema_error", label = label, missing = missing
+    )
+  }
+
+  unknown <- setdiff(cols, MASTER_COMMUNE_KNOWN_COLS)
+  if (length(unknown) > 0L) {
+    abort(
+      sprintf(paste0("communes sub-table '%s' has unexpected column(s): %s\n",
+                     "If intended, add them to MASTER_COMMUNE_KNOWN_COLS in 00_config.R."),
+              label, paste(unknown, collapse = ", ")),
+      class = "rcl_schema_error", label = label, unknown = unknown
+    )
+  }
+
+  invisible(TRUE)
+}
+
 #' Build the master classification table from all loaded data
 #'
 #' Creates a unified table structure with three main data.tables:
@@ -168,6 +203,12 @@ build_master_table <- function(raw_data) {
   # --- 9. Unify into three flat tables ---
 
   # communes: NIS 2019 + BEFORE_2019 + 2025
+  # Validate each sub-table's schema before stacking, so a renamed/dropped column
+  # fails loudly here instead of being silently NA-filled by rbindlist(fill=TRUE).
+  .validate_commune_schema(master_2019, "NIS 2019")
+  if (!is.null(master_before2019)) .validate_commune_schema(master_before2019, "NIS BEFORE_2019")
+  .validate_commune_schema(master_2025, "NIS 2025")
+
   communes_list <- list(master_2019)
   if (!is.null(master_before2019)) communes_list <- c(communes_list, list(master_before2019))
   communes_list <- c(communes_list, list(master_2025))
@@ -330,7 +371,8 @@ add_nuts2027_columns <- function(master) {
 #' pre-built snapshot used by load_master_data().
 #'
 #' @param master_data Output from build_master_table()
-#' @param output_dir  Path to output directory (default: data/processed/)
+#' @param output_dir  Path to output directory (default: inst/extdata/, via
+#'   get_processed_data_path())
 #' @return Invisible NULL (called for side effect)
 #' @export
 save_master_tables <- function(master_data, output_dir = get_processed_data_path()) {
