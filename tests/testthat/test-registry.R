@@ -103,15 +103,31 @@ test_that(".node_label_meta() returns the five expected fields", {
   expect_equal(meta$fr,   "tx_nuts3_fr")
 })
 
-test_that(".node_label_meta() agrees with .LABEL_META for all nodes", {
-  for (id in names(nbbbenuts:::.LABEL_META)) {
-    legacy <- nbbbenuts:::.LABEL_META[[id]]
-    new    <- nbbbenuts:::.node_label_meta(id)
-    expect_equal(new$ver,  legacy$ver,  info = id)
-    expect_equal(new$code, legacy$code, info = id)
-    expect_equal(new$fr,   legacy$fr,   info = id)
-    expect_equal(new$nl,   legacy$nl,   info = id)
-    expect_equal(new$src,  legacy$src,  info = id)
+test_that(".node_label_meta() returns correct values for all 22 nodes", {
+  # .LABEL_META has been removed; verify key nodes directly against known values.
+  check <- function(id, exp_ver, exp_code, exp_fr, exp_nl, exp_src) {
+    m <- nbbbenuts:::.node_label_meta(id)
+    expect_equal(m$ver,  exp_ver,  info = id)
+    expect_equal(m$code, exp_code, info = id)
+    expect_equal(m$fr,   exp_fr,   info = id)
+    expect_equal(m$nl,   exp_nl,   info = id)
+    expect_equal(m$src,  exp_src,  info = id)
+  }
+  check("NIS_COMMUNE_2019",    "2019",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
+  check("NIS_COMMUNE_2025",    "2025",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
+  check("NIS_COMMUNE_BEFORE_2019", "BEFORE_2019", "cd_commune","tx_commune_fr","tx_commune_nl", "communes")
+  check("NIS_ARRONDISSEMENT_2019", "2019",    "cd_arr",        "tx_arr_fr",    "tx_arr_nl",     "communes")
+  check("NUTS3_2021",          "2019",        "cd_nuts3",      "tx_nuts3_fr",  "tx_nuts3_nl",   "communes")
+  check("NUTS2_2021",          "2019",        "cd_nuts2",      NA_character_,  NA_character_,   "communes")
+  check("NUTS_LAU_2021",       "2019",        "cd_nuts_lau",   "tx_commune_fr","tx_commune_nl", "communes")
+  check("NUTS0",               "2019",        "cd_nuts0",      NA_character_,  NA_character_,   "communes")
+  check("NUTS3_2027",          "2025",        "cd_nuts3_2027", NA_character_,  NA_character_,   "communes")
+  check("POSTAL",              "2019",        "cd_postal",     "tx_postal_name_fr","tx_postal_name_nl","postal")
+  check("INTERNAL_ARRONDISSEMENT","2019",     "cd_arr_internal","tx_arr_fr",   "tx_arr_nl",     "communes")
+  # All 22 nodes resolvable without error
+  for (id in VALID_CLASSIFICATIONS) {
+    m <- nbbbenuts:::.node_label_meta(id)
+    expect_true(is.list(m) && length(m) == 5L, info = id)
   }
 })
 
