@@ -227,12 +227,19 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Each postal code maps to one commune (KEEP_UNIQUE=TRUE)"),
 
   # --- NIS version changes ---
+  # Forward (2019->2025) is N:1: each 2019 commune maps to exactly one 2025
+  # commune (unchanged or merged into one specific target). Several 2019
+  # communes can share the same 2025 target (fusions), but the mapping is
+  # unambiguous from the source side.
+  # Reverse (2025->2019) is auto-generated as 1:N: a fused 2025 commune maps
+  # back to the multiple 2019 constituents -> ambiguous, requires allow_ambiguous.
   list(from = "NIS_COMMUNE_2019", to = "NIS_COMMUNE_2025",
-       relation = "M:N", via = "REFNIS_CHANGE",
+       relation = "N:1", via = "REFNIS_CHANGE",
        notes = paste0(
-         "Fusions, district changes, and province changes between 2019 and 2025. ",
-         "Multiple 2019 communes may merge into one 2025 commune (FUSION). ",
-         "Some communes change arrondissement (CHANGE_DSTR) or province (CHANGE_PROV)."
+         "Each 2019 commune maps to exactly one 2025 commune (N:1 forward). ",
+         "Fusions: multiple 2019 communes merge into one 2025 commune. ",
+         "District/province changes: commune keeps its code or gets a new one. ",
+         "Reverse (2025->2019) is 1:N for fused communes."
        )),
 
   # --- NUTS3 to Internal arrondissement ---
