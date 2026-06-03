@@ -42,22 +42,15 @@ detect_classification <- function(codes, master_data) {
   if (!all_int) return(NULL)   # mixed or unknown
 
   # --- Integer codes: match against reference sets ---
-  comm19 <- master_data$communes[nis_version == "2019"]
-  comm25 <- master_data$communes[nis_version == "2025"]
-  refs <- list(
-    NIS_COMMUNE_2019        = as.character(comm19$cd_commune),
-    NIS_COMMUNE_2025        = as.character(comm25$cd_commune),
-    NIS_ARRONDISSEMENT_2019 = as.character(unique(comm19$cd_arr)),
-    NIS_PROVINCE_2019       = as.character(unique(comm19$cd_province)),
-    NIS_REGION_2019         = as.character(unique(comm19$cd_region)),
-    POSTAL                  = as.character(master_data$postal[nis_version == "2019", cd_postal]),
-    INTERNAL_ARRONDISSEMENT = as.character(unique(comm19[!is.na(cd_arr_internal), cd_arr_internal]))
-  )
-
-  comm_b19 <- master_data$communes[nis_version == "BEFORE_2019"]
-  if (nrow(comm_b19) > 0L) {
-    refs[["NIS_COMMUNE_BEFORE_2019"]] <- as.character(comm_b19$cd_commune)
-  }
+  # Build refs from the registry (detectable=TRUE nodes only) to keep the
+  # heuristic identical to the original hand-coded list.
+  detectable_ids <- names(Filter(function(n) isTRUE(n$detectable), CLASSIFICATION_NODES))
+  refs <- lapply(stats::setNames(detectable_ids, detectable_ids), function(id) {
+    ref <- .node_reference_codes(id, master_data)
+    if (is.null(ref)) return(NULL)
+    as.character(ref$code)
+  })
+  refs <- Filter(Negate(is.null), refs)
 
   rates <- vapply(refs, function(ref) mean(codes_chr %in% ref, na.rm = TRUE),
                   numeric(1))

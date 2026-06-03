@@ -72,12 +72,39 @@ test_that("convert_codes raises rcl_ambiguous_conversion with allow_ambiguous=FA
   )
 })
 
-# ── Test CC10: rcl_no_route pour paire valide mais sans chemin ────────────────
-test_that("convert_codes raises rcl_no_route for valid but unroutable pair", {
-  # NIS_COMMUNE_2019 -> NIS_COMMUNE_BEFORE_2019 has no route (only the reverse exists)
+# ── Test CC10: rcl_ambiguous_conversion pour paire M:N ───────────────────────
+test_that("convert_codes raises rcl_ambiguous_conversion for M:N pair", {
+  # NIS_COMMUNE_2019 -> NIS_COMMUNE_BEFORE_2019 exists in the graph but is M:N (ambiguous)
   expect_error(
     convert_codes(21004L, "NIS_COMMUNE_2019", "NIS_COMMUNE_BEFORE_2019", master_data),
-    class = "rcl_no_route"
+    class = "rcl_ambiguous_conversion"
+  )
+})
+
+# ── Test CC11b: NIS_COMMUNE_2019 -> 2025 est simple (N:1 forward) ─────────────
+test_that("NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 is simple (N:1)", {
+  r <- check_conversion_path("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")
+  expect_true(r[["is_simple"]])
+  expect_equal(r[["relations"]], "N:1")
+})
+
+test_that("NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 converts without allow_ambiguous", {
+  # A stable commune (Anderlecht 21001) and a fusion constituent (21013 merged)
+  result <- convert_codes(c(21001L, 21004L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025",
+                           master_data)
+  expect_true(is.data.table(result))
+  expect_equal(nrow(result), 2L)
+  expect_true(all(!is.na(result$code_to)))
+})
+
+test_that("NIS_COMMUNE_2025 -> NIS_COMMUNE_2019 is ambiguous (1:N reverse)", {
+  r <- check_conversion_path("NIS_COMMUNE_2025", "NIS_COMMUNE_2019")
+  expect_false(r[["is_simple"]])
+  expect_equal(r[["relations"]], "1:N")
+  # Raises error without allow_ambiguous
+  expect_error(
+    convert_codes(21001L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data),
+    class = "rcl_ambiguous_conversion"
   )
 })
 

@@ -331,12 +331,17 @@ build_nis_commune_table <- function(nis_parsed, version) {
   return(communes)
 }
 
-#' Derive NUTS 2027 columns from NUTS 2021 columns (NIS 2019 / BEFORE_2019 path)
+#' Derive NUTS 2027 columns for NIS 2019 / BEFORE_2019 communes (build-time only)
 #'
-#' Applies the NUTS 2021 → NUTS 2027 remapping from NUTS2021_TO_NUTS2027 (00_config.R),
-#' based on EU regulation 2026/195. For NIS 2025 communes, the official
-#' REFNIS_2025-NUTS_2027.xlsx file is used instead (see build_master_table step 7b).
-#' Codes not listed in the mapping are carried over unchanged.
+#' Applies the NUTS2021_TO_NUTS2027 code-rename table to add cd_nuts3_2027,
+#' cd_nuts2_2027, cd_nuts1_2027 to the NIS 2019 and BEFORE_2019 master tables.
+#'
+#' **Known limitation:** three communes changed province between 2019 and 2025
+#' (CHANGE_PROV/CHANGE_DSTR in nis_changes), shifting their NUTS3 region.  For
+#' these communes the derived cd_nuts3_2027 value is WRONG.  The conversion
+#' executor no longer reads this column: `NIS_COMMUNE_2019 → NUTS3_2027` is
+#' routed via `NIS_COMMUNE_2025` (authoritative data).  Phase 4 of the
+#' refactoring plan will rebuild the pre-computed snapshot with correct values.
 #'
 #' @param master data.table with cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0 columns
 #' @return data.table with added cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027

@@ -58,6 +58,7 @@ test_that("NUTS3_2021 converts to INTERNAL_ARRONDISSEMENT", {
 
 # ── Test 7: Fuzzy match - postal code names ───────────────────────────────────
 test_that("fuzzy_match_names works for POSTAL", {
+  skip_if_not_installed("stringdist")
   names  <- c("Bruxelles", "Anvers", "Liege", "Namur", "Gand")
   result <- fuzzy_match_names(names, "POSTAL", master_data, max_dist = 0.3, language = "fr")
   expect_gte(nrow(result), length(names))
@@ -65,6 +66,7 @@ test_that("fuzzy_match_names works for POSTAL", {
 
 # ── Test 8: Fuzzy match - NIS Commune 2019 names ─────────────────────────────
 test_that("fuzzy_match_names handles misspelled NIS_COMMUNE_2019 names", {
+  skip_if_not_installed("stringdist")
   names  <- c("Anderlecht", "Bruxeles", "Antwerpn", "Liege", "Vervirs")
   result <- fuzzy_match_names(names, "NIS_COMMUNE_2019", master_data,
                               max_dist = 0.3, language = "both")
@@ -73,6 +75,7 @@ test_that("fuzzy_match_names handles misspelled NIS_COMMUNE_2019 names", {
 
 # ── Test 9: Fuzzy match - NIS Commune 2025 names ─────────────────────────────
 test_that("fuzzy_match_names works for NIS_COMMUNE_2025", {
+  skip_if_not_installed("stringdist")
   names  <- c("Anderlecht", "Gent", "Hasselt", "Charleroi")
   result <- fuzzy_match_names(names, "NIS_COMMUNE_2025", master_data,
                               max_dist = 0.3, language = "both")
@@ -88,20 +91,23 @@ test_that("NIS_COMMUNE_2019 converts to NUTS3_2027 with correct remapping", {
   expect_equal(result[code_from == 44021L]$code_to, "BE274")   # BE234 -> BE274
 })
 
-# ── Test 11: NUTS3 2021 <-> NUTS3 2027 roundtrip ─────────────────────────────
-test_that("NUTS3_2021 <-> NUTS3_2027 roundtrip is lossless", {
-  nuts3_2021  <- c("BE100", "BE211", "BE223", "BE224", "BE225", "BE231", "BE335")
-  result_2027 <- convert_codes(nuts3_2021, "NUTS3_2021", "NUTS3_2027", master_data)
+# ── Test 11: NUTS3_2021 <-> NUTS3_2027 direct conversion is NOT supported ─────
+test_that("NUTS3_2021 -> NUTS3_2027 is not directly convertible (different perimeters)", {
+  # NUTS3_2021 and NUTS3_2027 cover different geographic areas: 3 communes
+  # changed province between 2019 and 2025, which shifted their NUTS3 region.
+  # A pure code-rename table gives wrong results for those communes.
+  # There is therefore no direct NUTS3_2021 <-> NUTS3_2027 conversion edge.
+  r <- check_conversion_path("NUTS3_2021", "NUTS3_2027")
+  expect_false(r[["is_simple"]])
 
-  expect_equal(result_2027[code_from == "BE211"]$code_to, "BE261")
-  expect_equal(result_2027[code_from == "BE223"]$code_to, "BE226")
-  expect_equal(result_2027[code_from == "BE225"]$code_to, "BE225")  # unchanged
-  expect_equal(result_2027[code_from == "BE231"]$code_to, "BE271")
-  expect_equal(result_2027[code_from == "BE335"]$code_to, "BE335")  # unchanged
-
-  result_back <- convert_codes(result_2027$code_to, "NUTS3_2027", "NUTS3_2021", master_data)
-  roundtrip   <- result_back$code_to[match(result_2027$code_to, result_back$code_from)]
-  expect_equal(roundtrip, nuts3_2021)
+  expect_error(
+    convert_codes("BE211", "NUTS3_2021", "NUTS3_2027", master_data),
+    class = "rcl_ambiguous_conversion"
+  )
+  expect_error(
+    convert_codes("BE261", "NUTS3_2027", "NUTS3_2021", master_data),
+    class = "rcl_ambiguous_conversion"
+  )
 })
 
 # ── Test 12: diagnose_classification() — check mode ──────────────────────────

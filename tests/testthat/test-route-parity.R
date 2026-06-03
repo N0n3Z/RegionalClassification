@@ -45,12 +45,26 @@ test_that("NUTS3_2021 -> NUTS0 aggregates all the way to country level", {
   expect_true(all(r$code_to == "BE"))
 })
 
-# ── Province -> region single hop (was missing a handler) ─────────────────────
-test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is executable", {
-  # 10000 = Antwerp province -> Flemish region (2000)
-  r <- convert_codes(10000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data)
+# ── Province -> region: M:N (Brabant spans 3 regions), requires allow_ambiguous ─
+test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is M:N (Brabant ambiguity)", {
+  # Non-Brabant province: 1 row, correct region, but requires allow_ambiguous
+  # because the graph declares province->region as M:N.
+  r <- convert_codes(10000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data,
+                     allow_ambiguous = TRUE)
   expect_equal(nrow(r), 1L)
   expect_equal(r$code_to, 2000L)
+
+  # Brabant (20000) correctly returns 3 rows: Brussels, Flemish, Walloon
+  r2 <- convert_codes(20000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data,
+                      allow_ambiguous = TRUE)
+  expect_equal(nrow(r2), 3L)
+  expect_true(all(c(2000L, 3000L, 4000L) %in% r2$code_to))
+
+  # Without allow_ambiguous: rcl_ambiguous_conversion
+  expect_error(
+    convert_codes(10000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data),
+    class = "rcl_ambiguous_conversion"
+  )
 })
 
 # ── POSTAL multi-hop now flows through the generic composer ───────────────────

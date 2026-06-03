@@ -34,14 +34,14 @@ fuzzy_match_names <- function(names, target_classification, master_data,
                               max_dist = 0.1, method = "jw",
                               language = "both") {
 
+  target <- normalize_classification_id(target_classification)
+
   if (!requireNamespace("stringdist", quietly = TRUE)) {
     abort(
       "Package 'stringdist' is required for fuzzy matching. Install with: install.packages('stringdist')",
       class = "rcl_missing_package"
     )
   }
-
-  target <- normalize_classification_id(target_classification)
 
   # Build reference table based on target
   ref <- build_name_reference(target, master_data, language)
