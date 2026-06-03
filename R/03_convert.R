@@ -14,7 +14,11 @@
 #' @param master_data Output from build_master_table()
 #' @param allow_ambiguous Logical. If FALSE (default), raises error on M:N conversions.
 #'   If TRUE, returns all possible mappings.
-#' @return data.table with columns: code_from, code_to (and optionally notes)
+#' @return data.table with columns \code{code_from}, \code{code_to}, \code{nature}.
+#'   \code{nature} is \code{NA} for most conversions; for NIS temporal conversions
+#'   (2019 \eqn{\leftrightarrow} 2025 / BEFORE_2019 \eqn{\to} 2019) it carries the
+#'   change reason: \code{"UNCHANGED"}, \code{"FUSION"}, \code{"CHANGE_DSTR"}, or
+#'   \code{"CHANGE_PROV"}.
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
@@ -70,7 +74,8 @@ convert_codes <- function(codes, from, to, master_data,
 #' @param from Source classification identifier
 #' @param to Target classification identifier
 #' @param master_data Output from build_master_table()
-#' @return data.table with code_from, code_to, and metadata
+#' @return data.table with columns \code{code_from}, \code{code_to}, \code{nature}
+#'   (see \code{\link{convert_codes}}).
 execute_conversion <- function(codes, from, to, master_data) {
 
   .validate_master_data(master_data)
@@ -289,6 +294,15 @@ normalize_classification_id <- function(class_id) {
   "NUTS1_2027__NUTS0"      = .master_pair_hop(NULL, "cd_nuts1_2027", "cd_nuts0_2027", "from")
 )
 
+# Normalize to the canonical 3-column schema: (code_from, code_to, nature).
+# Adds nature = NA_character_ if absent; enforces column order.
+# Called at every return point of route_conversion().
+.normalize_conversion_result <- function(dt) {
+  if (!"nature" %in% names(dt)) dt[, nature := NA_character_]
+  setcolorder(dt, c("code_from", "code_to", "nature"))
+  dt
+}
+
 #' Route conversion to the appropriate handler
 #'
 #' Looks up the "FROM__TO" key in .ROUTE_TABLE for a direct single-hop handler.
@@ -302,19 +316,20 @@ normalize_classification_id <- function(class_id) {
 #' @param from Normalized source classification
 #' @param to Normalized target classification
 #' @param md Master data (output from build_master_table)
-#' @return data.table with code_from, code_to
+#' @return data.table with code_from, code_to, nature
 route_conversion <- function(input_dt, from, to, md) {
 
-  if (from == to) return(input_dt[, .(code_from, code_to = code_from)])
+  if (from == to)
+    return(.normalize_conversion_result(input_dt[, .(code_from, code_to = code_from)]))
 
   input_dt <- copy(input_dt)
   input_dt[, code_from := .node_coerce(code_from, from)]
 
   handler <- .ROUTE_TABLE[[paste0(from, "__", to)]]
-  if (!is.null(handler)) return(handler(input_dt, md))
+  if (!is.null(handler)) return(.normalize_conversion_result(handler(input_dt, md)))
 
   composed <- .compose_via_handlers(copy(input_dt), from, to, md)
-  if (!is.null(composed)) return(composed)
+  if (!is.null(composed)) return(.normalize_conversion_result(composed))
 
   abort(
     sprintf("No conversion route from '%s' to '%s'. Use list_available_conversions() to see all supported paths.",

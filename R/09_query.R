@@ -127,7 +127,7 @@ get_crosswalk <- function(from, to, master_data, weights = FALSE) {
   result    <- suppressWarnings(
     convert_codes(all_codes, from_norm, to_norm, master_data,
                   allow_ambiguous = TRUE)
-  )
+  )[, .(code_from, code_to)]   # nature is internal; crosswalk only needs code pairs
 
   if (weights) {
     result[, weight := 1.0]

@@ -191,3 +191,45 @@ test_that("NIS_COMMUNE_2019 -> NIS_REGION_2019 assigns regions correctly", {
   expect_equal(result[code_from == 23002L]$code_to, 2000L)  # Flemish Brabant -> Flemish
   expect_equal(result[code_from == 25005L]$code_to, 3000L)  # Walloon Brabant -> Walloon
 })
+
+# ── Test 15: Uniform return schema (code_from, code_to, nature) ──────────────
+test_that("convert_codes always returns exactly 3 columns: code_from, code_to, nature", {
+  # Simple conversion: nature = NA
+  r_simple <- convert_codes(21004L, "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+  expect_equal(names(r_simple), c("code_from", "code_to", "nature"))
+  expect_true(is.na(r_simple$nature))
+
+  # Identity: nature = NA
+  r_id <- convert_codes("BE211", "NUTS3_2021", "NUTS3_2021", master_data)
+  expect_equal(names(r_id), c("code_from", "code_to", "nature"))
+  expect_true(is.na(r_id$nature))
+
+  # Multi-hop: nature = NA (composer drops it mid-chain)
+  r_multi <- convert_codes("BE211", "NUTS3_2021", "NUTS1_2021", master_data)
+  expect_equal(names(r_multi), c("code_from", "code_to", "nature"))
+  expect_true(is.na(r_multi$nature))
+})
+
+test_that("NIS temporal conversions carry correct nature values", {
+  # 2019 -> 2025: unchanged communes get UNCHANGED
+  r_unchanged <- convert_codes(21004L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+  expect_equal(r_unchanged$nature, "UNCHANGED")
+
+  # 2025 -> 2019: ambiguous path requires allow_ambiguous; unchanged commune stays UNCHANGED
+  r_rev <- convert_codes(21004L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data,
+                         allow_ambiguous = TRUE)
+  expect_equal(r_rev$nature, "UNCHANGED")
+})
+
+test_that("get_crosswalk does not expose the nature column", {
+  cw <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+  expect_false("nature" %in% names(cw))
+})
+
+test_that("convert_dataset does not expose the nature column", {
+  library(data.table)
+  dt <- data.table(commune = c(21004L, 11002L, 62063L), value = c(100, 200, 300))
+  out <- convert_dataset(dt, "commune", "NUTS3_2021", master_data,
+                         from = "NIS_COMMUNE_2019", verbose = FALSE)
+  expect_false("nature" %in% names(out))
+})
