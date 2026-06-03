@@ -152,11 +152,15 @@ CONVERSION_GRAPH_EDGES <- list(
 
   # --- NIS BEFORE_2019 to NUTS 2021 (pre-2019 assignments) ---
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2021",
-       relation = "1:1", via = "CONVERSION_NIS2019_NUTS2021",
-       notes = "Uses historical NUTS assignments (DT_VLDT_STOP = 2019-01-01 for changed codes)"),
+       relation = "N:1", via = "CONVERSION_NIS2019_NUTS2021",
+       notes = paste0(
+         "Many communes share one NUTS3 (N:1); the reverse NUTS3 -> commune is ",
+         "ambiguous. Uses historical NUTS assignments (DT_VLDT_STOP = 2019-01-01 ",
+         "for changed codes)."
+       )),
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NUTS3_2027",
-       relation = "1:1", via = "derived",
-       notes = "Via NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+       relation = "N:1", via = "derived",
+       notes = "Many communes per NUTS3 (N:1). Via NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021 -> NUTS3_2027"),
 
   # --- NIS BEFORE_2019 -> NIS 2019 (requires REFNIS_CHANGE_BEFORE2019.xlsx for merged communes) ---
   list(from = "NIS_COMMUNE_BEFORE_2019", to = "NIS_COMMUNE_2019",
@@ -265,8 +269,8 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "N:1", via = "derived",
        notes = "Hierarchical"),
   list(from = "NIS_COMMUNE_2019", to = "NUTS3_2027",
-       relation = "1:1", via = "derived",
-       notes = "Via NUTS 2021: NIS_COMMUNE_2019 -> NUTS3_2021 -> NUTS3_2027"),
+       relation = "N:1", via = "derived",
+       notes = "Many communes per NUTS3 (N:1). Via NUTS 2021: NIS_COMMUNE_2019 -> NUTS3_2021 -> NUTS3_2027"),
   list(from = "NUTS3_2027", to = "INTERNAL_ARRONDISSEMENT",
        relation = "1:1", via = "derived",
        notes = "Via NUTS 2021: NUTS3_2027 -> NUTS3_2021 -> INTERNAL_ARRONDISSEMENT"),

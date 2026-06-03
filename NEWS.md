@@ -2,6 +2,14 @@
 
 ## Bug fixes
 
+* Corrected the cardinality of three commune -> NUTS3 edges in the conversion
+  graph (`NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021`, `NIS_COMMUNE_BEFORE_2019 ->
+  NUTS3_2027`, `NIS_COMMUNE_2019 -> NUTS3_2027`) from `1:1` to `N:1`: many
+  communes share one NUTS3 region. They were previously labelled `1:1`, which
+  made their reverse appear `1:1` too, so `check_conversion_path()` wrongly
+  reported descents such as `NUTS3 -> commune`, `NUTS3 -> NUTS_LAU` and
+  `* -> *_BEFORE_2019` as lossless "simple" conversions when they are in fact
+  ambiguous (`1:N`). The forward direction stays `N:1` (still simple).
 * `convert_codes()` now executes **every** multi-hop conversion that
   `check_conversion_path()` reports as reachable. Previously the path checker
   did a generic graph BFS while the executor only knew hand-written single-hop
