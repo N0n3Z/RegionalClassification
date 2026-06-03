@@ -11,3 +11,4 @@
 ^docs_build$
 ^demo$
 ^REFACTORING_PLAN\.md$
+^CLAUDE\.md$
