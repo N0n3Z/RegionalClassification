@@ -58,6 +58,7 @@ test_that("NUTS3_2021 converts to INTERNAL_ARRONDISSEMENT", {
 
 # ── Test 7: Fuzzy match - postal code names ───────────────────────────────────
 test_that("fuzzy_match_names works for POSTAL", {
+  skip_if_not_installed("stringdist")
   names  <- c("Bruxelles", "Anvers", "Liege", "Namur", "Gand")
   result <- fuzzy_match_names(names, "POSTAL", master_data, max_dist = 0.3, language = "fr")
   expect_gte(nrow(result), length(names))
@@ -65,6 +66,7 @@ test_that("fuzzy_match_names works for POSTAL", {
 
 # ── Test 8: Fuzzy match - NIS Commune 2019 names ─────────────────────────────
 test_that("fuzzy_match_names handles misspelled NIS_COMMUNE_2019 names", {
+  skip_if_not_installed("stringdist")
   names  <- c("Anderlecht", "Bruxeles", "Antwerpn", "Liege", "Vervirs")
   result <- fuzzy_match_names(names, "NIS_COMMUNE_2019", master_data,
                               max_dist = 0.3, language = "both")
@@ -73,6 +75,7 @@ test_that("fuzzy_match_names handles misspelled NIS_COMMUNE_2019 names", {
 
 # ── Test 9: Fuzzy match - NIS Commune 2025 names ─────────────────────────────
 test_that("fuzzy_match_names works for NIS_COMMUNE_2025", {
+  skip_if_not_installed("stringdist")
   names  <- c("Anderlecht", "Gent", "Hasselt", "Charleroi")
   result <- fuzzy_match_names(names, "NIS_COMMUNE_2025", master_data,
                               max_dist = 0.3, language = "both")

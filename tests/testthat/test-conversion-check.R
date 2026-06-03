@@ -72,12 +72,12 @@ test_that("convert_codes raises rcl_ambiguous_conversion with allow_ambiguous=FA
   )
 })
 
-# ── Test CC10: rcl_no_route pour paire valide mais sans chemin ────────────────
-test_that("convert_codes raises rcl_no_route for valid but unroutable pair", {
-  # NIS_COMMUNE_2019 -> NIS_COMMUNE_BEFORE_2019 has no route (only the reverse exists)
+# ── Test CC10: rcl_ambiguous_conversion pour paire M:N ───────────────────────
+test_that("convert_codes raises rcl_ambiguous_conversion for M:N pair", {
+  # NIS_COMMUNE_2019 -> NIS_COMMUNE_BEFORE_2019 exists in the graph but is M:N (ambiguous)
   expect_error(
     convert_codes(21004L, "NIS_COMMUNE_2019", "NIS_COMMUNE_BEFORE_2019", master_data),
-    class = "rcl_no_route"
+    class = "rcl_ambiguous_conversion"
   )
 })
 

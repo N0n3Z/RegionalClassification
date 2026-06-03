@@ -10,13 +10,18 @@ test_that("convert_codes returns empty data.table for empty input", {
 # ── Test E2: convert_codes avec tous NA ───────────────────────────────────────
 test_that("convert_codes handles all-NA input gracefully", {
   # All-NA input has no match by design: the rcl_unmatched_codes warning is expected.
-  result <- expect_warning(
+  # Note: expect_warning(class=) in testthat <3.3 returns the condition, not the value.
+  # Separate the warning assertion from the result capture to stay compatible.
+  expect_warning(
     convert_codes(c(NA_integer_, NA_integer_), "NIS_COMMUNE_2019", "NUTS3_2021",
                   master_data),
     class = "rcl_unmatched_codes"
   )
+  result <- suppressWarnings(
+    convert_codes(c(NA_integer_, NA_integer_), "NIS_COMMUNE_2019", "NUTS3_2021",
+                  master_data)
+  )
   expect_true(is.data.table(result))
-  # At least returns code_from / code_to columns
   expect_true("code_from" %in% names(result))
   expect_true("code_to"   %in% names(result))
 })
@@ -24,9 +29,12 @@ test_that("convert_codes handles all-NA input gracefully", {
 # ── Test E3: convert_codes avec codes inconnus → NA dans code_to ──────────────
 test_that("convert_codes returns NA in code_to for unknown codes", {
   # Unknown codes have no match by design: the rcl_unmatched_codes warning is expected.
-  result <- expect_warning(
+  expect_warning(
     convert_codes(c(99999L, 88888L), "NIS_COMMUNE_2019", "NUTS3_2021", master_data),
     class = "rcl_unmatched_codes"
+  )
+  result <- suppressWarnings(
+    convert_codes(c(99999L, 88888L), "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
   )
   expect_true(is.data.table(result))
   expect_true(all(is.na(result$code_to)))
