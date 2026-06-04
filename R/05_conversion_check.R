@@ -61,6 +61,19 @@ check_conversion_path <- function(from, to) {
     ))
   }
 
+  # If a direct declared edge exists between from and to, its cardinality takes
+  # precedence over any indirect BFS path. This prevents a multi-hop simple path
+  # (e.g. via INTERNAL_ARRONDISSEMENT) from masking a direct 1:N or M:N edge.
+  direct_edge <- Find(function(e) e$from == from_norm && e$to == to_norm,
+                      CONVERSION_GRAPH_EDGES)
+  if (!is.null(direct_edge) && !(direct_edge$relation %in% c("1:1", "N:1"))) {
+    path_result <- list(
+      path       = c(from_norm, to_norm),
+      relations  = direct_edge$relation,
+      edges_used = list(direct_edge)
+    )
+  }
+
   # Check if all edges in path are simple (1:1 or N:1)
   is_simple <- all(path_result$relations %in% c("1:1", "N:1"))
 
@@ -92,12 +105,35 @@ check_conversion_path <- function(from, to) {
     )
   }
 
+  # Extract optional coverage / ambiguous_codes metadata from the edges used
+  ambiguous_codes <- NULL
+  coverage        <- NULL
+  for (edge in path_result$edges_used) {
+    if (!is.null(edge$ambiguous_codes)) {
+      ambiguous_codes <- c(ambiguous_codes, edge$ambiguous_codes)
+      coverage        <- edge$coverage
+    }
+  }
+
+  if (!is.null(coverage)) {
+    ambig_line <- sprintf(
+      "\nCoverage   : %s\nAmbiguous  : %d code(s) → %s\n%s",
+      coverage,
+      length(ambiguous_codes),
+      paste(sort(ambiguous_codes), collapse = ", "),
+      "→ Use allow_ambiguous = TRUE; register weights via register_split_weights() for proportional splits."
+    )
+    explanation <- paste0(explanation, ambig_line)
+  }
+
   return(list(
-    is_simple = is_simple,
-    path = path_result$path,
-    relations = path_result$relations,
-    explanation = explanation,
-    edges_used = path_result$edges_used
+    is_simple       = is_simple,
+    path            = path_result$path,
+    relations       = path_result$relations,
+    explanation     = explanation,
+    edges_used      = path_result$edges_used,
+    ambiguous_codes = ambiguous_codes,
+    coverage        = coverage
   ))
 }
 
@@ -125,21 +161,26 @@ build_conversion_graph <- function() {
     if (is.null(graph[[from]])) graph[[from]] <- list()
     graph[[from]][[length(graph[[from]]) + 1]] <- edge
 
-    # Add reverse edge with flipped relation
-    reverse_relation <- switch(edge$relation,
-                               "1:1" = "1:1",
-                               "N:1" = "1:N",
-                               "1:N" = "N:1",
-                               "M:N" = "M:N")
+    # Add reverse edge with flipped relation, unless no_reverse = TRUE.
+    # no_reverse guards cases where the reversed cardinality would be misleading
+    # (e.g. the reverse of NIS_COMMUNE_2025 -> NUTS3_2021 (1:N) is 1:N from
+    # NUTS3's perspective, not N:1, because many communes share a NUTS3 region).
+    if (!isTRUE(edge$no_reverse)) {
+      reverse_relation <- switch(edge$relation,
+                                 "1:1" = "1:1",
+                                 "N:1" = "1:N",
+                                 "1:N" = "N:1",
+                                 "M:N" = "M:N")
 
-    reverse_edge <- edge
-    reverse_edge$from <- to
-    reverse_edge$to <- from
-    reverse_edge$relation <- reverse_relation
-    reverse_edge$notes <- paste("[Reverse]", edge$notes)
+      reverse_edge <- edge
+      reverse_edge$from <- to
+      reverse_edge$to <- from
+      reverse_edge$relation <- reverse_relation
+      reverse_edge$notes <- paste("[Reverse]", edge$notes)
 
-    if (is.null(graph[[to]])) graph[[to]] <- list()
-    graph[[to]][[length(graph[[to]]) + 1]] <- reverse_edge
+      if (is.null(graph[[to]])) graph[[to]] <- list()
+      graph[[to]][[length(graph[[to]]) + 1]] <- reverse_edge
+    }
   }
 
   assign("graph", graph, envir = .graph_cache)
