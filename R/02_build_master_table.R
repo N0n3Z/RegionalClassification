@@ -350,9 +350,15 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #'
 #' @param master_2025 data.table for NIS 2025 communes (from build_master_table)
 #' @param master_2019 data.table for NIS 2019 communes (fully enriched)
-#' @param nis_changes data.table with columns cd_refnis_old, cd_refnis_new,
-#'   nature, from_version
-#' @return data.table master_2025 with NUTS 2021 columns added
+#' @param nis_changes Raw output from \code{parse_nis_changes()} — must have at
+#'   least \code{cd_refnis_old} and \code{cd_refnis_new} columns. The
+#'   \code{from_version} and \code{nature} columns are added later (step 8 of
+#'   \code{build_master_table}) and must NOT be present yet.
+#' @return data.table master_2025 with NUTS 2021 columns added in-place.
+#'   Note: \code{cd_nuts2}, \code{cd_nuts1}, and \code{cd_nuts0} may be
+#'   non-\code{NA} for communes where \code{cd_nuts3} is \code{NA} (cross-NUTS3
+#'   fusions), because NUTS2/1/0 are coarser and all constituent 2019 communes
+#'   may agree on the broader region even when their NUTS3 assignments differ.
 add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
 
   nuts_cols <- c("cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
@@ -383,8 +389,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
   scalar_cols <- setdiff(nuts_cols, "cd_nuts_lau")
   agg <- constituents[, c(
     lapply(setNames(scalar_cols, scalar_cols), function(col) .uniq1(get(col))),
-    list(n_constituents   = .N,
-         n_nuts3_distinct = uniqueN(na.omit(cd_nuts3)))
+    list(n_nuts3_distinct = uniqueN(na.omit(cd_nuts3)))
   ), by = .(cd_commune_2025 = cd_refnis_new)]
 
   # cd_nuts_lau: only copy for 1:1 changes (single constituent)
@@ -412,9 +417,8 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
 
   lookup <- rbindlist(list(unch_lkp, changed_lkp), use.names = TRUE)
 
-  # --- Merge back ---
-  result <- copy(master_2025)
-  result <- merge(result, lookup, by = "cd_commune", all.x = TRUE)
+  # --- Merge back (merge() returns a new table; no need to copy first) ---
+  result <- merge(master_2025, lookup, by = "cd_commune", all.x = TRUE)
 
   n_nuts3 <- sum(!is.na(result$cd_nuts3))
   message(sprintf("  NIS 2025 -> NUTS 2021: %d/%d communes with cd_nuts3 (%d ambiguous)",
