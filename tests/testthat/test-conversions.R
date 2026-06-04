@@ -236,31 +236,41 @@ test_that("convert_dataset does not expose the nature column", {
 
 # ── Tests Phase 4: NIS_COMMUNE_2025 -> NUTS3_2021 / INTERNAL_ARRONDISSEMENT ───
 
-test_that("NIS_COMMUNE_2025 -> NUTS3_2021 is a simple (direct) conversion", {
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021 is NOT simple (3 cross-NUTS3 fusions)", {
   r <- check_conversion_path("NIS_COMMUNE_2025", "NUTS3_2021")
-  expect_true(r[["is_simple"]])
+  expect_false(r[["is_simple"]])
+  # The ambiguous codes are surfaced explicitly
+  expect_true(setequal(r[["ambiguous_codes"]], c(46029L, 46030L, 71072L)))
+  expect_false(is.null(r[["coverage"]]))
 })
 
-test_that("NIS_COMMUNE_2025 -> NUTS3_2021 converts unchanged communes correctly", {
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021 requires allow_ambiguous = TRUE", {
+  expect_error(
+    convert_codes(c(21001L, 21004L), "NIS_COMMUNE_2025", "NUTS3_2021", master_data),
+    class = "rcl_ambiguous_conversion"
+  )
+})
+
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021 converts unchanged communes correctly (allow_ambiguous)", {
   # Brussels communes 21001-21019 are unchanged between 2019 and 2025
   codes  <- c(21001L, 21004L, 11002L)
-  result <- convert_codes(codes, "NIS_COMMUNE_2025", "NUTS3_2021", master_data)
+  result <- convert_codes(codes, "NIS_COMMUNE_2025", "NUTS3_2021", master_data,
+                          allow_ambiguous = TRUE)
   expect_equal(nrow(result), 3L)
   expect_equal(result[code_from == 21001L]$code_to, "BE100")
   expect_equal(result[code_from == 21004L]$code_to, "BE100")
   expect_true(all(!is.na(result$code_to)))
 })
 
-test_that("NIS_COMMUNE_2025 -> NUTS3_2021 returns NA for cross-NUTS3 fusions (46029, 46030, 71072)", {
-  # These 3 communes fuse localities from different NUTS3_2021 regions
-  expect_warning(
-    convert_codes(c(46029L, 46030L, 71072L), "NIS_COMMUNE_2025", "NUTS3_2021", master_data),
-    class = "rcl_unmatched_codes"
-  )
-  result <- suppressWarnings(
-    convert_codes(c(46029L, 46030L, 71072L), "NIS_COMMUNE_2025", "NUTS3_2021", master_data)
-  )
-  expect_true(all(is.na(result$code_to)))
+test_that("NIS_COMMUNE_2025 -> NUTS3_2021: ambiguous fusions return multiple rows, no NA", {
+  # These 3 communes fuse localities from different NUTS3_2021 regions.
+  # Each should now produce > 1 row (one per constituent NUTS3 region).
+  result <- convert_codes(c(46029L, 46030L, 71072L), "NIS_COMMUNE_2025", "NUTS3_2021",
+                          master_data, allow_ambiguous = TRUE)
+  expect_gt(nrow(result[code_from == 46029L]), 1L)
+  expect_gt(nrow(result[code_from == 46030L]), 1L)
+  expect_gt(nrow(result[code_from == 71072L]), 1L)
+  expect_true(all(!is.na(result$code_to)))
 })
 
 test_that("NIS_COMMUNE_2025 -> INTERNAL_ARRONDISSEMENT is a simple conversion", {
@@ -273,7 +283,8 @@ test_that("NIS_COMMUNE_2025 -> INTERNAL_ARRONDISSEMENT is a simple conversion", 
 })
 
 test_that("NIS_COMMUNE_2025 -> NUTS2_2021 is reachable (multi-hop via NUTS3_2021)", {
-  result <- convert_codes(21001L, "NIS_COMMUNE_2025", "NUTS2_2021", master_data)
+  result <- convert_codes(21001L, "NIS_COMMUNE_2025", "NUTS2_2021", master_data,
+                          allow_ambiguous = TRUE)
   expect_equal(nrow(result), 1L)
   expect_false(is.na(result$code_to))
 })

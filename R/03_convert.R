@@ -210,7 +210,11 @@ normalize_classification_id <- function(class_id) {
   "NIS_COMMUNE_2025__NIS_REGION_2025"         = .master_hop("2025", "cd_commune", "cd_region"),
   # NUTS 2021 paths: backfilled by add_nuts2021_columns_2025() at build time.
   # NIS_COMMUNE_2025__NUTS_LAU_2021 is intentionally absent: see 00_config.R note.
-  "NIS_COMMUNE_2025__NUTS3_2021"              = .master_hop("2025", "cd_commune", "cd_nuts3"),
+  # NIS_COMMUNE_2025__NUTS3_2021: 1:N edge (3 cross-NUTS3 fusions). Handler expands
+  # those 3 communes via their constituent 2019 NUTS3 assignments.
+  "NIS_COMMUNE_2025__NUTS3_2021" = function(i, md) {
+    .convert_comm2025_to_nuts3_2021(i, md)
+  },
   "NIS_COMMUNE_2025__INTERNAL_ARRONDISSEMENT" = .master_hop("2025", "cd_commune", "cd_arr_internal"),
   "NIS_COMMUNE_2025__NIS_COMMUNE_2019" = function(i, md) {
     convert_nis2025_to_nis2019(i, md)
@@ -297,6 +301,50 @@ normalize_classification_id <- function(class_id) {
   "NUTS2_2027__NUTS1_2027" = .master_pair_hop(NULL, "cd_nuts2_2027", "cd_nuts1_2027", "from"),
   "NUTS1_2027__NUTS0"      = .master_pair_hop(NULL, "cd_nuts1_2027", "cd_nuts0_2027", "from")
 )
+
+# Convert NIS_COMMUNE_2025 -> NUTS3_2021 with transparent handling of the 3
+# cross-NUTS3 fusions (46029, 46030, 71072).
+# - Unambiguous communes (564/567): direct lookup from 2025 master (1 row each).
+# - Ambiguous communes (3/567): expanded via their constituent 2019 communes'
+#   NUTS3_2021 values, yielding one row per distinct NUTS3 region covered.
+# Weights are NOT applied here; use register_split_weights() + split_ambiguous()
+# for proportional splits.
+.convert_comm2025_to_nuts3_2021 <- function(input_dt, md) {
+
+  lkp <- unique(md$communes[nis_version == "2025", .(cd_commune, cd_nuts3)])
+  result <- merge(input_dt, lkp, by.x = "code_from", by.y = "cd_commune", all.x = TRUE)
+  setnames(result, "cd_nuts3", "code_to")
+
+  # Identify codes for which no direct NUTS3 is stored (ambiguous fusions)
+  na_from <- result[is.na(code_to), unique(as.integer(code_from))]
+
+  if (length(na_from) > 0L) {
+    # Expand ambiguous communes via their constituent 2019 codes
+    changes <- md$nis_changes[from_version == "2019" & cd_refnis_new %in% na_from,
+                               .(cd_refnis_old, cd_refnis_new)]
+
+    lkp_2019 <- unique(md$communes[nis_version == "2019", .(cd_commune, cd_nuts3)])
+    expanded <- merge(changes, lkp_2019,
+                      by.x = "cd_refnis_old", by.y = "cd_commune", all.x = TRUE)
+
+    # One row per (2025 commune, distinct NUTS3) pair — no weights yet
+    expanded <- unique(expanded[!is.na(cd_nuts3),
+                                .(code_from = cd_refnis_new, code_to = cd_nuts3)])
+
+    if (nrow(expanded) > 0L) {
+      # Remove the NA placeholder rows for the ambiguous codes and replace
+      result <- rbindlist(list(result[!is.na(code_to)], expanded),
+                          use.names = TRUE, fill = TRUE)
+      ambig_codes <- sort(unique(expanded$code_from))
+      message(sprintf(
+        "Note: %d NIS 2025 commune(s) span multiple NUTS3_2021 regions: %s",
+        length(ambig_codes), paste(ambig_codes, collapse = ", ")
+      ))
+    }
+  }
+
+  result[, .(code_from, code_to)]
+}
 
 # Normalize to the canonical 3-column schema: (code_from, code_to, nature).
 # Adds nature = NA_character_ if absent; enforces column order.
@@ -664,7 +712,7 @@ convert_nis_before2019_to_nis2019 <- function(input_dt, md) {
 #' list_available_conversions()
 #' @export
 list_available_conversions <- function() {
-  edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, as.data.table))
+  edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, as.data.table), fill = TRUE)
   edges[, .(from, to, relation, notes)]
 }
 

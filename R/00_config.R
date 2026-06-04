@@ -334,12 +334,26 @@ CONVERSION_GRAPH_EDGES <- list(
   # --- NIS 2025 -> NUTS 2021 (Phase 4) ---
   # cd_nuts3 / cd_nuts_lau / cd_arr_internal backfilled onto the 2025 master via
   # add_nuts2021_columns_2025(): unchanged communes inherit from 2019; fused communes
-  # are unambiguous when all constituents share the same NUTS3, else NA + warning.
+  # are unambiguous when all constituents share the same NUTS3.
+  # 3 communes (46029, 46030, 71072) fuse localities from *different* NUTS3_2021
+  # regions -> genuinely 1:N. The handler returns N rows for these communes
+  # (one per distinct constituent NUTS3); weights must be registered separately via
+  # register_split_weights().
   list(from = "NIS_COMMUNE_2025", to = "NUTS3_2021",
-       relation = "N:1", via = "derived",
-       notes = paste0("cd_nuts3 backfilled onto 2025 master from constituent 2019 communes. ",
-                      "N:1 because all 2025 communes map to at most one NUTS3_2021 region; ",
-                      "ambiguous fusions get NA (rcl_ambiguous_backfill warning at build time).")),
+       relation = "1:N", via = "derived",
+       no_reverse = TRUE,
+       ambiguous_codes = c(46029L, 46030L, 71072L),
+       coverage = "564/567 (99.5%)",
+       notes = paste0(
+         "3 NIS 2025 communes (46029, 46030, 71072) fuse localities from different ",
+         "NUTS3_2021 regions; each maps to N NUTS3 targets (1:N). ",
+         "All other 564 communes are unambiguous (N:1). ",
+         "Use allow_ambiguous = TRUE; register weights via register_split_weights() ",
+         "for proportional splits. ",
+         "no_reverse = TRUE: the reverse NUTS3_2021 -> NIS_COMMUNE_2025 is 1:N ",
+         "(many communes per NUTS3) and would create a spurious simple path ",
+         "NUTS3_2021 -> NIS_COMMUNE_2025 -> NUTS3_2027."
+       )),
   # NIS_COMMUNE_2025 -> NUTS_LAU_2021: deliberately absent.
   # LAU (Local Administrative Unit) is a 1:1 identifier for NIS 2019 communes.
   # Fused communes in NIS 2025 do not have a single LAU code (LAU is undefined
