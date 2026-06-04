@@ -3,7 +3,7 @@
 # ==============================================================================
 # CLASSIFICATION_NODES is the one place that records, per node id:
 #   system, level, version, code_type, source_table, version_filter,
-#   code_col, label_fr_col, label_nl_col, distinct, detectable
+#   code_col, label_fr_col, label_nl_col, distinct, detectable, aggregates
 #
 # Everything that currently duplicates this knowledge (LABEL_META,
 # .list_codes_for, .get_reference_codes, .parse_classification_id, the
@@ -41,6 +41,14 @@
 #'     entities where every row is already a distinct code.}
 #'   \item{detectable}{`TRUE` for classifications included in the
 #'     `detect_classification()` integer matching loop.}
+#'   \item{aggregates}{Character vector of the node id(s) this node is the direct
+#'     aggregation of (the finer level it groups). `character(0)` for base/leaf
+#'     levels. The aggregation graph is a DAG, not a tree: an arrondissement is
+#'     aggregated by BOTH a province and a region, and `NUTS0` aggregates both
+#'     `NUTS1_2021` and `NUTS1_2027`. Province -> region is deliberately NOT an
+#'     aggregation (province 20000 Brabant spans 3 regions); a region aggregates
+#'     arrondissements directly. Used by `nomenclature_children()` /
+#'     `nomenclature_parents()` and validated against the conversion graph.}
 #' }
 #'
 #' @export
@@ -52,28 +60,32 @@ CLASSIFICATION_NODES <- list(
     code_type = "integer",   source_table = "communes",
     version_filter = "BEFORE_2019", code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
-    distinct = FALSE, detectable = TRUE
+    distinct = FALSE, detectable = TRUE,
+    aggregates = character(0)
   ),
   NIS_ARRONDISSEMENT_BEFORE_2019 = list(
     system = "NIS",  level = "arrondissement",  version = "BEFORE_2019",
     code_type = "integer",   source_table = "communes",
     version_filter = "BEFORE_2019", code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NIS_COMMUNE_BEFORE_2019"
   ),
   NIS_PROVINCE_BEFORE_2019 = list(
     system = "NIS",  level = "province",         version = "BEFORE_2019",
     code_type = "integer",   source_table = "communes",
     version_filter = "BEFORE_2019", code_col = "cd_province",
     label_fr_col = "tx_prov_fr",     label_nl_col = "tx_prov_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NIS_ARRONDISSEMENT_BEFORE_2019"
   ),
   NIS_REGION_BEFORE_2019 = list(
     system = "NIS",  level = "region",           version = "BEFORE_2019",
     code_type = "integer",   source_table = "communes",
     version_filter = "BEFORE_2019", code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NIS_ARRONDISSEMENT_BEFORE_2019"
   ),
 
   # ---- NIS 2019 --------------------------------------------------------------
@@ -82,28 +94,32 @@ CLASSIFICATION_NODES <- list(
     code_type = "integer",   source_table = "communes",
     version_filter = "2019", code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
-    distinct = FALSE, detectable = TRUE
+    distinct = FALSE, detectable = TRUE,
+    aggregates = character(0)
   ),
   NIS_ARRONDISSEMENT_2019 = list(
     system = "NIS",  level = "arrondissement",  version = "2019",
     code_type = "integer",   source_table = "communes",
     version_filter = "2019", code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
-    distinct = TRUE,  detectable = TRUE
+    distinct = TRUE,  detectable = TRUE,
+    aggregates = "NIS_COMMUNE_2019"
   ),
   NIS_PROVINCE_2019 = list(
     system = "NIS",  level = "province",         version = "2019",
     code_type = "integer",   source_table = "communes",
     version_filter = "2019", code_col = "cd_province",
     label_fr_col = "tx_prov_fr",     label_nl_col = "tx_prov_nl",
-    distinct = TRUE,  detectable = TRUE
+    distinct = TRUE,  detectable = TRUE,
+    aggregates = "NIS_ARRONDISSEMENT_2019"
   ),
   NIS_REGION_2019 = list(
     system = "NIS",  level = "region",           version = "2019",
     code_type = "integer",   source_table = "communes",
     version_filter = "2019", code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
-    distinct = TRUE,  detectable = TRUE
+    distinct = TRUE,  detectable = TRUE,
+    aggregates = "NIS_ARRONDISSEMENT_2019"
   ),
 
   # ---- NIS 2025 --------------------------------------------------------------
@@ -112,28 +128,32 @@ CLASSIFICATION_NODES <- list(
     code_type = "integer",   source_table = "communes",
     version_filter = "2025", code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
-    distinct = FALSE, detectable = TRUE
+    distinct = FALSE, detectable = TRUE,
+    aggregates = character(0)
   ),
   NIS_ARRONDISSEMENT_2025 = list(
     system = "NIS",  level = "arrondissement",  version = "2025",
     code_type = "integer",   source_table = "communes",
     version_filter = "2025", code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NIS_COMMUNE_2025"
   ),
   NIS_PROVINCE_2025 = list(
     system = "NIS",  level = "province",         version = "2025",
     code_type = "integer",   source_table = "communes",
     version_filter = "2025", code_col = "cd_province",
     label_fr_col = "tx_prov_fr",     label_nl_col = "tx_prov_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NIS_ARRONDISSEMENT_2025"
   ),
   NIS_REGION_2025 = list(
     system = "NIS",  level = "region",           version = "2025",
     code_type = "integer",   source_table = "communes",
     version_filter = "2025", code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NIS_ARRONDISSEMENT_2025"
   ),
 
   # ---- NUTS 2021 -------------------------------------------------------------
@@ -143,35 +163,40 @@ CLASSIFICATION_NODES <- list(
     code_type = "character", source_table = "communes",
     version_filter = "2019", code_col = "cd_nuts_lau",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = character(0)
   ),
   NUTS3_2021 = list(
     system = "NUTS", level = "nuts3", version = "2021",
     code_type = "character", source_table = "communes",
     version_filter = "2019", code_col = "cd_nuts3",
     label_fr_col = "tx_nuts3_fr",    label_nl_col = "tx_nuts3_nl",
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NUTS_LAU_2021"
   ),
   NUTS2_2021 = list(
     system = "NUTS", level = "nuts2", version = "2021",
     code_type = "character", source_table = "communes",
     version_filter = "2019", code_col = "cd_nuts2",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NUTS3_2021"
   ),
   NUTS1_2021 = list(
     system = "NUTS", level = "nuts1", version = "2021",
     code_type = "character", source_table = "communes",
     version_filter = "2019", code_col = "cd_nuts1",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NUTS2_2021"
   ),
   NUTS0 = list(
     system = "NUTS", level = "nuts0", version = NA_character_,
     code_type = "character", source_table = "communes",
     version_filter = "2019", code_col = "cd_nuts0",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = c("NUTS1_2021", "NUTS1_2027")
   ),
 
   # ---- NUTS 2027 -------------------------------------------------------------
@@ -181,21 +206,24 @@ CLASSIFICATION_NODES <- list(
     code_type = "character", source_table = "communes",
     version_filter = "2025", code_col = "cd_nuts3_2027",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = character(0)
   ),
   NUTS2_2027 = list(
     system = "NUTS", level = "nuts2", version = "2027",
     code_type = "character", source_table = "communes",
     version_filter = "2025", code_col = "cd_nuts2_2027",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NUTS3_2027"
   ),
   NUTS1_2027 = list(
     system = "NUTS", level = "nuts1", version = "2027",
     code_type = "character", source_table = "communes",
     version_filter = "2025", code_col = "cd_nuts1_2027",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
-    distinct = TRUE,  detectable = FALSE
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = "NUTS2_2027"
   ),
 
   # ---- POSTAL ----------------------------------------------------------------
@@ -204,7 +232,8 @@ CLASSIFICATION_NODES <- list(
     code_type = "integer",   source_table = "postal",
     version_filter = "2019", code_col = "cd_postal",
     label_fr_col = "tx_postal_name_fr", label_nl_col = "tx_postal_name_nl",
-    distinct = FALSE, detectable = TRUE
+    distinct = FALSE, detectable = TRUE,
+    aggregates = character(0)
   ),
 
   # ---- INTERNAL --------------------------------------------------------------
@@ -214,7 +243,8 @@ CLASSIFICATION_NODES <- list(
     code_type = "character", source_table = "communes",
     version_filter = "2019", code_col = "cd_arr_internal",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
-    distinct = TRUE,  detectable = TRUE
+    distinct = TRUE,  detectable = TRUE,
+    aggregates = character(0)
   )
 )
 
