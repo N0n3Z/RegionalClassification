@@ -29,6 +29,36 @@ if (is.null(md$crosswalks)) {
     "NIS_COMMUNE_BEFORE_2019__NIS_COMMUNE_2019"
   )
 
+  # --- Coverage assertion ---------------------------------------------------
+  # A skip() inside the per-edge loop would silently pass if build_crosswalks
+  # forgot to build an edge.  Guard against that with an explicit set check
+  # for all non-BEFORE_2019 edges (BEFORE_2019 is optional / data-dependent).
+  test_that("every non-BEFORE_2019 route key has crosswalk rows", {
+    core    <- grep("BEFORE_2019", keys, value = TRUE, invert = TRUE)
+    covered <- unique(md$crosswalks[, paste0(from_id, "__", to_id)])
+    missing <- setdiff(core, covered)
+    expect_true(
+      length(missing) == 0L,
+      label = paste("route keys missing from crosswalks:",
+                    paste(missing, collapse = ", "))
+    )
+  })
+
+  # --- Postal universe assumption -------------------------------------------
+  # POSTAL->NIS_COMMUNE_2025 crosswalk is built on the p19 universe (the same
+  # one .list_codes_for("POSTAL") uses).  This is valid only if every p25
+  # postal code already appears in p19.  Verify that here so a future postal
+  # remapping triggers a loud failure rather than a silent gap.
+  test_that("all p25 postal codes are present in p19 (POSTAL universe assumption)", {
+    p19_codes <- md$postal[nis_version == "2019", unique(cd_postal)]
+    p25_codes <- md$postal[nis_version == "2025", unique(cd_postal)]
+    new_in_p25 <- setdiff(p25_codes, p19_codes)
+    expect_true(
+      length(new_in_p25) == 0L,
+      label = paste("p25 codes not in p19:", paste(new_in_p25, collapse = ", "))
+    )
+  })
+
   for (key in keys) {
     parts <- strsplit(key, "__", fixed = TRUE)[[1]]
     from  <- parts[1L]

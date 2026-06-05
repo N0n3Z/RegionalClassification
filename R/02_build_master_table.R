@@ -620,13 +620,14 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   xw[["POSTAL__NIS_COMMUNE_2019"]] <- .xw("POSTAL", "NIS_COMMUNE_2019",
                                             p19$cd_postal, p19$cd_commune_nis)
 
-  # POSTAL -> NIS_COMMUNE_2025: use all unique postal codes (same universe as
-  # .list_codes_for("POSTAL", md)), left-joining against p25 so that codes
-  # present in p19 but absent from p25 appear with code_to = NA.
-  all_postal_codes <- unique(postal$cd_postal)
-  p25_map          <- unique(p25[, .(cd_postal, cd_commune_nis)])
-  p25_full         <- merge(data.table(cd_postal = all_postal_codes),
-                             p25_map, by = "cd_postal", all.x = TRUE)
+  # POSTAL -> NIS_COMMUNE_2025: universe = p19 postal codes, which is the
+  # same set that .list_codes_for("POSTAL", md) and the entities table use.
+  # Assumption: p25 codes ⊆ p19 codes (i.e. no new postal codes were
+  # introduced in the 2025 mapping).  Left-join so codes in p19 but absent
+  # from p25 appear with code_to = NA, matching engine behaviour.
+  p25_map  <- unique(p25[, .(cd_postal, cd_commune_nis)])
+  p25_full <- merge(data.table(cd_postal = unique(p19$cd_postal)),
+                    p25_map, by = "cd_postal", all.x = TRUE)
   xw[["POSTAL__NIS_COMMUNE_2025"]] <- .xw("POSTAL", "NIS_COMMUNE_2025",
                                             p25_full$cd_postal, p25_full$cd_commune_nis)
 
