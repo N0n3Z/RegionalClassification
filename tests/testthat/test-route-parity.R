@@ -15,7 +15,11 @@ test_that("every simple conversion in the matrix is executable (graph <-> execut
   mtx    <- get_conversion_matrix()
   simple <- mtx[is_simple == TRUE & from != to]
 
-  ok  <- mapply(nbbbenuts:::.route_is_executable, simple$from, simple$to)
+  # Executability is now tested against the CROSSWALK graph (.xw_path via
+  # .route_is_executable), i.e. what route_conversion() can actually run — not
+  # mere reachability in the declared CONVERSION_GRAPH_EDGES graph.
+  ok  <- mapply(nbbbenuts:::.route_is_executable, simple$from, simple$to,
+                MoreArgs = list(md = master_data))
   bad <- simple[!ok]
 
   expect_equal(

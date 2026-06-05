@@ -152,8 +152,8 @@ normalize_classification_id <- function(class_id) {
 #'
 #' For a direct (from, to) edge present in md$crosswalks, performs a single
 #' table lookup via .crosswalk_hop().  Otherwise, composes single-hop crosswalk
-#' lookups along the shortest path in the handler graph (derived from
-#' CONVERSION_GRAPH_EDGES).
+#' lookups along the shortest path in the crosswalk graph (.xw_path, built from
+#' md$crosswalks so every hop is guaranteed to have rows).
 #'
 #' Output codes are re-coerced to the canonical type of each node
 #' (.node_coerce, R/00b_registry.R) after the lookup, preserving the contract
@@ -181,7 +181,7 @@ route_conversion <- function(input_dt, from, to, md) {
     return(.normalize_conversion_result(res))
   }
 
-  # Multi-hop: compose single-hop crosswalk lookups along the handler-graph path
+  # Multi-hop: compose single-hop crosswalk lookups along the crosswalk-graph path
   composed <- .compose_via_handlers(copy(input_dt), from, to, md)
   if (!is.null(composed)) {
     composed[, code_to   := .node_coerce(code_to,   to)]
@@ -196,56 +196,18 @@ route_conversion <- function(input_dt, from, to, md) {
   )
 }
 
-# Mutable cache (filled after namespace lock) for the handler-edge adjacency.
+# Mutable cache (filled after namespace lock) for the crosswalk-edge adjacency.
 .route_cache <- new.env(parent = emptyenv())
 
-# Adjacency list of directly-executable single hops, derived from
-# CONVERSION_GRAPH_EDGES (forward edges + auto-reversed edges where
-# !no_reverse).  Used by .route_is_executable() and .handler_path() to check
-# reachability in parity with check_conversion_path().
-# NOTE: This graph may include edges that have no crosswalk rows (e.g., edges
-# declared as multi-hop compositions in CONVERSION_GRAPH_EDGES).  Do NOT use
-# this graph to find execution paths — use .xw_graph() / .xw_path() instead.
-.handler_graph <- function() {
-  if (exists("graph", envir = .route_cache, inherits = FALSE))
-    return(get("graph", envir = .route_cache))
-  g <- list()
-  for (e in CONVERSION_GRAPH_EDGES) {
-    g[[e$from]] <- unique(c(g[[e$from]], e$to))
-    if (!isTRUE(e$no_reverse)) {
-      g[[e$to]] <- unique(c(g[[e$to]], e$from))
-    }
-  }
-  assign("graph", g, envir = .route_cache)
-  g
-}
-
-# Shortest path between two classifications using the CONVERSION_GRAPH_EDGES
-# handler graph (BFS).  Returns a character vector of nodes, or NULL.
-# Used by .route_is_executable() for the graph <-> executor parity test.
-.handler_path <- function(from, to) {
-  g <- .handler_graph()
-  if (is.null(g[[from]])) return(NULL)
-  queue   <- list(list(node = from, path = from))
-  visited <- from
-  while (length(queue) > 0) {
-    cur   <- queue[[1]]; queue <- queue[-1]
-    for (nb in g[[cur$node]]) {
-      if (nb == to) return(c(cur$path, nb))
-      if (!nb %in% visited) {
-        visited <- c(visited, nb)
-        queue[[length(queue) + 1L]] <- list(node = nb, path = c(cur$path, nb))
-      }
-    }
-  }
-  NULL
-}
-
-# TRUE if `from` -> `to` is executable (identity or reachable via the handler
-# graph).  Used by the test suite to assert parity with check_conversion_path().
-.route_is_executable <- function(from, to) {
+# TRUE if `from` -> `to` is executable by the crosswalk engine: the identity, a
+# direct crosswalk edge, or a multi-hop path composed entirely of crosswalk
+# edges (.xw_path).  This is the EXECUTION predicate: it must mirror what
+# route_conversion() can actually run, so the graph <-> executor parity test
+# (test-route-parity.R) keeps its teeth.  Declared-graph reachability is a
+# separate concern, handled by check_conversion_path() (05_conversion_check.R).
+.route_is_executable <- function(from, to, md) {
   if (from == to) return(TRUE)
-  !is.null(.handler_path(from, to))
+  !is.null(.xw_path(from, to, md))
 }
 
 # Adjacency list built exclusively from md$crosswalks unique (from_id, to_id)
@@ -289,9 +251,10 @@ route_conversion <- function(input_dt, from, to, md) {
 }
 
 # Compose single-hop crosswalk lookups along the crosswalk-graph path from
-# `from` to `to`.  Uses .xw_path() so that every hop in the path is guaranteed
-# to have crosswalk rows (unlike .handler_path() which can return paths that
-# include edges declared in CONVERSION_GRAPH_EDGES but absent from crosswalk).
+# `from` to `to`.  Uses .xw_path() (BFS over md$crosswalks edges) so that every
+# hop in the path is guaranteed to have crosswalk rows — a path over the
+# declared CONVERSION_GRAPH_EDGES could include composite edges absent from the
+# crosswalk table.
 # Joins by code value (not position) so M:N hops fan out correctly; input order
 # is restored at the end.
 # Returns data.table(code_from, code_to) — nature is not propagated across

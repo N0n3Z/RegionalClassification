@@ -539,8 +539,8 @@ build_entities_table <- function(communes, postal) {
 
 #' Build the crosswalks table from unified flat tables
 #'
-#' Produces one row per primitive code link between every directly-executable
-#' hop in \code{.ROUTE_TABLE}:
+#' Produces one row per primitive code link for every directly-executable
+#' single hop (one \code{(from_id, to_id)} edge):
 #' \code{(from_id, to_id, code_from, code_to, relation, nature)}.
 #' All codes are stored as \strong{character}; the engine re-coerces to the
 #' canonical type on output via \code{.node_coerce()}.
