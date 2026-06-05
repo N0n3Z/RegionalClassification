@@ -11,5 +11,6 @@
 ^docs_build$
 ^demo$
 ^REFACTORING_PLAN\.md$
+^REFACTOR_CROSSWALKS\.md$
 ^CLAUDE\.md$
 ^\.claude$
