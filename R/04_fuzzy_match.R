@@ -63,96 +63,67 @@ fuzzy_match_names <- function(names, target_classification, master_data,
 
 #' Build a reference table of names and codes for a given classification
 #'
+#' Phase 3: driven entirely by the registry (.node_reference_codes) instead of
+#' a hardcoded switch over source-table columns.  Any classification that has
+#' at least one non-NA label (name_fr or name_nl) in the entities table is
+#' now supported automatically.  An abort is raised only when no labels are
+#' available (e.g. NUTS2, NUTS1, NUTS0 which carry no names).
+#'
 #' @param target Normalized classification identifier
 #' @param md Master data
 #' @param language "fr", "nl", or "both"
 #' @return data.table with ref_name, ref_code, ref_language
 build_name_reference <- function(target, md, language = "both") {
 
-  ref_list <- list()
+  ref_codes <- .node_reference_codes(target, md)
 
-  if (target == "NIS_COMMUNE_2019") {
-    comm <- md$communes[nis_version == "2019"]
-    if (language %in% c("fr", "both")) {
-      ref_list[["fr"]] <- comm[!is.na(tx_commune_fr),
-                                .(ref_name = tx_commune_fr, ref_code = cd_commune,
-                                  ref_language = "fr")]
-    }
-    if (language %in% c("nl", "both")) {
-      ref_list[["nl"]] <- comm[!is.na(tx_commune_nl),
-                                .(ref_name = tx_commune_nl, ref_code = cd_commune,
-                                  ref_language = "nl")]
-    }
-  } else if (target == "NIS_COMMUNE_2025") {
-    comm <- md$communes[nis_version == "2025"]
-    if (language %in% c("fr", "both")) {
-      ref_list[["fr"]] <- comm[!is.na(tx_commune_fr),
-                                .(ref_name = tx_commune_fr, ref_code = cd_commune,
-                                  ref_language = "fr")]
-    }
-    if (language %in% c("nl", "both")) {
-      ref_list[["nl"]] <- comm[!is.na(tx_commune_nl),
-                                .(ref_name = tx_commune_nl, ref_code = cd_commune,
-                                  ref_language = "nl")]
-    }
-  } else if (target == "POSTAL") {
-    postal <- md$postal[nis_version == "2019"]
-    if (language %in% c("fr", "both")) {
-      ref_list[["fr"]] <- postal[!is.na(tx_postal_name_fr),
-                                  .(ref_name = tx_postal_name_fr, ref_code = cd_postal,
-                                    ref_language = "fr")]
-    }
-    if (language %in% c("nl", "both")) {
-      ref_list[["nl"]] <- postal[!is.na(tx_postal_name_nl),
-                                  .(ref_name = tx_postal_name_nl, ref_code = cd_postal,
-                                    ref_language = "nl")]
-    }
-  } else if (target == "NIS_ARRONDISSEMENT_2019") {
-    comm <- md$communes[nis_version == "2019"]
-    arr <- unique(comm[!is.na(tx_arr_fr), .(ref_code = cd_arr, tx_arr_fr, tx_arr_nl)])
-    if (language %in% c("fr", "both")) {
-      ref_list[["fr"]] <- arr[, .(ref_name = tx_arr_fr, ref_code, ref_language = "fr")]
-    }
-    if (language %in% c("nl", "both")) {
-      ref_list[["nl"]] <- arr[!is.na(tx_arr_nl),
-                               .(ref_name = tx_arr_nl, ref_code, ref_language = "nl")]
-    }
-  } else if (target == "NIS_ARRONDISSEMENT_2025") {
-    comm <- md$communes[nis_version == "2025"]
-    arr <- unique(comm[!is.na(tx_arr_fr), .(ref_code = cd_arr, tx_arr_fr, tx_arr_nl)])
-    if (language %in% c("fr", "both")) {
-      ref_list[["fr"]] <- arr[, .(ref_name = tx_arr_fr, ref_code, ref_language = "fr")]
-    }
-    if (language %in% c("nl", "both")) {
-      ref_list[["nl"]] <- arr[!is.na(tx_arr_nl),
-                               .(ref_name = tx_arr_nl, ref_code, ref_language = "nl")]
-    }
-  } else if (target == "NUTS3_2021") {
-    nuts3 <- unique(md$communes[nis_version == "2019" & !is.na(cd_nuts3),
-                                 .(cd_nuts3, tx_nuts3_fr, tx_nuts3_nl)])
-    if (language %in% c("fr", "both")) {
-      ref_list[["fr"]] <- nuts3[!is.na(tx_nuts3_fr),
-                                 .(ref_name = tx_nuts3_fr, ref_code = cd_nuts3,
-                                   ref_language = "fr")]
-    }
-    if (language %in% c("nl", "both")) {
-      ref_list[["nl"]] <- nuts3[!is.na(tx_nuts3_nl),
-                                 .(ref_name = tx_nuts3_nl, ref_code = cd_nuts3,
-                                   ref_language = "nl")]
-    }
-  } else {
+  if (is.null(ref_codes) || nrow(ref_codes) == 0L) {
     abort(
-      sprintf("Fuzzy matching not supported for classification '%s'", target),
+      sprintf("No reference data found for classification '%s'", target),
       class = "rcl_invalid_input", classification = target
     )
   }
 
+  has_fr <- !all(is.na(ref_codes$name_fr))
+  has_nl <- !all(is.na(ref_codes$name_nl))
+
+  if (!has_fr && !has_nl) {
+    abort(
+      sprintf(
+        paste0("Fuzzy matching not supported for classification '%s': ",
+               "no names (name_fr / name_nl) available in the reference table."),
+        target
+      ),
+      class = "rcl_invalid_input", classification = target
+    )
+  }
+
+  ref_list <- list()
+  if (language %in% c("fr", "both") && has_fr) {
+    ref_list[["fr"]] <- ref_codes[!is.na(name_fr),
+                                   .(ref_name    = name_fr,
+                                     ref_code    = as.character(code),
+                                     ref_language = "fr")]
+  }
+  if (language %in% c("nl", "both") && has_nl) {
+    ref_list[["nl"]] <- ref_codes[!is.na(name_nl),
+                                   .(ref_name    = name_nl,
+                                     ref_code    = as.character(code),
+                                     ref_language = "nl")]
+  }
+
+  if (length(ref_list) == 0L) {
+    abort(
+      sprintf("No names available for language '%s' in classification '%s'",
+              language, target),
+      class = "rcl_invalid_input"
+    )
+  }
+
   ref <- rbindlist(ref_list, use.names = TRUE)
-  # Normalize reference names for matching
   ref[, ref_name_norm := normalize_name(ref_name)]
   ref <- unique(ref)
-
-  return(ref)
+  ref
 }
 
 #' Match a single name against a reference table

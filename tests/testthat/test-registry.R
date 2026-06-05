@@ -140,9 +140,13 @@ test_that(".node_reference_codes() returns data.table(code, name_fr, name_nl)", 
   expect_type(ref$code, "character")
 })
 
-test_that(".node_reference_codes() returns NULL for empty BEFORE_2019 slice", {
+test_that(".node_reference_codes() returns NULL for absent BEFORE_2019 data", {
+  # Phase 3: the fast path reads md$entities, so we must remove the BEFORE_2019
+  # classification from entities (not just from communes) to simulate data absence.
   empty_md <- master_data
-  empty_md$communes <- master_data$communes[nis_version != "BEFORE_2019"]
+  empty_md$entities <- master_data$entities[
+    !classification_id %in% grep("BEFORE_2019", names(CLASSIFICATION_NODES), value = TRUE)
+  ]
   result <- nbbbenuts:::.node_reference_codes("NIS_COMMUNE_BEFORE_2019", empty_md)
   expect_null(result)
 })

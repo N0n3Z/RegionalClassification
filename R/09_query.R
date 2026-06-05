@@ -81,6 +81,16 @@ get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) 
     return(input)
   }
 
+  # Phase 3: prefer entities table (built at snapshot time, always available
+  # after load_master_data()).  Fallback to communes/postal for legacy or
+  # rebuild contexts where entities is not yet populated.
+  if (!is.null(master_data$entities)) {
+    name_col <- if (lang == "fr") "name_fr" else "name_nl"
+    ent  <- master_data$entities[classification_id == cls]
+    ref  <- unique(ent[!is.na(get(name_col)), .(code, label = get(name_col))])
+    return(ref[input, on = "code"])
+  }
+
   src <- if (meta$src == "communes") master_data$communes else master_data$postal
   src <- src[get("nis_version") == meta$ver]
 

@@ -288,14 +288,29 @@ CLASSIFICATION_NODES <- list(
 
 #' Reference code table for a classification
 #'
-#' Returns a `data.table(code, name_fr, name_nl)` using the source table and
-#' columns declared in the registry.  Returns `NULL` when the optional
-#' BEFORE_2019 slice is not loaded.
+#' Returns a `data.table(code, name_fr, name_nl)` for the requested node.
+#' Returns `NULL` when no data is available (e.g. BEFORE_2019 slice not loaded).
+#'
+#' Phase 3: prefers `master_data$entities` when available (single normalised
+#' table built at snapshot time).  Falls back to reading `master_data$communes`
+#' / `master_data$postal` directly when entities is NULL — this covers
+#' `rebuild_master_data()` (entities not yet built) and legacy master_data
+#' objects that pre-date the entities table.
 #'
 #' Replaces `.list_codes_for()` (R/09_query.R) and
 #' `.get_reference_codes()` (R/07_diagnose.R).
 #' @noRd
 .node_reference_codes <- function(id, master_data) {
+  # -- Phase 3 fast path: entities table -----------------------------------------
+  if (!is.null(master_data$entities)) {
+    ent <- master_data$entities[classification_id == id]
+    if (nrow(ent) == 0L) return(NULL)
+    return(ent[, .(code, name_fr, name_nl)])
+  }
+
+  # -- Fallback: read from communes / postal directly ----------------------------
+  # Used when entities has not yet been built (rebuild_master_data() context) or
+  # when loading a master_data object that pre-dates the entities table.
   n     <- .node(id)
   tbl   <- if (n$source_table == "communes") master_data$communes
            else                               master_data$postal
@@ -316,7 +331,7 @@ CLASSIFICATION_NODES <- list(
     sub <- slice[, .SD, .SDcols = keep]
   }
 
-  result <- data.table(code = sub[[cc]])
+  result <- data.table(code = as.character(sub[[cc]]))
   result[, name_fr := if (has_fr) sub[[fr_col]] else NA_character_]
   result[, name_nl := if (has_nl) sub[[nl_col]] else NA_character_]
   result
