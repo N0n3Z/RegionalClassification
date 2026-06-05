@@ -12,5 +12,6 @@
 ^demo$
 ^REFACTORING_PLAN\.md$
 ^REFACTOR_CROSSWALKS\.md$
+^DOCUMENTATION\.md$
 ^CLAUDE\.md$
 ^\.claude$
