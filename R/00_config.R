@@ -417,7 +417,9 @@ NIS_PROV_DIGIT_TO_REGION <- c(
 MASTER_FLAT_TABLES <- c(
   "communes",    # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
   "postal",      # postal -> NIS mappings for all versions (nis_version discriminator)
-  "nis_changes"  # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (from_version)
+  "nis_changes", # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (from_version)
+  "entities",    # one row per (classification_id, code) — flat enumeration of all nodes
+  "crosswalks"   # one row per primitive code link (from_id, to_id, code_from, code_to, relation, nature)
 )
 
 # --- Schema of the unified `communes` table ---
