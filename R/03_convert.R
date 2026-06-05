@@ -142,8 +142,44 @@ normalize_classification_id <- function(class_id) {
 # Normalize to the canonical 3-column schema: (code_from, code_to, nature).
 # Adds nature = NA_character_ if absent; enforces column order.
 # Called at every return point of route_conversion().
-.normalize_conversion_result <- function(dt) {
+#
+# Phase 4b: when `from` and `to` are supplied, fills any remaining NA nature
+# values according to the edge's perimeter semantics:
+#   - identity / nesting (1:1 or N:1, non-temporal) → "RECODE"
+#   - overlap (1:N or M:N)                          → "OVERLAP"
+#   - temporal                                       → kept as-is (crosswalk
+#       already carries UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV)
+# Multi-hop paths are called *without* from/to so nature stays NA there.
+.normalize_conversion_result <- function(dt, from = NULL, to = NULL) {
   if (!"nature" %in% names(dt)) dt[, nature := NA_character_]
+
+  if (!is.null(from) && !is.null(to)) {
+    if (from == to) {
+      # Identity no-op: classify as RECODE (self-mapping, no information loss)
+      dt[is.na(nature), nature := "RECODE"]
+    } else {
+      # Determine the perimeter semantics of the (from -> to) conversion.
+      # check_conversion_path() is used (rather than a direct lookup in
+      # CONVERSION_GRAPH_EDGES) because many crosswalk entries are shortcut /
+      # composite edges (e.g. NIS_COMMUNE_2019 -> NUTS3_2021 is stored as a
+      # single crosswalk hop but declared as two hops in CGE).  The graph BFS
+      # result is cached by build_conversion_graph() so repeated calls are O(1).
+      pc <- tryCatch(check_conversion_path(from, to), error = function(e) NULL)
+
+      if (!is.null(pc) && !is.null(pc$perimeter_relations) &&
+          length(pc$perimeter_relations) > 0L) {
+        if (all(pc$perimeter_relations == "temporal")) {
+          # Pure temporal path: crosswalk already holds UNCHANGED / FUSION /
+          # CHANGE_DSTR / CHANGE_PROV — do not overwrite.
+        } else if (isTRUE(pc$straddle_free)) {
+          dt[is.na(nature), nature := "RECODE"]
+        } else {
+          dt[is.na(nature), nature := "OVERLAP"]
+        }
+      }
+    }
+  }
+
   setcolorder(dt, c("code_from", "code_to", "nature"))
   dt
 }
@@ -167,7 +203,8 @@ normalize_classification_id <- function(class_id) {
 route_conversion <- function(input_dt, from, to, md) {
 
   if (from == to)
-    return(.normalize_conversion_result(input_dt[, .(code_from, code_to = code_from)]))
+    return(.normalize_conversion_result(input_dt[, .(code_from, code_to = code_from)],
+                                        from, to))
 
   input_dt <- copy(input_dt)
   input_dt[, code_from := .node_coerce(code_from, from)]
@@ -178,10 +215,12 @@ route_conversion <- function(input_dt, from, to, md) {
     res <- .crosswalk_hop(input_dt, from, to, md)
     res[, code_to   := .node_coerce(code_to,   to)]
     res[, code_from := .node_coerce(code_from, from)]
-    return(.normalize_conversion_result(res))
+    return(.normalize_conversion_result(res, from, to))
   }
 
-  # Multi-hop: compose single-hop crosswalk lookups along the crosswalk-graph path
+  # Multi-hop: compose single-hop crosswalk lookups along the crosswalk-graph path.
+  # nature is intentionally NOT propagated across multi-hop paths (ill-defined
+  # which hop's semantics should label the composite).
   composed <- .compose_via_handlers(copy(input_dt), from, to, md)
   if (!is.null(composed)) {
     composed[, code_to   := .node_coerce(code_to,   to)]
@@ -286,13 +325,37 @@ route_conversion <- function(input_dt, from, to, md) {
 
 #' List all available conversion paths
 #'
-#' @return data.table describing available conversions
+#' Returns a data.table with one row per declared edge in
+#' \code{CONVERSION_GRAPH_EDGES}.  The \code{perimeter_relation} column
+#' summarises the spatial semantics of each edge (see
+#' \code{\link{is_perimeter_preserving}}):
+#' \describe{
+#'   \item{temporal}{Same system, different edition.}
+#'   \item{identity}{Exact 1:1 correspondence, no splitting.}
+#'   \item{nesting}{Many fine units aggregate into one coarser unit (N:1).}
+#'   \item{overlap}{A source unit straddles multiple target units (1:N / M:N).}
+#' }
+#' @return data.table with columns \code{from}, \code{to}, \code{relation},
+#'   \code{perimeter_relation}, \code{notes}.
 #' @examples
 #' list_available_conversions()
 #' @export
 list_available_conversions <- function() {
-  edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, as.data.table), fill = TRUE)
-  edges[, .(from, to, relation, notes)]
+  # Build from scalar fields only — some edges carry vector fields (e.g.
+  # ambiguous_codes) that rbindlist(as.data.table(e)) would expand into
+  # multiple rows, misaligning the perimeter_relation vector.
+  edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, function(e) {
+    data.table(
+      from     = e$from,
+      to       = e$to,
+      relation = e$relation,
+      notes    = if (!is.null(e$notes) && length(e$notes) == 1L) e$notes
+                 else NA_character_
+    )
+  }), use.names = TRUE, fill = TRUE)
+  prel <- vapply(CONVERSION_GRAPH_EDGES, .edge_perimeter_relation, character(1))
+  edges[, perimeter_relation := prel]
+  edges[, .(from, to, relation, perimeter_relation, notes)]
 }
 
 .validate_master_data <- function(master_data) {

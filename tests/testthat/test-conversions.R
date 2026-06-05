@@ -194,15 +194,15 @@ test_that("NIS_COMMUNE_2019 -> NIS_REGION_2019 assigns regions correctly", {
 
 # ── Test 15: Uniform return schema (code_from, code_to, nature) ──────────────
 test_that("convert_codes always returns exactly 3 columns: code_from, code_to, nature", {
-  # Simple conversion: nature = NA
+  # Simple conversion: nature = "RECODE" (N:1 nesting, non-temporal)
   r_simple <- convert_codes(21004L, "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
   expect_equal(names(r_simple), c("code_from", "code_to", "nature"))
-  expect_true(is.na(r_simple$nature))
+  expect_equal(r_simple$nature, "RECODE")
 
-  # Identity: nature = NA
+  # Identity (from == to): nature = "RECODE" (self-mapping, no information loss)
   r_id <- convert_codes("BE211", "NUTS3_2021", "NUTS3_2021", master_data)
   expect_equal(names(r_id), c("code_from", "code_to", "nature"))
-  expect_true(is.na(r_id$nature))
+  expect_equal(r_id$nature, "RECODE")
 
   # Multi-hop: nature = NA (composer drops it mid-chain)
   r_multi <- convert_codes("BE211", "NUTS3_2021", "NUTS1_2021", master_data)

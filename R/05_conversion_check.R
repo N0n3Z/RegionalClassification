@@ -3,6 +3,42 @@
 # ==============================================================================
 
 
+#' Classify the perimeter semantics of a single conversion edge
+#'
+#' Returns a string describing whether the edge preserves, aggregates, or
+#' crosses spatial perimeters:
+#' \describe{
+#'   \item{temporal}{Same system, both nodes have explicit versions that differ.
+#'     Boundaries may change edition-to-edition but no cross-system split occurs.}
+#'   \item{identity}{1:1 edge, same or different system, same effective territory.}
+#'   \item{nesting}{N:1 edge — many fine units aggregate into one coarser unit.
+#'     The source perimeter is fully contained in the target.}
+#'   \item{overlap}{1:N or M:N edge — a source unit straddles multiple target
+#'     units, so the source perimeter is \emph{not} contained in any single
+#'     target unit. This is the only category that breaks perimeter preservation.}
+#' }
+#'
+#' @param edge One element of \code{CONVERSION_GRAPH_EDGES} (or a reverse edge
+#'   built by \code{build_conversion_graph()}).
+#' @return A length-1 character string: one of \code{"temporal"},
+#'   \code{"identity"}, \code{"nesting"}, \code{"overlap"}.
+#' @keywords internal
+.edge_perimeter_relation <- function(edge) {
+  from_n <- CLASSIFICATION_NODES[[edge$from]]
+  to_n   <- CLASSIFICATION_NODES[[edge$to]]
+  same_sys <- !is.null(from_n) && !is.null(to_n) &&
+              from_n$system == to_n$system
+  both_ver <- same_sys &&
+              !is.na(from_n$version) && !is.na(to_n$version)
+  temporal <- both_ver && from_n$version != to_n$version
+
+  if (temporal)                            return("temporal")
+  if (edge$relation %in% c("1:N", "M:N")) return("overlap")
+  if (edge$relation == "1:1")             return("identity")
+  "nesting"   # N:1
+}
+
+
 #' Check if a simple (direct, unambiguous) conversion is possible
 #'
 #' A conversion is "simple" if there exists a path where every edge
@@ -34,11 +70,14 @@ check_conversion_path <- function(from, to) {
 
   if (from_norm == to_norm) {
     return(list(
-      is_simple = TRUE,
-      path = from_norm,
-      relations = character(0),
-      explanation = "Same classification - no conversion needed.",
-      edges_used = list()
+      is_simple           = TRUE,
+      path                = from_norm,
+      relations           = character(0),
+      explanation         = "Same classification - no conversion needed.",
+      edges_used          = list(),
+      perimeter_relations = character(0),
+      perimeter_status    = "preserving",
+      straddle_free       = TRUE
     ))
   }
 
@@ -50,14 +89,17 @@ check_conversion_path <- function(from, to) {
 
   if (is.null(path_result)) {
     return(list(
-      is_simple = FALSE,
-      path = NULL,
-      relations = NULL,
-      explanation = sprintf(
+      is_simple           = FALSE,
+      path                = NULL,
+      relations           = NULL,
+      explanation         = sprintf(
         "No conversion path exists from '%s' to '%s'. Use list_available_conversions() to see all supported paths.",
         from, to
       ),
-      edges_used = list()
+      edges_used          = list(),
+      perimeter_relations = NULL,
+      perimeter_status    = NA_character_,
+      straddle_free       = NA
     ))
   }
 
@@ -126,16 +168,57 @@ check_conversion_path <- function(from, to) {
     explanation <- paste0(explanation, ambig_line)
   }
 
+  perimeter_relations <- vapply(path_result$edges_used,
+                                .edge_perimeter_relation, character(1))
+  perimeter_status    <- if (length(perimeter_relations) == 0L ||
+                             !any(perimeter_relations == "overlap"))
+                           "preserving" else "crossing"
+  straddle_free       <- perimeter_status == "preserving"
+
   return(list(
-    is_simple       = is_simple,
-    path            = path_result$path,
-    relations       = path_result$relations,
-    explanation     = explanation,
-    edges_used      = path_result$edges_used,
-    ambiguous_codes = ambiguous_codes,
-    coverage        = coverage
+    is_simple           = is_simple,
+    path                = path_result$path,
+    relations           = path_result$relations,
+    explanation         = explanation,
+    edges_used          = path_result$edges_used,
+    ambiguous_codes     = ambiguous_codes,
+    coverage            = coverage,
+    perimeter_relations = perimeter_relations,
+    perimeter_status    = perimeter_status,
+    straddle_free       = straddle_free
   ))
 }
+
+#' Test whether a conversion path is perimeter-preserving
+#'
+#' A conversion is perimeter-preserving when no edge along the (shortest) path
+#' has a `1:N` or `M:N` cardinality in the forward direction — i.e. no source
+#' unit straddles two or more target units. Temporal edges (same system,
+#' different edition) are always considered perimeter-preserving.
+#'
+#' Typical results:
+#' \itemize{
+#'   \item \code{NIS_COMMUNE_2019 -> NUTS3_2021}: `TRUE`  (N:1, nesting)
+#'   \item \code{NIS_COMMUNE_2025 -> NUTS3_2021}: `FALSE` (1:N, fused communes
+#'     straddle NUTS3 boundaries)
+#'   \item \code{NIS_COMMUNE_2019 -> NIS_COMMUNE_2025}: `TRUE`  (temporal)
+#' }
+#'
+#' @param from Source classification identifier.
+#' @param to   Target classification identifier.
+#' @return `TRUE` if all edges in the path are perimeter-preserving, `FALSE`
+#'   if any edge is an overlap (1:N / M:N), and `NA` if no conversion path
+#'   exists.
+#' @examples
+#' is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
+#' is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE
+#' @export
+is_perimeter_preserving <- function(from, to) {
+  result <- check_conversion_path(from, to)
+  if (is.null(result$path)) return(NA)
+  isTRUE(result$straddle_free)
+}
+
 
 # Private cache environment — mutable after namespace lock
 .graph_cache <- new.env(parent = emptyenv())
@@ -280,6 +363,13 @@ print_conversion_check <- function(from, to) {
   cat(sprintf("To:   %s\n", to))
   cat(sprintf("Simple conversion: %s\n",
               ifelse(result$is_simple, "YES", "NO")))
+  if (!is.na(result$straddle_free)) {
+    cat(sprintf("Perimeter-preserving: %s\n",
+                ifelse(result$straddle_free, "YES", "NO (straddle)")))
+    if (!is.null(result$perimeter_relations) && length(result$perimeter_relations) > 0L)
+      cat(sprintf("Perimeter relations: %s\n",
+                  paste(result$perimeter_relations, collapse = " -> ")))
+  }
   cat("\n")
   cat(result$explanation)
   cat("\n")
