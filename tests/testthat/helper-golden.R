@@ -5,19 +5,24 @@
 # Run gen_golden() ONCE with the current engine to capture reference output,
 # then commit tests/testthat/fixtures/golden_crosswalks.rds.
 # The golden test (test-crosswalks-golden.R) loads that fixture and asserts
-# the engine still reproduces it — trivially green in P0/P1, a real guard in P2.
+# the engine still reproduces it — trivially green in P0/P1, a real guard in P2+.
+#
+# Phase 2 note: .ROUTE_TABLE has been removed; gen_golden() now iterates the
+# unique (from_id, to_id) pairs present in md$crosswalks instead.
 # ==============================================================================
 
 #' Generate and save the golden crosswalks fixture
 #'
 #' Captures (code_from, code_to, nature) for every directly-executable hop
-#' in .ROUTE_TABLE, plus a small set of representative multi-hop pairs.
+#' derived from the crosswalks table, plus a small set of representative
+#' multi-hop pairs.
 #' @noRd
 gen_golden <- function() {
   md   <- load_master_data()
-  keys <- names(nbbbenuts:::.ROUTE_TABLE)
+  # Derive edge keys from the crosswalks table (Phase 2: .ROUTE_TABLE removed)
+  keys <- unique(md$crosswalks[, paste0(from_id, "__", to_id)])
 
-  # --- Per-hop golden (one block per .ROUTE_TABLE key) ---
+  # --- Per-hop golden (one block per crosswalk edge) ---
   per_edge <- rbindlist(lapply(keys, function(key) {
     parts <- strsplit(key, "__", fixed = TRUE)[[1]]
     from  <- parts[1L]
