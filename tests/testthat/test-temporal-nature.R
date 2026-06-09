@@ -1,22 +1,22 @@
 library(data.table)
 
 # ==============================================================================
-# test-temporal-nature.R  —  Phase 5a: CHANGE_DSTR / CHANGE_PROV coverage
+# test-temporal-nature.R  --  Phase 5a: CHANGE_DSTR / CHANGE_PROV coverage
 # ==============================================================================
 # Guards that convert_codes() correctly propagates nature values on temporal
 # (NIS 2019 <-> 2025) edges:
 #
-#   UNCHANGED   —  commune code persists in both versions (553 communes)
-#   FUSION      —  one or more 2019 communes merged into one 2025 code (27 pairs)
-#   CHANGE_DSTR —  commune moved to a different arrondissement (2 communes)
-#   CHANGE_PROV —  commune moved to a different province (1 commune)
+#   UNCHANGED   --  commune code persists in both versions (553 communes)
+#   FUSION      --  one or more 2019 communes merged into one 2025 code (27 pairs)
+#   CHANGE_DSTR --  commune moved to a different arrondissement (2 communes)
+#   CHANGE_PROV --  commune moved to a different province (1 commune)
 #
 # Source codes (from nis_changes table, from_version == "2019"):
 #   CHANGE_DSTR:  44045 -> 46029,  73040 -> 71072
 #   CHANGE_PROV:  11056 -> 46030
 # ==============================================================================
 
-# ── TN1: CHANGE_DSTR — forward (2019 -> 2025) ────────────────────────────────
+# -- TN1: CHANGE_DSTR -- forward (2019 -> 2025) --------------------------------
 
 test_that("convert_codes returns CHANGE_DSTR for commune 44045 (arr change -> 46029)", {
   r <- convert_codes(44045L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
@@ -32,7 +32,7 @@ test_that("convert_codes returns CHANGE_DSTR for commune 73040 (arr change -> 71
   expect_equal(r$code_from, 73040L)
 })
 
-# ── TN2: CHANGE_PROV — forward (2019 -> 2025) ────────────────────────────────
+# -- TN2: CHANGE_PROV -- forward (2019 -> 2025) --------------------------------
 
 test_that("convert_codes returns CHANGE_PROV for commune 11056 (prov change -> 46030)", {
   r <- convert_codes(11056L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
@@ -41,7 +41,7 @@ test_that("convert_codes returns CHANGE_PROV for commune 11056 (prov change -> 4
   expect_equal(r$code_from, 11056L)
 })
 
-# ── TN3: CHANGE_DSTR / CHANGE_PROV — reverse (2025 -> 2019) ──────────────────
+# -- TN3: CHANGE_DSTR / CHANGE_PROV -- reverse (2025 -> 2019) ------------------
 # NIS_COMMUNE_2025 -> NIS_COMMUNE_2019 is a non-simple edge overall (FUSION
 # cases make it 1:N for some codes), so allow_ambiguous = TRUE is required.
 # CHANGE_DSTR and CHANGE_PROV codes are 1:1 in both directions (single row).
@@ -67,7 +67,7 @@ test_that("reverse temporal conversion preserves CHANGE_PROV (46030 contains 110
   expect_equal(prov_row$nature, "CHANGE_PROV")
 })
 
-# ── TN4: UNCHANGED and FUSION still correct ───────────────────────────────────
+# -- TN4: UNCHANGED and FUSION still correct -----------------------------------
 
 test_that("UNCHANGED commune returns nature='UNCHANGED' and same code", {
   # 21004 = Auderghem (Brussels): code persists unchanged in 2025
@@ -82,7 +82,7 @@ test_that("FUSION commune returns nature='FUSION'", {
   expect_equal(r$nature, "FUSION")
 })
 
-# ── TN5: Batch conversion returns correct mix ────────────────────────────────
+# -- TN5: Batch conversion returns correct mix --------------------------------
 
 test_that("batch temporal conversion carries the correct nature per code", {
   codes <- c(21004L, 44045L, 11056L, 73040L, 11007L)
@@ -95,7 +95,7 @@ test_that("batch temporal conversion carries the correct nature per code", {
   expect_equal(r[code_from == 11007L, nature], "FUSION")
 })
 
-# ── TN6: Temporal nature values are within the declared set ──────────────────
+# -- TN6: Temporal nature values are within the declared set ------------------
 
 test_that("all 2019->2025 temporal nature values are in {UNCHANGED,FUSION,CHANGE_DSTR,CHANGE_PROV}", {
   # Convert all NIS 2019 communes to 2025
@@ -110,7 +110,7 @@ test_that("all 2019->2025 temporal nature values are in {UNCHANGED,FUSION,CHANGE
 test_that("all BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION} or NA", {
   # BEFORE_2019->2019 transitions are pure fusions/unchanged; no CHANGE_DSTR/PROV.
   # 15 orphaned BEFORE_2019 communes (absent from nis_changes and NIS 2019) produce
-  # code_to = NA with rcl_unmatched_codes — suppress that advisory warning.
+  # code_to = NA with rcl_unmatched_codes -- suppress that advisory warning.
   all_b19 <- unique(master_data$communes[nis_version == "BEFORE_2019", cd_commune])
   r       <- suppressWarnings(
     convert_codes(all_b19, "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019", master_data)
@@ -121,7 +121,7 @@ test_that("all BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION} or NA"
                info = paste("Unexpected nature values:", paste(bad, collapse = ", ")))
 })
 
-# ── TN7: Nature counts match known totals ────────────────────────────────────
+# -- TN7: Nature counts match known totals ------------------------------------
 
 test_that("CHANGE_DSTR count == 2 and CHANGE_PROV count == 1 in 2019->2025 crosswalk", {
   all_2019 <- unique(master_data$communes[nis_version == "2019", cd_commune])

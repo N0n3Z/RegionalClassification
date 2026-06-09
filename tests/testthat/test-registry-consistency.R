@@ -1,7 +1,7 @@
 library(data.table)
 
 # ==============================================================================
-# test-registry-consistency.R  —  Phase 5b: CLASSIFICATION_REGISTRY coherence
+# test-registry-consistency.R  --  Phase 5b: CLASSIFICATION_REGISTRY coherence
 # ==============================================================================
 # CLASSIFICATION_REGISTRY (R/00_config.R) is a human-readable catalogue of
 # classification *systems* (NIS, NUTS, POSTAL, INTERNAL) with their declared
@@ -14,13 +14,13 @@ library(data.table)
 #   RC3  Every level used by a node is listed in the registry system
 #        (case-insensitive: nodes use "nuts3", registry has "NUTS3").
 #   RC4  Every version declared in the registry is referenced by at least one
-#        node (no orphan versions; "current" is exempted — POSTAL/INTERNAL).
+#        node (no orphan versions; "current" is exempted -- POSTAL/INTERNAL).
 #   RC5  CLASSIFICATION_NODES keys equal VALID_CLASSIFICATIONS (parity with the
-#        conversion graph — already in test-registry.R; kept here as a cross-
+#        conversion graph -- already in test-registry.R; kept here as a cross-
 #        file anchor so both files catch regressions independently).
 # ==============================================================================
 
-# ── RC1: Every node system is declared in CLASSIFICATION_REGISTRY ─────────────
+# -- RC1: Every node system is declared in CLASSIFICATION_REGISTRY -------------
 
 test_that("every system used by CLASSIFICATION_NODES exists in CLASSIFICATION_REGISTRY", {
   node_systems <- unique(vapply(CLASSIFICATION_NODES, `[[`, character(1), "system"))
@@ -29,7 +29,7 @@ test_that("every system used by CLASSIFICATION_NODES exists in CLASSIFICATION_RE
                info = paste("Unknown system(s):", paste(unknown, collapse = ", ")))
 })
 
-# ── RC2: Every non-NA node version is declared in its system ──────────────────
+# -- RC2: Every non-NA node version is declared in its system ------------------
 
 test_that("every non-NA node version is declared in CLASSIFICATION_REGISTRY", {
   failures <- character(0)
@@ -47,7 +47,7 @@ test_that("every non-NA node version is declared in CLASSIFICATION_REGISTRY", {
                info = paste(failures, collapse = "\n"))
 })
 
-# ── RC3: Every node level is declared in its system (case-insensitive) ────────
+# -- RC3: Every node level is declared in its system (case-insensitive) --------
 
 test_that("every node level is declared in CLASSIFICATION_REGISTRY (case-insensitive)", {
   failures <- character(0)
@@ -63,11 +63,11 @@ test_that("every node level is declared in CLASSIFICATION_REGISTRY (case-insensi
                info = paste(failures, collapse = "\n"))
 })
 
-# ── RC4: Every registry version is referenced by at least one node ────────────
+# -- RC4: Every registry version is referenced by at least one node ------------
 
 test_that("every registry version is referenced by at least one CLASSIFICATION_NODE", {
   # "current" is used by POSTAL and INTERNAL which have version = NA_character_
-  # in CLASSIFICATION_NODES — exempt from the reverse check.
+  # in CLASSIFICATION_NODES -- exempt from the reverse check.
   EXEMPT_VERSIONS <- "current"
 
   failures <- character(0)
@@ -87,7 +87,7 @@ test_that("every registry version is referenced by at least one CLASSIFICATION_N
                info = paste(failures, collapse = "\n"))
 })
 
-# ── RC5: CLASSIFICATION_NODES keys == VALID_CLASSIFICATIONS ───────────────────
+# -- RC5: CLASSIFICATION_NODES keys == VALID_CLASSIFICATIONS -------------------
 
 test_that("CLASSIFICATION_NODES keys equal VALID_CLASSIFICATIONS (22 nodes)", {
   # Cross-file anchor (also checked in test-registry.R).

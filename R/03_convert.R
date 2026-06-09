@@ -145,9 +145,9 @@ normalize_classification_id <- function(class_id) {
 #
 # Phase 4b: when `from` and `to` are supplied, fills any remaining NA nature
 # values according to the edge's perimeter semantics:
-#   - identity / nesting (1:1 or N:1, non-temporal) → "RECODE"
-#   - overlap (1:N or M:N)                          → "OVERLAP"
-#   - temporal                                       → kept as-is (crosswalk
+#   - identity / nesting (1:1 or N:1, non-temporal) -> "RECODE"
+#   - overlap (1:N or M:N)                          -> "OVERLAP"
+#   - temporal                                       -> kept as-is (crosswalk
 #       already carries UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV)
 # Multi-hop paths are called *without* from/to so nature stays NA there.
 .normalize_conversion_result <- function(dt, from = NULL, to = NULL) {
@@ -170,7 +170,7 @@ normalize_classification_id <- function(class_id) {
           length(pc$perimeter_relations) > 0L) {
         if (all(pc$perimeter_relations == "temporal")) {
           # Pure temporal path: crosswalk already holds UNCHANGED / FUSION /
-          # CHANGE_DSTR / CHANGE_PROV — do not overwrite.
+          # CHANGE_DSTR / CHANGE_PROV -- do not overwrite.
         } else if (isTRUE(pc$straddle_free)) {
           dt[is.na(nature), nature := "RECODE"]
         } else {
@@ -291,12 +291,12 @@ route_conversion <- function(input_dt, from, to, md) {
 
 # Compose single-hop crosswalk lookups along the crosswalk-graph path from
 # `from` to `to`.  Uses .xw_path() (BFS over md$crosswalks edges) so that every
-# hop in the path is guaranteed to have crosswalk rows — a path over the
+# hop in the path is guaranteed to have crosswalk rows -- a path over the
 # declared CONVERSION_GRAPH_EDGES could include composite edges absent from the
 # crosswalk table.
 # Joins by code value (not position) so M:N hops fan out correctly; input order
 # is restored at the end.
-# Returns data.table(code_from, code_to) — nature is not propagated across
+# Returns data.table(code_from, code_to) -- nature is not propagated across
 # multi-hop paths; .normalize_conversion_result() will set it to NA.
 .compose_via_handlers <- function(input_dt, from, to, md) {
   path <- .xw_path(from, to, md)
@@ -341,7 +341,7 @@ route_conversion <- function(input_dt, from, to, md) {
 #' list_available_conversions()
 #' @export
 list_available_conversions <- function() {
-  # Build from scalar fields only — some edges carry vector fields (e.g.
+  # Build from scalar fields only -- some edges carry vector fields (e.g.
   # ambiguous_codes) that rbindlist(as.data.table(e)) would expand into
   # multiple rows, misaligning the perimeter_relation vector.
   edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, function(e) {

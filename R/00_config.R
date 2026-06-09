@@ -381,7 +381,7 @@ VALID_CLASSIFICATIONS <- unique(c(
 # These structural codes are defined by Belgian law / Statbel and do not change
 # between NIS versions (regions and provinces predate the 2019/2025 commune fusions).
 # All build logic in 01_load_data.R and 02_build_master_table.R uses these names.
-# Never scatter these literals through the codebase — reference this block instead.
+# Never scatter these literals through the codebase -- reference this block instead.
 
 NIS_REGION_FLEMISH  <- 2000L
 NIS_REGION_WALLOON  <- 3000L
@@ -418,7 +418,7 @@ MASTER_FLAT_TABLES <- c(
   "communes",    # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
   "postal",      # postal -> NIS mappings for all versions (nis_version discriminator)
   "nis_changes", # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (from_version)
-  "entities",    # one row per (classification_id, code) — flat enumeration of all nodes
+  "entities",    # one row per (classification_id, code) -- flat enumeration of all nodes
   "crosswalks"   # one row per primitive code link (from_id, to_id, code_from, code_to, relation, nature)
 )
 

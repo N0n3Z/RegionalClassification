@@ -12,7 +12,7 @@ golden_path <- testthat::test_path("fixtures", "golden_crosswalks.rds")
 if (!file.exists(golden_path)) {
   test_that("golden fixture is present", {
     skip(paste("golden_crosswalks.rds not found at", golden_path,
-               "— run gen_golden() from helper-golden.R to create it."))
+               "-- run gen_golden() from helper-golden.R to create it."))
   })
 } else {
 

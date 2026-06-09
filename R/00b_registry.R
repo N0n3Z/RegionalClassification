@@ -293,7 +293,7 @@ CLASSIFICATION_NODES <- list(
 #'
 #' Phase 3: prefers `master_data$entities` when available (single normalised
 #' table built at snapshot time).  Falls back to reading `master_data$communes`
-#' / `master_data$postal` directly when entities is NULL — this covers
+#' / `master_data$postal` directly when entities is NULL -- this covers
 #' `rebuild_master_data()` (entities not yet built) and legacy master_data
 #' objects that pre-date the entities table.
 #'
@@ -339,7 +339,7 @@ CLASSIFICATION_NODES <- list(
 
 #' Label metadata compatible with the legacy .LABEL_META[[id]] structure
 #'
-#' Returns `list(ver, code, fr, nl, src)` — a drop-in replacement for
+#' Returns `list(ver, code, fr, nl, src)` -- a drop-in replacement for
 #' accessing `.LABEL_META[[id]]` in R/09_query.R.
 #' @noRd
 .node_label_meta <- function(id) {

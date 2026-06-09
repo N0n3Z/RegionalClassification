@@ -1,17 +1,17 @@
 library(data.table)
 
 # ==============================================================================
-# test-crosswalks-parity.R  —  Phase 1 guard (per-edge loop retired in Phase 2)
+# test-crosswalks-parity.R  --  Phase 1 guard (per-edge loop retired in Phase 2)
 # ==============================================================================
 # The per-edge parity loop (engine output == crosswalks table) was the gate
 # for Phase 2.  Now that the engine IS the crosswalks table, that loop is
 # trivially true and has been retired.
 #
 # What remains:
-#   1. Coverage assertion — every non-BEFORE_2019 edge from CONVERSION_GRAPH_EDGES
+#   1. Coverage assertion -- every non-BEFORE_2019 edge from CONVERSION_GRAPH_EDGES
 #      (forward + auto-reversed) must have crosswalk rows.  Prevents a silent gap
 #      that would cause silent NA outputs for missing edges.
-#   2. Postal universe assumption — p25 codes ⊆ p19 codes; guards the universe
+#   2. Postal universe assumption -- p25 codes <= p19 codes; guards the universe
 #      used when building the POSTAL -> NIS_COMMUNE_2025 crosswalk.
 #
 # Primary regression guard is now test-crosswalks-golden.R.
@@ -21,7 +21,7 @@ md <- load_master_data()
 
 if (is.null(md$crosswalks)) {
   test_that("crosswalks table is present", {
-    skip(paste0("master_data$crosswalks is NULL — run:\n",
+    skip(paste0("master_data$crosswalks is NULL -- run:\n",
                 "  rebuild_master_data()"))
   })
 } else {

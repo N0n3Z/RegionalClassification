@@ -1,6 +1,6 @@
 library(data.table)
 
-# ── Parity: registry keys == VALID_CLASSIFICATIONS ───────────────────────────
+# -- Parity: registry keys == VALID_CLASSIFICATIONS ---------------------------
 test_that("CLASSIFICATION_NODES keys match VALID_CLASSIFICATIONS exactly", {
   expect_true(setequal(names(CLASSIFICATION_NODES), VALID_CLASSIFICATIONS))
 })
@@ -11,7 +11,7 @@ test_that("CLASSIFICATION_NODES keys match get_all_classification_nodes() parity
   expect_true(setequal(names(CLASSIFICATION_NODES), get_all_classification_nodes()))
 })
 
-# ── Every node resolvable via .node() ────────────────────────────────────────
+# -- Every node resolvable via .node() ----------------------------------------
 test_that("every valid classification resolves via .node()", {
   for (id in VALID_CLASSIFICATIONS) {
     n <- nbbbenuts:::.node(id)
@@ -28,7 +28,7 @@ test_that(".node() aborts with rcl_invalid_classification for unknown id", {
                class = "rcl_invalid_classification")
 })
 
-# ── code_type is "integer" or "character" ────────────────────────────────────
+# -- code_type is "integer" or "character" ------------------------------------
 test_that("every node has code_type 'integer' or 'character'", {
   for (id in VALID_CLASSIFICATIONS) {
     ct <- nbbbenuts:::.node_code_type(id)
@@ -36,7 +36,7 @@ test_that("every node has code_type 'integer' or 'character'", {
   }
 })
 
-# ── code_type matches the actual column type in the RDS ──────────────────────
+# -- code_type matches the actual column type in the RDS ----------------------
 test_that("code_type matches the real column class in master_data", {
   for (id in names(CLASSIFICATION_NODES)) {
     n   <- CLASSIFICATION_NODES[[id]]
@@ -54,7 +54,7 @@ test_that("code_type matches the real column class in master_data", {
   }
 })
 
-# ── label columns exist in the source table ──────────────────────────────────
+# -- label columns exist in the source table ----------------------------------
 test_that("non-NA label columns exist in the source table", {
   for (id in names(CLASSIFICATION_NODES)) {
     n   <- CLASSIFICATION_NODES[[id]]
@@ -67,7 +67,7 @@ test_that("non-NA label columns exist in the source table", {
   }
 })
 
-# ── .node_parse() covers all 22 nodes ────────────────────────────────────────
+# -- .node_parse() covers all 22 nodes ----------------------------------------
 test_that(".node_parse() returns non-NA type for every node", {
   for (id in VALID_CLASSIFICATIONS) {
     p <- nbbbenuts:::.node_parse(id)
@@ -94,7 +94,7 @@ test_that(".node_parse() spot-checks match legacy .parse_classification_id()", {
   check("INTERNAL_ARRONDISSEMENT",       "INTERNAL_ARRONDISSEMENT", NA_character_)
 })
 
-# ── .node_label_meta() matches .LABEL_META structure ─────────────────────────
+# -- .node_label_meta() matches .LABEL_META structure -------------------------
 test_that(".node_label_meta() returns the five expected fields", {
   meta <- nbbbenuts:::.node_label_meta("NUTS3_2021")
   expect_equal(sort(names(meta)), sort(c("ver","code","fr","nl","src")))
@@ -131,7 +131,7 @@ test_that(".node_label_meta() returns correct values for all 22 nodes", {
   }
 })
 
-# ── .node_reference_codes() returns the right structure ──────────────────────
+# -- .node_reference_codes() returns the right structure ----------------------
 test_that(".node_reference_codes() returns data.table(code, name_fr, name_nl)", {
   ref <- nbbbenuts:::.node_reference_codes("NUTS3_2021", master_data)
   expect_true(is.data.table(ref))
@@ -167,7 +167,7 @@ test_that(".node_reference_codes() agrees with .list_codes_for() for key nodes",
   check_parity("INTERNAL_ARRONDISSEMENT")
 })
 
-# ── .node_coerce() type coercion ─────────────────────────────────────────────
+# -- .node_coerce() type coercion ---------------------------------------------
 test_that(".node_coerce() coerces to integer for NIS nodes", {
   result <- nbbbenuts:::.node_coerce("21004", "NIS_COMMUNE_2019")
   expect_type(result, "integer")
@@ -180,7 +180,7 @@ test_that(".node_coerce() coerces to character for NUTS nodes", {
   expect_equal(result, "21004")
 })
 
-# ── Phase 5: CLASSIFICATION_REGISTRY consistency with CLASSIFICATION_NODES ────
+# -- Phase 5: CLASSIFICATION_REGISTRY consistency with CLASSIFICATION_NODES ----
 # CLASSIFICATION_REGISTRY is a system-level grouping (NIS, NUTS, POSTAL, INTERNAL).
 # CLASSIFICATION_NODES is the granular per-node truth. The registry must cover
 # every system and level that a node declares.

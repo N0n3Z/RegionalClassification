@@ -11,9 +11,9 @@
 #'   \item{temporal}{Same system, both nodes have explicit versions that differ.
 #'     Boundaries may change edition-to-edition but no cross-system split occurs.}
 #'   \item{identity}{1:1 edge, same or different system, same effective territory.}
-#'   \item{nesting}{N:1 edge — many fine units aggregate into one coarser unit.
+#'   \item{nesting}{N:1 edge -- many fine units aggregate into one coarser unit.
 #'     The source perimeter is fully contained in the target.}
-#'   \item{overlap}{1:N or M:N edge — a source unit straddles multiple target
+#'   \item{overlap}{1:N or M:N edge -- a source unit straddles multiple target
 #'     units, so the source perimeter is \emph{not} contained in any single
 #'     target unit. This is the only category that breaks perimeter preservation.}
 #' }
@@ -59,7 +59,7 @@
 #'     or ambiguous.}
 #'   \item{edges_used}{List of edge objects (from \code{CONVERSION_GRAPH_EDGES})
 #'     for each hop in the path.}
-#'   \item{perimeter_relations}{Character vector — one entry per hop — with
+#'   \item{perimeter_relations}{Character vector -- one entry per hop -- with
 #'     the perimeter semantic of that edge: \code{"temporal"}, \code{"identity"},
 #'     \code{"nesting"}, or \code{"overlap"}.  Empty for the identity path
 #'     (\code{from == to}).}
@@ -176,11 +176,11 @@ check_conversion_path <- function(from, to) {
 
   if (!is.null(coverage)) {
     ambig_line <- sprintf(
-      "\nCoverage   : %s\nAmbiguous  : %d code(s) → %s\n%s",
+      "\nCoverage   : %s\nAmbiguous  : %d code(s) -> %s\n%s",
       coverage,
       length(ambiguous_codes),
       paste(sort(ambiguous_codes), collapse = ", "),
-      "→ Use allow_ambiguous = TRUE; register weights via register_split_weights() for proportional splits."
+      "-> Use allow_ambiguous = TRUE; register weights via register_split_weights() for proportional splits."
     )
     explanation <- paste0(explanation, ambig_line)
   }
@@ -209,7 +209,7 @@ check_conversion_path <- function(from, to) {
 #' Test whether a conversion path is perimeter-preserving
 #'
 #' A conversion is perimeter-preserving when no edge along the (shortest) path
-#' has a `1:N` or `M:N` cardinality in the forward direction — i.e. no source
+#' has a `1:N` or `M:N` cardinality in the forward direction -- i.e. no source
 #' unit straddles two or more target units. Temporal edges (same system,
 #' different edition) are always considered perimeter-preserving.
 #'
@@ -237,7 +237,7 @@ is_perimeter_preserving <- function(from, to) {
 }
 
 
-# Private cache environment — mutable after namespace lock
+# Private cache environment -- mutable after namespace lock
 .graph_cache <- new.env(parent = emptyenv())
 
 #' Build conversion graph from CONVERSION_GRAPH_EDGES

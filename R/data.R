@@ -1,8 +1,8 @@
 # ==============================================================================
-# R/data.R — Documentation of bundled sample datasets
+# R/data.R -- Documentation of bundled sample datasets
 # ==============================================================================
 
-#' Sample communes — NIS 2019
+#' Sample communes -- NIS 2019
 #'
 #' A small representative dataset of 12 Belgian communes using NIS 2019 codes,
 #' with fictional but realistic socio-economic indicators. Useful for testing
@@ -17,7 +17,7 @@
 #'   \item{population}{Integer. Resident population (fictional).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
-#'   \item{taux_activite}{Numeric. Activity rate, 0–1 (fictional).}
+#'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
 #' @examples
 #' data(rc_communes_2019)
@@ -31,7 +31,7 @@
 "rc_communes_2019"
 
 
-#' Sample communes — NIS 2025
+#' Sample communes -- NIS 2025
 #'
 #' A small representative dataset of 10 Belgian communes using NIS 2025 codes,
 #' with fictional but realistic socio-economic indicators.
@@ -44,7 +44,7 @@
 #'   \item{population}{Integer. Resident population (fictional).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
-#'   \item{taux_activite}{Numeric. Activity rate, 0–1 (fictional).}
+#'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
 #' @examples
 #' data(rc_communes_2025)
@@ -82,7 +82,7 @@
 "rc_postal"
 
 
-#' Sample arrondissements — NIS 2019
+#' Sample arrondissements -- NIS 2019
 #'
 #' A dataset of 8 Belgian arrondissements using NIS 2019 codes. Includes
 #' arrondissement 63000 (Verviers), which maps to two NUTS3 regions (BE335 and
@@ -116,11 +116,11 @@
 "rc_arrondissements_2019"
 
 
-#' Sample NUTS3 regions — 2021 classification
+#' Sample NUTS3 regions -- 2021 classification
 #'
 #' A dataset of 10 Belgian NUTS3 regions (2021 classification) with fictional
 #' macroeconomic indicators. Includes BE335 and BE336 (the two Verviers
-#' sub-regions) to demonstrate NUTS 2021 → NUTS 2027 conversions.
+#' sub-regions) to demonstrate NUTS 2021 -> NUTS 2027 conversions.
 #'
 #' @format A `data.table` with 10 rows and 5 columns:
 #' \describe{
@@ -128,7 +128,7 @@
 #'   \item{nom_fr}{Character. French name of the NUTS3 region.}
 #'   \item{gdp_mio_eur}{Numeric. GDP in millions of EUR (fictional).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
-#'   \item{taux_chomage}{Numeric. Unemployment rate, 0–1 (fictional).}
+#'   \item{taux_chomage}{Numeric. Unemployment rate, 0--1 (fictional).}
 #' }
 #' @examples
 #' data(rc_nuts3_2021)

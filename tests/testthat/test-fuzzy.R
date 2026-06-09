@@ -1,6 +1,6 @@
 library(data.table)
 
-# ── Test F1: classe d'erreur pour classification non supportée ────────────────
+# -- Test F1: classe d'erreur pour classification non supportee ----------------
 test_that("fuzzy_match_names throws rcl_invalid_classification for unknown classification", {
   expect_error(
     fuzzy_match_names("Bruxelles", "UNKNOWN_CLASSIFICATION", master_data),
@@ -8,15 +8,15 @@ test_that("fuzzy_match_names throws rcl_invalid_classification for unknown class
   )
 })
 
-# ── Test F2: normalize_name supprime les accents et les préfixes ──────────────
+# -- Test F2: normalize_name supprime les accents et les prefixes --------------
 test_that("normalize_name strips accents and arrondissement prefix", {
-  expect_equal(nbbbenuts:::normalize_name("Liège"),    "liege")
+  expect_equal(nbbbenuts:::normalize_name("Liege"),    "liege")
   expect_equal(nbbbenuts:::normalize_name("Bruxelles"), "bruxelles")
-  expect_equal(nbbbenuts:::normalize_name("Arrondissement de Liège"), "liege")
+  expect_equal(nbbbenuts:::normalize_name("Arrondissement de Liege"), "liege")
   expect_equal(nbbbenuts:::normalize_name("arrondissement d'Anvers"), "anvers")
 })
 
-# ── Test F3: correspondance exacte retourne distance = 0 ─────────────────────
+# -- Test F3: correspondance exacte retourne distance = 0 ---------------------
 test_that("fuzzy_match_names exact match returns distance 0", {
   skip_if_not_installed("stringdist")
   result <- fuzzy_match_names("Anderlecht", "NIS_COMMUNE_2019", master_data,
@@ -26,7 +26,7 @@ test_that("fuzzy_match_names exact match returns distance 0", {
   expect_true(result$is_confident)
 })
 
-# ── Test F4: résultat même pour faute d'orthographe ──────────────────────────
+# -- Test F4: resultat meme pour faute d'orthographe --------------------------
 test_that("fuzzy_match_names matches misspelled names below threshold", {
   skip_if_not_installed("stringdist")
   result <- fuzzy_match_names(c("Bruxeles", "Antwerpn"), "NIS_COMMUNE_2019", master_data,
@@ -34,7 +34,7 @@ test_that("fuzzy_match_names matches misspelled names below threshold", {
   expect_equal(nrow(result), 2L)
 })
 
-# ── Test F5: identify_from_names retourne une ligne par input ─────────────────
+# -- Test F5: identify_from_names retourne une ligne par input -----------------
 test_that("identify_from_names returns one best match per input name", {
   skip_if_not_installed("stringdist")
   result <- identify_from_names(c("Bruxelles", "Gent"), master_data, max_dist = 0.1)
@@ -42,7 +42,7 @@ test_that("identify_from_names returns one best match per input name", {
   expect_true("classification" %in% names(result))
 })
 
-# ── Test F6: résultat NIS_COMMUNE_2025 ───────────────────────────────────────
+# -- Test F6: resultat NIS_COMMUNE_2025 ---------------------------------------
 test_that("fuzzy_match_names works for NIS_COMMUNE_2025", {
   skip_if_not_installed("stringdist")
   result <- fuzzy_match_names(c("Gent", "Hasselt"), "NIS_COMMUNE_2025", master_data,
@@ -51,7 +51,7 @@ test_that("fuzzy_match_names works for NIS_COMMUNE_2025", {
   expect_true(all(result$is_confident))
 })
 
-# ── Test F7: warn rcl_unmatched_codes quand aucune classification trouvée ─────
+# -- Test F7: warn rcl_unmatched_codes quand aucune classification trouvee -----
 test_that("identify_from_names warns rcl_unmatched_codes when no match in any classification", {
   skip_if_not_installed("stringdist")
   # Use a completely nonsensical name with tight threshold

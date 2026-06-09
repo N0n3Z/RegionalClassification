@@ -318,7 +318,7 @@ clear_split_weights <- function() {
 #' \donttest{
 #'   master_data <- load_master_data()
 #'
-#'   # 1. Inspect the template — equal weights are the starting point
+#'   # 1. Inspect the template -- equal weights are the starting point
 #'   tpl <- split_weights_template(
 #'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
 #'   )

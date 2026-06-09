@@ -360,7 +360,7 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #'
 #' @param master_2025 data.table for NIS 2025 communes (from build_master_table)
 #' @param master_2019 data.table for NIS 2019 communes (fully enriched)
-#' @param nis_changes Raw output from \code{parse_nis_changes()} — must have at
+#' @param nis_changes Raw output from \code{parse_nis_changes()} -- must have at
 #'   least \code{cd_refnis_old} and \code{cd_refnis_new} columns. The
 #'   \code{from_version} and \code{nature} columns are added later (step 8 of
 #'   \code{build_master_table}) and must NOT be present yet.
@@ -445,7 +445,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
 #' **Known limitation:** three communes changed province between 2019 and 2025
 #' (CHANGE_PROV/CHANGE_DSTR in nis_changes), shifting their NUTS3 region.  For
 #' these communes the derived cd_nuts3_2027 value is WRONG.  The conversion
-#' executor no longer reads this column: `NIS_COMMUNE_2019 → NUTS3_2027` is
+#' executor no longer reads this column: `NIS_COMMUNE_2019 -> NUTS3_2027` is
 #' routed via `NIS_COMMUNE_2025` (authoritative data).  Phase 4 of the
 #' refactoring plan will rebuild the pre-computed snapshot with correct values.
 #'
@@ -516,7 +516,7 @@ save_master_tables <- function(master_data, output_dir = get_processed_data_path
 #' Build the entities table from unified communes + postal tables
 #'
 #' Returns a \code{data.table(classification_id chr, code chr, name_fr chr,
-#' name_nl chr)} — one row per known code for each classification node.
+#' name_nl chr)} -- one row per known code for each classification node.
 #' Uses \code{.node_reference_codes()} so the logic stays in one place.
 #'
 #' @param communes Unified communes data.table (all nis_version values stacked)
@@ -548,7 +548,7 @@ build_entities_table <- function(communes, postal) {
 #' Key design decisions:
 #' \itemize{
 #'   \item Built from the already-assembled flat tables (communes, postal,
-#'     nis_changes), NOT by calling the runtime engine — so
+#'     nis_changes), NOT by calling the runtime engine -- so
 #'     \code{rebuild_master_data()} remains functional after the handlers are
 #'     removed in Phase 2.
 #'   \item \code{NIS_COMMUNE_2025 -> NUTS3_2021} replicates the
@@ -622,7 +622,7 @@ build_crosswalks <- function(communes, postal, nis_changes) {
 
   # POSTAL -> NIS_COMMUNE_2025: universe = p19 postal codes, which is the
   # same set that .list_codes_for("POSTAL", md) and the entities table use.
-  # Assumption: p25 codes ⊆ p19 codes (i.e. no new postal codes were
+  # Assumption: p25 codes <= p19 codes (i.e. no new postal codes were
   # introduced in the 2025 mapping).  Left-join so codes in p19 but absent
   # from p25 appear with code_to = NA, matching engine behaviour.
   p25_map  <- unique(p25[, .(cd_postal, cd_commune_nis)])
@@ -756,7 +756,7 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   xw[["NUTS1_2027__NUTS0"]] <- .pairs_xw(
     "NUTS1_2027", "NUTS0",      m25, "cd_nuts1_2027", "cd_nuts0_2027")
 
-  # ---- NIS BEFORE_2019 (optional — only when BEFORE_2019 slice is loaded) --
+  # ---- NIS BEFORE_2019 (optional -- only when BEFORE_2019 slice is loaded) --
   if (has_b19) {
     ch_b19 <- nis_changes[from_version == "BEFORE_2019",
                            .(cd_refnis_old, cd_refnis_new, nature)]

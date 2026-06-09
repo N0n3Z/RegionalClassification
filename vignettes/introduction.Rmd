@@ -96,18 +96,35 @@ convert_codes(commune, "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", master_dat
 Belgian communes are periodically reorganized. Three versions are supported:
 
 ```
-BEFORE_2019  ──►  2019  ──►  2025
+BEFORE_2019  -->  2019  -->  2025
   591 comm.       583         567
 ```
 
-```{r}
-# NIS 2019 → NIS 2025 (handles fusions)
-convert_codes(c(71002L, 71011L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+Temporal conversions return a `nature` column describing the type of change:
 
-# NIS 2025 → NIS 2019 (fused commune returns multiple rows)
+| `nature`       | Meaning |
+|----------------|---------|
+| `UNCHANGED`    | Code persists unchanged (553 communes in 2019->2025) |
+| `FUSION`       | One or more communes merged into a single code |
+| `CHANGE_DSTR`  | Commune moved to a different arrondissement (2 communes) |
+| `CHANGE_PROV`  | Commune moved to a different province (1 commune) |
+
+```{r}
+# NIS 2019 -> NIS 2025: nature column shows what changed
+convert_codes(c(71002L, 71011L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from  code_to   nature
+#        71002    71072   FUSION
+#        71011    71072   FUSION
+
+# CHANGE_DSTR: commune 44045 moved to a different arrondissement
+convert_codes(44045L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from  code_to       nature
+#        44045    46029  CHANGE_DSTR
+
+# NIS 2025 -> NIS 2019 (fused commune returns multiple rows)
 convert_codes(71072L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data)
 
-# NIS BEFORE_2019 → NIS 2019
+# NIS BEFORE_2019 -> NIS 2019
 convert_codes(c(55022L, 56011L), "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019", master_data)
 ```
 

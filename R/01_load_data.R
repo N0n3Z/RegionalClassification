@@ -342,7 +342,7 @@ parse_nis_changes <- function(change_dt) {
 
   # Rename by matching known source column names (case-insensitive).
   # The file may contain a typo variant (NUT_VERSION_OLD vs NUTS_VERSION_OLD)
-  # and the order could change — so we rename by name, not by position.
+  # and the order could change -- so we rename by name, not by position.
   required <- c(CD_REFNIS_OLD = "cd_refnis_old",
                 CD_REFNIS_NEW = "cd_refnis_new",
                 NATURE        = "nature")

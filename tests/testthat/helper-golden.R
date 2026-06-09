@@ -1,11 +1,11 @@
 # ==============================================================================
-# helper-golden.R  —  Golden fixture generator for the crosswalks refactor
+# helper-golden.R  --  Golden fixture generator for the crosswalks refactor
 # ==============================================================================
 # NOT executed automatically by the testthat runner (no test_that() blocks).
 # Run gen_golden() ONCE with the current engine to capture reference output,
 # then commit tests/testthat/fixtures/golden_crosswalks.rds.
 # The golden test (test-crosswalks-golden.R) loads that fixture and asserts
-# the engine still reproduces it — trivially green in P0/P1, a real guard in P2+.
+# the engine still reproduces it -- trivially green in P0/P1, a real guard in P2+.
 #
 # Phase 2 note: .ROUTE_TABLE has been removed; gen_golden() now iterates the
 # unique (from_id, to_id) pairs present in md$crosswalks instead.

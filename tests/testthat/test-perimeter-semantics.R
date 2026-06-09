@@ -1,16 +1,16 @@
 library(data.table)
 
 # ==============================================================================
-# test-perimeter-semantics.R  —  Phase 4a: perimeter_relation logic
+# test-perimeter-semantics.R  --  Phase 4a: perimeter_relation logic
 # ==============================================================================
 # These tests guard:
-#   1. .edge_perimeter_relation() — classification of individual edges
-#   2. check_conversion_path()    — enriched return fields
-#   3. is_perimeter_preserving()  — exported convenience wrapper
-#   4. list_available_conversions() — perimeter_relation column
+#   1. .edge_perimeter_relation() -- classification of individual edges
+#   2. check_conversion_path()    -- enriched return fields
+#   3. is_perimeter_preserving()  -- exported convenience wrapper
+#   4. list_available_conversions() -- perimeter_relation column
 # ==============================================================================
 
-# ── PS1: .edge_perimeter_relation() — spot-checks ────────────────────────────
+# -- PS1: .edge_perimeter_relation() -- spot-checks ----------------------------
 
 test_that(".edge_perimeter_relation returns 'temporal' for NIS temporal edge", {
   # NIS_COMMUNE_2019 -> NIS_COMMUNE_2025: same system, different versions
@@ -22,7 +22,7 @@ test_that(".edge_perimeter_relation returns 'temporal' for NIS temporal edge", {
 })
 
 test_that(".edge_perimeter_relation returns 'nesting' for N:1 same-version aggregation edge", {
-  # NUTS3_2021 -> NUTS2_2021: N:1, same system, same version → nesting (aggregation)
+  # NUTS3_2021 -> NUTS2_2021: N:1, same system, same version -> nesting (aggregation)
   edge <- Find(function(e) e$from == "NUTS3_2021" && e$to == "NUTS2_2021",
                CONVERSION_GRAPH_EDGES)
   expect_false(is.null(edge))
@@ -50,7 +50,7 @@ test_that(".edge_perimeter_relation returns 'overlap' for M:N edge", {
 })
 
 test_that(".edge_perimeter_relation returns 'nesting' for NUTS aggregation edge", {
-  # NUTS3_2021 -> NUTS2_2021: N:1, same system NUTS, same version 2021 → nesting
+  # NUTS3_2021 -> NUTS2_2021: N:1, same system NUTS, same version 2021 -> nesting
   # (both_ver = TRUE and temporal = FALSE since versions are equal)
   edge <- Find(function(e) e$from == "NUTS3_2021" && e$to == "NUTS2_2021",
                CONVERSION_GRAPH_EDGES)
@@ -59,7 +59,7 @@ test_that(".edge_perimeter_relation returns 'nesting' for NUTS aggregation edge"
   expect_equal(pr, "nesting")
 })
 
-# ── PS2: check_conversion_path() — perimeter fields ──────────────────────────
+# -- PS2: check_conversion_path() -- perimeter fields --------------------------
 
 test_that("check_conversion_path includes perimeter_relations/status/straddle_free", {
   r <- check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
@@ -110,7 +110,7 @@ test_that("check_conversion_path: perimeter fields have correct types when path 
   expect_true(is.logical(r$straddle_free))
 })
 
-# ── PS3: is_perimeter_preserving() ───────────────────────────────────────────
+# -- PS3: is_perimeter_preserving() -------------------------------------------
 
 test_that("is_perimeter_preserving: TRUE for nesting path", {
   expect_true(is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021"))
@@ -133,11 +133,11 @@ test_that("is_perimeter_preserving: TRUE for identity (from == to)", {
 })
 
 test_that("is_perimeter_preserving: returns logical for all valid paths", {
-  # NUTS3_2021 -> NUTS2_2021 is a simple nesting edge → preserving
+  # NUTS3_2021 -> NUTS2_2021 is a simple nesting edge -> preserving
   expect_true(is_perimeter_preserving("NUTS3_2021", "NUTS2_2021"))
 })
 
-# ── PS4: list_available_conversions() has perimeter_relation column ───────────
+# -- PS4: list_available_conversions() has perimeter_relation column -----------
 
 test_that("list_available_conversions includes perimeter_relation column", {
   la <- list_available_conversions()
@@ -164,7 +164,7 @@ test_that("list_available_conversions: overlap edges classified correctly", {
   expect_equal(ov2$perimeter_relation, "overlap")
 })
 
-# ── PS5: Phase 4b — nature values for single-hop non-temporal conversions ─────
+# -- PS5: Phase 4b -- nature values for single-hop non-temporal conversions -----
 
 test_that("convert_codes returns nature='RECODE' for nesting conversion (N:1)", {
   r <- convert_codes(21004L, "NIS_COMMUNE_2019", "NUTS3_2021", master_data)

@@ -1,6 +1,6 @@
 library(data.table)
 
-# ── Construction ─────────────────────────────────────────────────────────────
+# -- Construction -------------------------------------------------------------
 test_that("nomenclature() builds a valid object and resolves the canonical id", {
   n <- nomenclature("NIS", "commune", "2019")
   expect_s3_class(n, "nomenclature")
@@ -36,7 +36,7 @@ test_that("nomenclature() errors (ambiguous) when version is needed but omitted"
   expect_error(nomenclature("NIS", "commune"), class = "rcl_invalid_classification")
 })
 
-# ── Predicate / accessors ────────────────────────────────────────────────────
+# -- Predicate / accessors ----------------------------------------------------
 test_that("is_nomenclature() discriminates", {
   expect_true(is_nomenclature(nomenclature("POSTAL")))
   expect_false(is_nomenclature("NIS_COMMUNE_2019"))
@@ -48,7 +48,7 @@ test_that("nom_version() is NA for unversioned systems", {
   expect_true(is.na(nom_version(nomenclature("NUTS", "nuts0"))))
 })
 
-# ── id <-> object bridges ────────────────────────────────────────────────────
+# -- id <-> object bridges ----------------------------------------------------
 test_that(".nom_to_id() accepts objects and strings", {
   expect_equal(nbbbenuts:::.nom_to_id(nomenclature("NIS", "commune", "2019")), "NIS_COMMUNE_2019")
   expect_equal(nbbbenuts:::.nom_to_id("nis_commune_2019"), "NIS_COMMUNE_2019")
@@ -63,7 +63,7 @@ test_that(".id_to_nom() / .nom_to_id() round-trip for every node", {
   }
 })
 
-# ── S3 methods ───────────────────────────────────────────────────────────────
+# -- S3 methods ---------------------------------------------------------------
 test_that("format/print show a readable representation", {
   expect_match(format(nomenclature("NIS", "commune", "2019")),
                "NIS / commune / 2019", fixed = TRUE)
@@ -79,7 +79,7 @@ test_that("== and != compare on canonical id (object and string)", {
   expect_false(n != "NIS_COMMUNE_2019")
 })
 
-# ── Introspection ────────────────────────────────────────────────────────────
+# -- Introspection ------------------------------------------------------------
 test_that("list_nomenclatures() returns objects, filterable by system", {
   all_n <- list_nomenclatures()
   expect_equal(length(all_n), length(CLASSIFICATION_NODES))
@@ -98,7 +98,7 @@ test_that("nomenclature_levels()/versions() expose the discovery surface", {
   expect_true("2027" %in% nomenclature_versions("NUTS"))
 })
 
-# ── Aggregation (DAG) ────────────────────────────────────────────────────────
+# -- Aggregation (DAG) --------------------------------------------------------
 test_that("nomenclature_children() returns the finer aggregated level", {
   kids <- nomenclature_children(nomenclature("NIS", "arrondissement", "2019"))
   expect_equal(length(kids), 1L)
@@ -119,7 +119,7 @@ test_that("NUTS0 aggregates both the 2021 and 2027 NUTS1 levels", {
   expect_setequal(ids, c("NUTS1_2021", "NUTS1_2027"))
 })
 
-# ── Registry consistency for the new `aggregates` field ───────────────────────
+# -- Registry consistency for the new `aggregates` field -----------------------
 test_that("every `aggregates` target exists and shares the system", {
   for (id in names(CLASSIFICATION_NODES)) {
     n <- CLASSIFICATION_NODES[[id]]
