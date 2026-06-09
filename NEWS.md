@@ -1,5 +1,37 @@
 # nbbbenuts (development version)
 
+## New features
+
+* **Crosswalks engine** (`get_crosswalk()`, `list_crosswalks()`): generates
+  tidy crosswalk tables between any two supported classifications.  The result
+  includes source code, target code, and a `nature` column that classifies
+  each row as one of `UNCHANGED`, `FUSION`, `CHANGE_DSTR`, `CHANGE_PROV`
+  (temporal NIS edges), `RECODE` (1:1 non-temporal), `OVERLAP` (1:N / M:N),
+  or `NA` (multi-hop path).
+* **Entities table** (`master_data$entities`): a unified lookup table of all
+  geographic entities (communes, arrondissements, provinces, regions, NUTS
+  units, postal codes) with French/Dutch names and code fields.
+* **Perimeter semantics** (`is_perimeter_preserving()`,
+  `check_conversion_path()$perimeter_relations`,
+  `check_conversion_path()$perimeter_status`,
+  `check_conversion_path()$straddle_free`): every edge in the conversion graph
+  is now classified as `temporal`, `identity`, `nesting`, or `overlap`,
+  allowing callers to determine whether a conversion preserves spatial
+  boundaries without manual inspection.
+* **`nature` column in `convert_codes()` output**: temporal NIS conversions
+  now include a `nature` column (`UNCHANGED`, `FUSION`, `CHANGE_DSTR`,
+  `CHANGE_PROV`) that explains how each commune changed between editions.
+* **Classification registry** (`CLASSIFICATION_NODES`, `R/00b_registry.R`):
+  a 22-node structured registry that is now the single source of truth for
+  system/level/version/code_type metadata, replacing ad-hoc string parsing.
+* **Golden-fixture test** (`tests/testthat/test-crosswalks-golden.R`):
+  crosswalk content is pinned against a pre-built fixture
+  (`fixtures/golden_crosswalks.rds`) to detect regressions in code mapping
+  or nature classification.
+* **Registry consistency tests** (`tests/testthat/test-registry-consistency.R`):
+  asserts that every node referenced by `CONVERSION_GRAPH_EDGES` exists in
+  `CLASSIFICATION_NODES` and that every registry node is reachable in the graph.
+
 ## Bug fixes
 
 * Corrected the cardinality of three commune -> NUTS3 edges in the conversion

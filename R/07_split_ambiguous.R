@@ -30,7 +30,7 @@
 #'   produce one row each.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   arr_salaries <- data.table(
 #'     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
 #'     total_wage = c(5e9, 3e9, 1e9),
@@ -197,7 +197,7 @@ split_ambiguous <- function(
 #' @param variable   Name of the weighting variable (default: "population")
 #' @return Invisible NULL (called for side effect)
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Register population-based Verviers split (indicative values)
 #'   register_split_weights(
 #'     from       = "NIS_ARRONDISSEMENT_2019",

@@ -15,3 +15,4 @@ Normalized string
 \description{
 Removes accents, converts to lowercase, removes common prefixes, etc.
 }
+\keyword{internal}

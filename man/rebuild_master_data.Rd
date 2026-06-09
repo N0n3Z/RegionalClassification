@@ -23,7 +23,7 @@ Call this only when the source files change. Requires all raw XLSX/XLS/CSV
 files in data/raw/ to be present, as well as the readxl package.
 }
 \examples{
-\dontrun{
+\donttest{
   # Only needed when raw source files in data/raw/ change
   master_data <- rebuild_master_data()
 }

@@ -24,7 +24,7 @@ Multiple variables (population, employment, etc.) can be registered for the
 same conversion pair.
 }
 \examples{
-\dontrun{
+\donttest{
   # Register population-based Verviers split (indicative values)
   register_split_weights(
     from       = "NIS_ARRONDISSEMENT_2019",

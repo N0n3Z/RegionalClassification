@@ -23,3 +23,4 @@ at least one non-NA label (name_fr or name_nl) in the entities table is
 now supported automatically.  An abort is raised only when no labels are
 available (e.g. NUTS2, NUTS1, NUTS0 which carry no names).
 }
+\keyword{internal}

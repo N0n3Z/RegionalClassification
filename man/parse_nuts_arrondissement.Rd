@@ -15,3 +15,4 @@ list of data.tables by NUTS version year
 \description{
 Parse the NUTS-Arrondissement internal mapping
 }
+\keyword{internal}

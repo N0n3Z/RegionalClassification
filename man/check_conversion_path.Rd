@@ -24,7 +24,7 @@ A named list with the following fields:
     or ambiguous.}
   \item{edges_used}{List of edge objects (from \code{CONVERSION_GRAPH_EDGES})
     for each hop in the path.}
-  \item{perimeter_relations}{Character vector — one entry per hop — with
+  \item{perimeter_relations}{Character vector -- one entry per hop -- with
     the perimeter semantic of that edge: \code{"temporal"}, \code{"identity"},
     \code{"nesting"}, or \code{"overlap"}.  Empty for the identity path
     (\code{from == to}).}

@@ -29,3 +29,4 @@ Output codes are re-coerced to the canonical type of each node
 (.node_coerce, R/00b_registry.R) after the lookup, preserving the contract
 that NIS codes are integer and NUTS codes are character.
 }
+\keyword{internal}

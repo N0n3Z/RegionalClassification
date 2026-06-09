@@ -11,7 +11,7 @@ add_nuts2021_columns_2025(master_2025, master_2019, nis_changes)
 
 \item{master_2019}{data.table for NIS 2019 communes (fully enriched)}
 
-\item{nis_changes}{Raw output from \code{parse_nis_changes()} — must have at
+\item{nis_changes}{Raw output from \code{parse_nis_changes()} -- must have at
 least \code{cd_refnis_old} and \code{cd_refnis_new} columns. The
 \code{from_version} and \code{nature} columns are added later (step 8 of
 \code{build_master_table}) and must NOT be present yet.}
@@ -37,3 +37,4 @@ cd_arr_internal for NIS 2025 communes from the NIS 2019 master:
 The 2025 master must already carry cd_nuts3_2027 etc. (added by
 add_nuts2027_columns before this call, via the NIS 2025 NUTS 2027 file).
 }
+\keyword{internal}

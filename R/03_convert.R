@@ -81,6 +81,7 @@ convert_codes <- function(codes, from, to, master_data,
 #' @param master_data Output from build_master_table()
 #' @return data.table with columns \code{code_from}, \code{code_to}, \code{nature}
 #'   (see \code{\link{convert_codes}}).
+#' @keywords internal
 execute_conversion <- function(codes, from, to, master_data) {
 
   .validate_master_data(master_data)
@@ -200,6 +201,7 @@ normalize_classification_id <- function(class_id) {
 #' @param to Normalized target classification
 #' @param md Master data (output from build_master_table)
 #' @return data.table with code_from, code_to, nature
+#' @keywords internal
 route_conversion <- function(input_dt, from, to, md) {
 
   if (from == to)

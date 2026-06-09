@@ -19,3 +19,4 @@ data.table
 \description{
 Load a single data file (xlsx, xls, or csv)
 }
+\keyword{internal}

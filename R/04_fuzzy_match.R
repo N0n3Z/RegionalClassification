@@ -73,6 +73,7 @@ fuzzy_match_names <- function(names, target_classification, master_data,
 #' @param md Master data
 #' @param language "fr", "nl", or "both"
 #' @return data.table with ref_name, ref_code, ref_language
+#' @keywords internal
 build_name_reference <- function(target, md, language = "both") {
 
   ref_codes <- .node_reference_codes(target, md)
@@ -133,6 +134,7 @@ build_name_reference <- function(target, md, language = "both") {
 #' @param max_dist Maximum relative distance
 #' @param method String distance method
 #' @return data.table with match results
+#' @keywords internal
 match_single_name <- function(name, ref, max_dist = 0.1, method = "jw") {
 
   name_norm <- normalize_name(name)
@@ -176,6 +178,7 @@ match_single_name <- function(name, ref, max_dist = 0.1, method = "jw") {
 #'
 #' @param name Character string
 #' @return Normalized string
+#' @keywords internal
 normalize_name <- function(name) {
   n <- tolower(trimws(name))
 

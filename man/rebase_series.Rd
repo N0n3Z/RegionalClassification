@@ -72,10 +72,10 @@ Converts a panel dataset that spans multiple classification versions onto a
 single target version.
 }
 \details{
-**Merges (N:1)** — several old codes map to one new code (e.g. two 2019
+**Merges (N:1)** -- several old codes map to one new code (e.g. two 2019
 communes fused into one 2025 commune): values are aggregated with `fun`.
 
-**Splits (1:N)** — one old code maps to several new codes (e.g. arrondissement
+**Splits (1:N)** -- one old code maps to several new codes (e.g. arrondissement
 Verviers 63000 -> NUTS3 BE335 + BE336): values are distributed proportionally
 according to `split`. Register weights with [register_split_weights()] before
 calling this function when population weights are needed.
@@ -107,7 +107,7 @@ labels afterwards with [get_label()] or a join.
     population = c(18000, 8500, 180000, 28000, 185000)
   )
 
-  # Rebase to NIS 2025 — pre-2025 values for 11002+11007 are summed
+  # Rebase to NIS 2025 -- pre-2025 values for 11002+11007 are summed
   rebase_series(
     panel,
     period_col  = "year",
@@ -119,7 +119,7 @@ labels afterwards with [get_label()] or a join.
     master_data = master_data
   )
 
-  # ── Custom weights for a 1:N split ────────────────────────────────────────
+  # -- Custom weights for a 1:N split ----------------------------------------
   # Arrondissement Verviers (63000) splits into two NUTS3 regions.
   # Use split_weights_template() to get the right structure, then fill in
   # your own weights before passing them to rebase_series().

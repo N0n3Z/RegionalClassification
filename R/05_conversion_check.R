@@ -296,6 +296,7 @@ build_conversion_graph <- function() {
 #' @param to Target node
 #' @param graph Adjacency list from build_conversion_graph()
 #' @return list with path, relations, edges_used, or NULL if no path
+#' @keywords internal
 find_conversion_path <- function(from, to, graph) {
 
   if (from == to) {
@@ -319,6 +320,7 @@ find_conversion_path <- function(from, to, graph) {
 #' @param graph Adjacency list
 #' @param only_simple If TRUE, only traverse 1:1 and N:1 edges
 #' @return list with path, relations, edges_used, or NULL
+#' @keywords internal
 bfs_find_path <- function(from, to, graph, only_simple = FALSE) {
 
   queue <- list(list(node = from, path = from,

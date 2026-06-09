@@ -276,6 +276,7 @@ build_master_table <- function(raw_data) {
 #' @param nis_parsed Output from parse_refnis_hierarchy()
 #' @param version "2019" or "2025"
 #' @return data.table with commune info and parent codes
+#' @keywords internal
 build_nis_commune_table <- function(nis_parsed, version) {
 
   communes <- copy(nis_parsed$communes)
@@ -369,6 +370,7 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #'   non-\code{NA} for communes where \code{cd_nuts3} is \code{NA} (cross-NUTS3
 #'   fusions), because NUTS2/1/0 are coarser and all constituent 2019 communes
 #'   may agree on the broader region even when their NUTS3 assignments differ.
+#' @keywords internal
 add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
 
   nuts_cols <- c("cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
@@ -451,6 +453,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
 #'
 #' @param master data.table with cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0 columns
 #' @return data.table with added cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027
+#' @keywords internal
 add_nuts2027_columns <- function(master) {
 
   master <- copy(master)

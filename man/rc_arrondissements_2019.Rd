@@ -3,7 +3,7 @@
 \docType{data}
 \name{rc_arrondissements_2019}
 \alias{rc_arrondissements_2019}
-\title{Sample arrondissements — NIS 2019}
+\title{Sample arrondissements -- NIS 2019}
 \format{
 A `data.table` with 8 rows and 5 columns:
 \describe{

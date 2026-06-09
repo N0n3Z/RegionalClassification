@@ -3,7 +3,7 @@
 \docType{data}
 \name{rc_nuts3_2021}
 \alias{rc_nuts3_2021}
-\title{Sample NUTS3 regions — 2021 classification}
+\title{Sample NUTS3 regions -- 2021 classification}
 \format{
 A `data.table` with 10 rows and 5 columns:
 \describe{
@@ -11,7 +11,7 @@ A `data.table` with 10 rows and 5 columns:
   \item{nom_fr}{Character. French name of the NUTS3 region.}
   \item{gdp_mio_eur}{Numeric. GDP in millions of EUR (fictional).}
   \item{emplois}{Integer. Number of jobs (fictional).}
-  \item{taux_chomage}{Numeric. Unemployment rate, 0–1 (fictional).}
+  \item{taux_chomage}{Numeric. Unemployment rate, 0--1 (fictional).}
 }
 }
 \usage{
@@ -20,7 +20,7 @@ rc_nuts3_2021
 \description{
 A dataset of 10 Belgian NUTS3 regions (2021 classification) with fictional
 macroeconomic indicators. Includes BE335 and BE336 (the two Verviers
-sub-regions) to demonstrate NUTS 2021 → NUTS 2027 conversions.
+sub-regions) to demonstrate NUTS 2021 -> NUTS 2027 conversions.
 }
 \examples{
 data(rc_nuts3_2021)

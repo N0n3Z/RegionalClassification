@@ -20,3 +20,4 @@ list with path, relations, edges_used, or NULL if no path
 First tries to find a path using only simple edges (1:1 and N:1).
 If no simple path exists, finds the shortest path using all edges.
 }
+\keyword{internal}

@@ -23,3 +23,4 @@ data.table with cd_refnis_before2019 (integer) and cd_refnis_2019 (integer)
 \description{
 Parse NIS BEFORE_2019 -> NIS 2019 change table (optional file)
 }
+\keyword{internal}

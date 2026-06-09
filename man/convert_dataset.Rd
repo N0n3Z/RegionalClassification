@@ -51,7 +51,7 @@ data.table. Optionally auto-detects the source classification by matching
 the column values against known code sets in master_data.
 }
 \examples{
-\dontrun{
+\donttest{
   salaries <- data.table(commune = c(21004L, 11002L, 44021L), avg_salary = c(3200, 2900, 2700))
 
   # Explicit source

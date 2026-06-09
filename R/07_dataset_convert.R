@@ -31,7 +31,7 @@
 #'   For M:N conversions, may return more rows than input.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   salaries <- data.table(commune = c(21004L, 11002L, 44021L), avg_salary = c(3200, 2900, 2700))
 #'
 #'   # Explicit source

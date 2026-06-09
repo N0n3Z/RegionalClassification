@@ -22,3 +22,4 @@ data.table with columns \code{code_from}, \code{code_to}, \code{nature}
 \description{
 Execute the actual conversion between two classifications
 }
+\keyword{internal}

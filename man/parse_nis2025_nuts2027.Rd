@@ -24,3 +24,4 @@ data.table with columns cd_commune_2025 (integer) and cd_nuts3_2027 (character)
 Called only when CONVERSION_NIS2025_NUTS2027.xlsx is present in data/raw/.
 Column names are configured in FILE_MAPPING$CONVERSION_NIS2025_NUTS2027.
 }
+\keyword{internal}

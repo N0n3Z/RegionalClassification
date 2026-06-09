@@ -18,7 +18,7 @@ is_perimeter_preserving(from, to)
 }
 \description{
 A conversion is perimeter-preserving when no edge along the (shortest) path
-has a `1:N` or `M:N` cardinality in the forward direction — i.e. no source
+has a `1:N` or `M:N` cardinality in the forward direction -- i.e. no source
 unit straddles two or more target units. Temporal edges (same system,
 different edition) are always considered perimeter-preserving.
 }

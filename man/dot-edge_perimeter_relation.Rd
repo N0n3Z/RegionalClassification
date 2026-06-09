@@ -21,9 +21,9 @@ crosses spatial perimeters:
   \item{temporal}{Same system, both nodes have explicit versions that differ.
     Boundaries may change edition-to-edition but no cross-system split occurs.}
   \item{identity}{1:1 edge, same or different system, same effective territory.}
-  \item{nesting}{N:1 edge — many fine units aggregate into one coarser unit.
+  \item{nesting}{N:1 edge -- many fine units aggregate into one coarser unit.
     The source perimeter is fully contained in the target.}
-  \item{overlap}{1:N or M:N edge — a source unit straddles multiple target
+  \item{overlap}{1:N or M:N edge -- a source unit straddles multiple target
     units, so the source perimeter is \emph{not} contained in any single
     target unit. This is the only category that breaks perimeter preservation.}
 }
