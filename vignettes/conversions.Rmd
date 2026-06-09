@@ -22,7 +22,25 @@ master_data <- load_master_data()
 
 ## 1. `convert_codes()` — conversion de vecteurs
 
-La fonction centrale du package. Elle accepte un vecteur de codes source et retourne un `data.table` avec les colonnes `code_from` et `code_to`.
+La fonction centrale du package. Elle retourne un `data.table` à trois colonnes :
+
+| Colonne     | Contenu |
+|-------------|---------|
+| `code_from` | Code source (dans le type canonique : entier pour NIS/POSTAL, caractère pour NUTS) |
+| `code_to`   | Code cible |
+| `nature`    | Type de conversion (voir tableau ci-dessous) |
+
+Valeurs de `nature` :
+
+| Valeur         | Quand |
+|----------------|-------|
+| `UNCHANGED`    | NIS temporel : commune inchangée |
+| `FUSION`       | NIS temporel : fusion de communes |
+| `CHANGE_DSTR`  | NIS temporel : changement d'arrondissement |
+| `CHANGE_PROV`  | NIS temporel : changement de province |
+| `RECODE`       | Non-temporel sans enjambement (nesting N:1, identity 1:1) |
+| `OVERLAP`      | Non-temporel avec enjambement (1:N ou M:N) |
+| `NA`           | Chemin multi-hop composé (nature intermédiaire non définie) |
 
 ### NIS communes → NUTS3 2021
 
@@ -33,11 +51,11 @@ convert_codes(
   to   = "NUTS3_2021",
   master_data
 )
-#    code_from code_to
-# 1:     21004   BE100
-# 2:     11002   BE211
-# 3:     44021   BE234
-# 4:     62063   BE332
+#    code_from code_to  nature
+# 1:     21004   BE100   RECODE
+# 2:     11002   BE211   RECODE
+# 3:     44021   BE234   RECODE
+# 4:     62063   BE332   RECODE
 ```
 
 ### NIS communes → NUTS3 2027
@@ -65,15 +83,56 @@ convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
 # 3:      4000   62063
 ```
 
-### NIS 2019 → NIS 2025 (fusions)
+### NIS 2019 → NIS 2025 : colonne `nature`
+
+Toutes les conversions temporelles NIS portent une colonne `nature` qui qualifie
+le type de changement :
+
+| Valeur         | Signification |
+|----------------|---------------|
+| `UNCHANGED`    | Le code commune est identique dans les deux versions (553 communes) |
+| `FUSION`       | Plusieurs communes 2019 ont fusionné en une commune 2025 (27 paires) |
+| `CHANGE_DSTR`  | La commune a changé d'arrondissement entre 2019 et 2025 (2 communes) |
+| `CHANGE_PROV`  | La commune a changé de province entre 2019 et 2025 (1 commune) |
 
 ```{r nis-versions}
-# Communes fusionnées en 2025 : plusieurs codes 2019 -> 1 code 2025
+# FUSION : plusieurs communes 2019 -> 1 code 2025 (Beringen)
 convert_codes(c(71002L, 71011L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from code_to      nature
+# 1:     71002   71072      FUSION
+# 2:     71011   71072      FUSION
 
 # Sens inverse : 1 code 2025 -> plusieurs codes 2019
 convert_codes(71072L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data)
+#    code_from code_to      nature
+# 1:     71072   71002      FUSION
+# 2:     71072   71011      FUSION
 ```
+
+### CHANGE_DSTR et CHANGE_PROV
+
+Trois communes ont changé de découpage administratif en 2025 :
+
+```{r change-dstr-prov}
+# CHANGE_DSTR : commune 44045 (Sint-Laureins) passe dans un autre arrondissement
+convert_codes(44045L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from code_to      nature
+# 1:     44045   46029 CHANGE_DSTR
+
+# CHANGE_PROV : commune 11056 (Puurs) change de province
+convert_codes(11056L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from code_to      nature
+# 1:     11056   46030 CHANGE_PROV
+
+# La nature est symétrique sur le sens inverse
+convert_codes(46030L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data)
+#    code_from code_to      nature
+# 1:     46030   11056 CHANGE_PROV
+```
+
+Ces valeurs sont utiles pour auditer la stabilité longitudinale d'une série
+statistique : une commune `CHANGE_DSTR` ou `CHANGE_PROV` peut changer de
+périmètre dans des agrégats supérieurs (arrondissement, province, NUTS2).
 
 ### Commune pré-2019 → classification actuelle
 
@@ -190,38 +249,68 @@ convert_dataset(dt_avec_na, "code", to = "NUTS3_2021", master_data,
 
 ## 3. `list_available_conversions()` — chemins disponibles
 
-Affiche tous les chemins de conversion supportés avec leur type de relation.
+Affiche tous les chemins de conversion déclarés avec leur type de relation et
+leur **sémantique de périmètre** (colonne `perimeter_relation`).
 
 ```{r list-conversions}
-list_available_conversions()
-# From                       To                        Relation  Via
-# NIS_COMMUNE_2019           NUTS3_2021                N:1       CONVERSION_NIS2019_NUTS2021
-# NIS_COMMUNE_2019           NUTS3_2027                1:1       derived
-# NIS_COMMUNE_2025           NUTS3_2027                N:1       CONVERSION_NIS2025_NUTS2027
-# NIS_ARRONDISSEMENT_2019    NUTS3_2021                M:N       CONVERSION_NIS2019_NUTS2021  (!)
-# ...
+la <- list_available_conversions()
+# Colonnes : from, to, relation, perimeter_relation, notes
+print(la[, .(from, to, relation, perimeter_relation)])
+
+# Filtrer par sémantique de périmètre :
+la[perimeter_relation == "temporal"]   # conversions entre versions NIS
+la[perimeter_relation == "overlap"]    # conversions avec enjambement (1:N / M:N)
+la[perimeter_relation == "nesting"]    # agrégations N:1 pures
+la[perimeter_relation == "identity"]   # correspondances 1:1
 ```
+
+Les quatre valeurs de `perimeter_relation` :
+
+| Valeur      | Signification |
+|-------------|---------------|
+| `temporal`  | Même système, versions différentes (NIS 2019 → 2025, etc.) |
+| `identity`  | Correspondance exacte 1:1 sans perte (NIS commune → NUTS LAU) |
+| `nesting`   | Agrégation N:1 (plusieurs communes → un arrondissement) |
+| `overlap`   | La source enjambe plusieurs cibles (Verviers 1:N, Brabant M:N) |
 
 ---
 
-## 4. `check_conversion_path()` et `print_conversion_check()`
+## 4. `check_conversion_path()` et `is_perimeter_preserving()`
 
-Vérifient si un chemin de conversion est direct (sans ambiguïté M:N) avant de l'exécuter.
+`check_conversion_path()` retourne maintenant des informations de périmètre en
+plus du test de simplicité.
 
 ```{r check-path}
-# Chemin simple : OK
-check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
-# $is_simple    TRUE
-# $path         c("NIS_COMMUNE_2019", "NUTS_LAU_2021", "NUTS3_2021")
+# Chemin simple et préservant le périmètre
+r <- check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
+# $is_simple          TRUE
+# $path               c("NIS_COMMUNE_2019", "NUTS_LAU_2021", "NUTS3_2021")
+# $perimeter_relations c("identity", "nesting")
+# $perimeter_status   "preserving"
+# $straddle_free      TRUE
 
-# Chemin ambigu : Verviers
-check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
-# $is_simple    FALSE
-# $explanation  "... M:N step: NIS_ARRONDISSEMENT_2019 -> NUTS3_2021 ..."
+# Chemin ambigu et enjambant : Verviers (M:N)
+r2 <- check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+# $is_simple          FALSE
+# $perimeter_relations c("overlap")
+# $perimeter_status   "crossing"
+# $straddle_free      FALSE
+
+# Chemin NIS 2025 -> NUTS3 2021 : 1:N (3 fusions enjambent les régions NUTS3)
+r3 <- check_conversion_path("NIS_COMMUNE_2025", "NUTS3_2021")
+# $perimeter_status   "crossing"
+# $straddle_free      FALSE
+```
+
+```{r is-perimeter}
+# Raccourci booléen
+is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
+is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE
+is_perimeter_preserving("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")  # TRUE (temporal)
 ```
 
 ```{r print-path}
-# Version lisible pour exploration interactive
+# Vue lisible pour exploration interactive (affiche perimeter_relations)
 print_conversion_check("POSTAL", "NUTS3_2021")
 print_conversion_check("NIS_COMMUNE_2025", "NUTS3_2027")
 print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
