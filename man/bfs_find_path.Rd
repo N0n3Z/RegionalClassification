@@ -21,3 +21,4 @@ list with path, relations, edges_used, or NULL
 \description{
 BFS path finder
 }
+\keyword{internal}

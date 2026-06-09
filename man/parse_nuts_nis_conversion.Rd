@@ -18,3 +18,4 @@ list with NUTS hierarchy and commune-level mapping
 \description{
 Parse the NUTS-NIS conversion file
 }
+\keyword{internal}

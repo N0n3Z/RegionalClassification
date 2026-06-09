@@ -48,7 +48,7 @@
 #' }
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Check mode
 #'   nuts3_data <- data.table(nuts3 = c("BE100","BE211","BE332"), val = 1:3)
 #'   diagnose_classification(nuts3_data, "nuts3", master_data,

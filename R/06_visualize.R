@@ -14,7 +14,7 @@
 #' @param output_file Optional: save to HTML file
 #' @return visNetwork object (if visNetwork is available), otherwise a text summary
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   visualize_classification_graph()
 #'   visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
 #'   visualize_classification_graph(output_file = "classification_graph.html")
@@ -157,6 +157,7 @@ visualize_classification_graph <- function(highlight_from = NULL,
 #' For use when visNetwork is not available.
 #'
 #' @return invisible(NULL)
+#' @keywords internal
 print_text_graph <- function() {
 
   cat("\n")
@@ -203,7 +204,7 @@ print_text_graph <- function() {
 #' @param output_file Optional: save plot to file
 #' @return ggplot object if ggplot2 available, otherwise text matrix
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   visualize_conversion_matrix()
 #'   visualize_conversion_matrix(output_file = "conversion_matrix.png")
 #' }

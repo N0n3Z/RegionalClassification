@@ -1,8 +1,8 @@
 # ==============================================================================
-# demo.R — Démonstration complète du package nbbbenuts
+# demo.R -- Demonstration complete du package nbbbenuts
 #
 # Ce script illustre toutes les fonctions publiques du package.
-# Exécuter section par section dans RStudio ou en ligne de commande :
+# Executer section par section dans RStudio ou en ligne de commande :
 #   Rscript demo/demo.R
 # ==============================================================================
 
@@ -11,7 +11,7 @@ library(data.table)
 
 
 # ==============================================================================
-# 0. Chargement des données de référence
+# 0. Chargement des donnees de reference
 # ==============================================================================
 
 master_data <- load_master_data()
@@ -26,45 +26,67 @@ master_data <- load_master_data()
 # Liste tous les identifiants canoniques (22 au total)
 get_all_classification_nodes()
 
-# Matrice de conversions possibles (1 = route disponible)
+# Matrice de conversions possibles
 get_conversion_matrix()
 
-# Détail d'une route avant conversion
+# Chemins de conversion avec semantique de perimetre
 print_conversion_check("NIS_COMMUNE_2019", "NUTS3_2021")
-# > Path: NIS_COMMUNE_2019 -> NUTS_LAU_2021 -> NUTS3_2021  (simple)
+# Simple conversion: YES
+# Perimeter-preserving: YES
+# Perimeter relations: identity -> nesting
+# Path: NIS_COMMUNE_2019 -> NUTS_LAU_2021 -> NUTS3_2021
 
 print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
-# > NOT simple: arrondissement Verviers (63000) est ambiguë (BE335 + BE336)
+# Simple conversion: NO
+# Perimeter-preserving: NO (straddle)
+# arrondissement Verviers (63000) chevauche BE335 + BE336
 
-# Documentation complète des identifiants
+print_conversion_check("NIS_COMMUNE_2025", "NUTS3_2021")
+# Simple conversion: NO  (3 fusions enjambent les frontieres NUTS3)
+# Perimeter-preserving: NO (straddle)
+
+# Test rapide : la conversion preserve-t-elle les perimetres ?
+is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
+is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE (fusions 1:N)
+is_perimeter_preserving("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")  # TRUE (temporel)
+
+# Toutes les conversions disponibles avec leur semantique de perimetre
+la <- list_available_conversions()
+# Colonnes : from, to, relation, perimeter_relation, notes
+la[perimeter_relation == "temporal"]   # conversions entre versions NIS
+la[perimeter_relation == "overlap"]    # 1:N ou M:N (enjambement)
+la[perimeter_relation == "nesting"]    # agregations N:1 pures
+la[perimeter_relation == "identity"]   # correspondances 1:1
+
+# Documentation complete des identifiants
 # ?classification_reference
 
 
 # ==============================================================================
-# 2. Conversion de codes — convert_codes()
+# 2. Conversion de codes -- convert_codes()
 # ==============================================================================
 
-# --- 2a. Communes NIS 2019 → NUTS3 2021 ----------------------------------------
+# --- 2a. Communes NIS 2019 -> NUTS3 2021 ----------------------------------------
 convert_codes(
   c(21004L, 11002L, 44021L, 62063L),
   from = "NIS_COMMUNE_2019",
   to   = "NUTS3_2021",
   master_data
 )
-#    code_from  code_to
-# 1:     21004   BE100   (Bruxelles-Capitale)
-# 2:     11002   BE211   (Arrondissement d'Anvers)
-# 3:     44021   BE234   (Arrondissement de Gand)
-# 4:     62063   BE332   (Arrondissement de Liège)
+#    code_from  code_to  nature
+# 1:     21004   BE100   RECODE   (Bruxelles-Capitale)
+# 2:     11002   BE211   RECODE   (Arrondissement d'Anvers)
+# 3:     44021   BE234   RECODE   (Arrondissement de Gand)
+# 4:     62063   BE332   RECODE   (Arrondissement de Liege)
 
-# --- 2b. Codes postaux → NIS communes ------------------------------------------
+# --- 2b. Codes postaux -> NIS communes ------------------------------------------
 convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
-#    code_from  code_to
-# 1:      1000    21004   (Bruxelles)
-# 2:      2000    11002   (Anvers)
-# 3:      4000    62063   (Liège)
+#    code_from  code_to  nature
+# 1:      1000    21004   RECODE  (Bruxelles)
+# 2:      2000    11002   RECODE  (Anvers)
+# 3:      4000    62063   RECODE  (Liege)
 
-# --- 2c. NIS commune → tous les niveaux géographiques -------------------------
+# --- 2c. NIS commune -> tous les niveaux geographiques -------------------------
 commune <- 11002L  # Anvers
 
 convert_codes(commune, "NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data)
@@ -76,42 +98,66 @@ convert_codes(commune, "NIS_COMMUNE_2019", "NUTS1_2021",              master_dat
 convert_codes(commune, "NIS_COMMUNE_2019", "NUTS0",                   master_data)
 convert_codes(commune, "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", master_data)
 
-# --- 2d. Conversions entre versions NIS ----------------------------------------
+# --- 2d. Conversions entre versions NIS (colonne nature) -----------------------
+#
+# Les conversions temporelles portent une colonne 'nature' :
+#   UNCHANGED   -- code inchange dans les deux versions (553 communes)
+#   FUSION      -- une ou plusieurs communes 2019 fusionnees en un code 2025
+#   CHANGE_DSTR -- commune deplacee dans un autre arrondissement (2 communes)
+#   CHANGE_PROV -- commune deplacee dans une autre province (1 commune)
 
-# NIS 2019 → NIS 2025 (fusions de communes)
+# NIS 2019 -> NIS 2025 : fusions de communes
 convert_codes(c(11002L, 11007L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
-# 11002 → 11002  (inchangée)
-# 11007 → 11002  (fusionnée dans 11002 en 2025)
+#    code_from  code_to  nature
+# 1:     11002    11002   UNCHANGED
+# 2:     11007    11002   FUSION   (Borgerhout fusionne dans Anvers)
 
-# NIS 2025 → NIS 2019 (décomposition — retourne plusieurs lignes)
+# NIS 2019 -> NIS 2025 : CHANGE_DSTR (commune 44045 -> arr. different)
+convert_codes(44045L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from  code_to       nature
+# 1:     44045    46029  CHANGE_DSTR
+
+# NIS 2019 -> NIS 2025 : CHANGE_PROV (commune 11056 -> autre province)
+convert_codes(11056L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+#    code_from  code_to       nature
+# 1:     11056    46030  CHANGE_PROV
+
+# NIS 2025 -> NIS 2019 : decomposition (retourne plusieurs lignes pour les fusions)
 convert_codes(11002L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data,
               allow_ambiguous = TRUE)
-# 11002 → 11002
-# 11002 → 11007
+#    code_from  code_to  nature
+# 1:     11002    11002   UNCHANGED
+# 2:     11002    11007   FUSION
 
-# NIS BEFORE_2019 → NIS 2019
+# La nature est symetrique sur le chemin inverse (CHANGE_PROV conserve)
+convert_codes(46030L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data,
+              allow_ambiguous = TRUE)
+#    code_from  code_to       nature
+# ...           11056   CHANGE_PROV   (la ligne correspondante)
+
+# NIS BEFORE_2019 -> NIS 2019
 convert_codes(c(55022L, 56011L), "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019",
               master_data)
 
-# --- 2e. NUTS 2027 (EU regulation 2026/195) ------------------------------------
+# --- 2e. NUTS 2027 (Reglement UE 2026/195) ------------------------------------
 convert_codes(
   c(21004L, 11002L, 44021L),
   "NIS_COMMUNE_2019", "NUTS3_2027",
   master_data
 )
-# 21004 → BE100  (Bruxelles, inchangé)
-# 11002 → BE261  (Anvers : BE211 → BE261)
-# 44021 → BE274  (Gand   : BE234 → BE274)
+# 21004 -> BE100  (Bruxelles, inchange)
+# 11002 -> BE261  (Anvers : BE211 -> BE261)
+# 44021 -> BE274  (Gand   : BE234 -> BE274)
 
-# NUTS 2021 ↔ NUTS 2027 aller-retour
+# NUTS 2021 <-> NUTS 2027 aller-retour
 nuts2027 <- convert_codes(
   c("BE211", "BE223", "BE231", "BE335"),
   "NUTS3_2021", "NUTS3_2027", master_data
 )
 convert_codes(nuts2027$code_to, "NUTS3_2027", "NUTS3_2021", master_data)
 
-# --- 2f. Conversion ambiguë — arrondissement Verviers (M:N) --------------------
-# Par défaut, une erreur est levée pour les conversions ambiguës
+# --- 2f. Conversion ambigue -- arrondissement Verviers (M:N) --------------------
+# Par defaut, une erreur est levee pour les conversions ambigues
 tryCatch(
   convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data),
   error = function(e) message("Erreur attendue : ", conditionMessage(e))
@@ -120,13 +166,13 @@ tryCatch(
 # Forcer toutes les correspondances possibles
 convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
               master_data, allow_ambiguous = TRUE)
-#    code_from  code_to
-# 1:     63000   BE335   (Arr. Verviers francophone)
-# 2:     63000   BE336   (Arr. Verviers germanophone)
+#    code_from  code_to  nature
+# 1:     63000   BE335   OVERLAP  (Arr. Verviers francophone)
+# 2:     63000   BE336   OVERLAP  (Arr. Verviers germanophone)
 
 
 # ==============================================================================
-# 3. Conversion d'un dataset — convert_dataset()
+# 3. Conversion d'un dataset -- convert_dataset()
 # ==============================================================================
 
 dt <- data.table(
@@ -134,21 +180,21 @@ dt <- data.table(
   pop        = c(180000L, 530000L, 260000L, 200000L)
 )
 
-# Auto-détection de la classification source + ajout d'une colonne NUTS3
+# Auto-detection de la classification source + ajout d'une colonne NUTS3
 convert_dataset(dt, "cd_commune",
                 from = "NIS_COMMUNE_2019",
                 to   = "NUTS3_2021",
                 master_data)
 # Ajoute la colonne 'cd_nuts3_2021'.
 
-# Conversion complète : communes → NUTS3 → arrondissements NIS
+# Conversion complete : communes -> NUTS3 -> arrondissements NIS
 dt2 <- copy(dt)
 convert_dataset(dt2, "cd_commune", from = "NIS_COMMUNE_2019",
                 to = "NIS_ARRONDISSEMENT_2019", master_data)
 
 
 # ==============================================================================
-# 4. Validation de codes — validate_codes()
+# 4. Validation de codes -- validate_codes()
 # ==============================================================================
 
 validate_codes(c(21004L, 99999L, 11002L), "NIS_COMMUNE_2019", master_data)
@@ -163,17 +209,17 @@ validate_codes(c("21", "99"),      "INTERNAL_ARRONDISSEMENT", master_data)
 
 
 # ==============================================================================
-# 5. Noms officiels — get_label()
+# 5. Noms officiels -- get_label()
 # ==============================================================================
 
-# Noms français
+# Noms francais
 get_label(c(21004L, 11002L, 62063L), "NIS_COMMUNE_2019", master_data, lang = "fr")
 #      code      label
 # 1:  21004  Bruxelles
 # 2:  11002      Anvers
-# 3:  62063      Liège
+# 3:  62063      Liege
 
-# Noms néerlandais
+# Noms neerlandais
 get_label(c(21004L, 11002L), "NIS_COMMUNE_2019", master_data, lang = "nl")
 
 # NUTS3
@@ -182,28 +228,28 @@ get_label(c("BE100", "BE211", "BE332"), "NUTS3_2021", master_data, lang = "fr")
 # Codes postaux
 get_label(c(1000L, 2000L), "POSTAL", master_data, lang = "fr")
 
-# Code inconnu → NA
+# Code inconnu -> NA
 get_label(c(21004L, 99999L), "NIS_COMMUNE_2019", master_data)
 
 
 # ==============================================================================
-# 6. Table de correspondance — get_crosswalk()
+# 6. Table de correspondance -- get_crosswalk()
 # ==============================================================================
 
-# Correspondance complète communes → NUTS3
+# Correspondance complete communes -> NUTS3
 cw <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
 head(cw)
 
-# Correspondance postaux → communes (N:1 — chaque code postal apparaît une fois)
+# Correspondance postaux -> communes (N:1)
 get_crosswalk("POSTAL", "NIS_COMMUNE_2019", master_data)
 
-# Avec colonne de poids — utile pour les paires ambiguës
+# Avec colonne de poids -- utile pour les paires ambigues
 get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data, weights = TRUE)
 # ...
-# 63000   BE335   0.5   (poids égaux par défaut)
+# 63000   BE335   0.5   (poids egaux par defaut)
 # 63000   BE336   0.5
 
-# Avec poids de population enregistrés (voir section 8)
+# Avec poids de population enregistres (voir section 8)
 register_split_weights(
   "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
   data.table(code_from = c(63000L, 63000L),
@@ -217,10 +263,10 @@ clear_split_weights()
 
 
 # ==============================================================================
-# 7. Diagnostic de couverture — diagnose_classification()
+# 7. Diagnostic de couverture -- diagnose_classification()
 # ==============================================================================
 
-# --- 7a. Mode vérification (classification fournie) ----------------------------
+# --- 7a. Mode verification (classification fournie) ----------------------------
 nuts3_data <- data.table(
   nuts3 = c("BE100", "BE211", "BE332"),
   value = c(100, 200, 150)
@@ -230,21 +276,21 @@ diagnose_classification(nuts3_data, "nuts3", master_data,
                         classification = "NUTS3_2021")
 # Affiche : couverture, codes manquants, codes inconnus, doublons
 
-# Le résultat invisible contient les détails structurés
+# Le resultat invisible contient les details structures
 diag <- diagnose_classification(nuts3_data, "nuts3", master_data,
                                 classification = "NUTS3_2021", verbose = FALSE)
-diag$coverage_rate   # fraction de codes de référence présents
+diag$coverage_rate   # fraction de codes de reference presents
 diag$status          # "COMPLETE", "INCOMPLETE", "COMPLETE_WITH_UNKNOWNS", ...
 diag$missing_codes   # data.table des codes absents
 diag$unknown_codes   # data.table des codes non reconnus
 
-# --- 7b. Mode auto-détection (classification = NULL) ---------------------------
+# --- 7b. Mode auto-detection (classification = NULL) ---------------------------
 diagnose_classification(nuts3_data, "nuts3", master_data)
-# Classe toutes les classifications par taux de correspondance et recommande la meilleure
+# Classe toutes les classifications par taux de correspondance
 
 
 # ==============================================================================
-# 8. Correspondances pondérées — split_ambiguous() et registre de poids
+# 8. Correspondances ponderees -- split_ambiguous() et registre de poids
 # ==============================================================================
 
 # --- 8a. split_ambiguous() directement -----------------------------------------
@@ -254,7 +300,7 @@ arr_data <- data.table(
   avg_salary = c(2900, 2700, 2400)
 )
 
-# Poids égaux (par défaut) — variable additive
+# Poids egaux (par defaut) -- variable additive
 split_ambiguous(
   arr_data,
   code_col   = "arr_code",
@@ -264,10 +310,10 @@ split_ambiguous(
   master_data,
   value_type = "additive"
 )
-# 63000 → BE335 : total_wage * 0.5
-# 63000 → BE336 : total_wage * 0.5
+# 63000 -> BE335 : total_wage * 0.5
+# 63000 -> BE336 : total_wage * 0.5
 
-# Variable ratio — valeurs inchangées dans les deux cibles
+# Variable ratio -- valeurs inchangees dans les deux cibles
 split_ambiguous(
   arr_data,
   code_col   = "arr_code",
@@ -278,7 +324,7 @@ split_ambiguous(
   value_type = "ratio"
 )
 
-# --- 8b. Template de poids — split_weights_template() --------------------------
+# --- 8b. Template de poids -- split_weights_template() -------------------------
 tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
 #    code_from  code_to  weight
 # 1:     63000    BE335     0.5
@@ -288,7 +334,7 @@ tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_da
 tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
 tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
 
-# --- 8c. Registre de poids pour réutilisation ----------------------------------
+# --- 8c. Registre de poids pour reutilisation ----------------------------------
 register_split_weights(
   from       = "NIS_ARRONDISSEMENT_2019",
   to         = "NUTS3_2021",
@@ -306,11 +352,11 @@ clear_split_weights()
 
 
 # ==============================================================================
-# 9. Rebasement longitudinal — rebase_series()
+# 9. Rebasement longitudinal -- rebase_series()
 # ==============================================================================
 
 # --- 9a. Fusion N:1 : communes qui fusionnent en 2025 --------------------------
-# Les communes 11002 (Anvers) et 11007 (Borgerhout) ont fusionné dans NIS 2025.
+# Les communes 11002 (Anvers) et 11007 (Borgerhout) ont fusionne dans NIS 2025.
 panel <- data.table(
   year       = c(2022L, 2022L, 2022L, 2025L, 2025L),
   commune    = c(11002L, 11007L, 21004L, 11002L, 21004L),
@@ -329,10 +375,10 @@ result_n1 <- rebase_series(
   to          = "NIS_COMMUNE_2025",
   master_data = master_data
 )
-# 2022 : commune 11002 → 530000 + 42000 = 572000 (fusionnées)
-# 2025 : données inchangées (déjà en NIS 2025)
+# 2022 : commune 11002 -> 530000 + 42000 = 572000 (fusionnees)
+# 2025 : donnees inchangees (deja en NIS 2025)
 
-# --- 9b. Variable ratio — taux : aggregation avec la moyenne -------------------
+# --- 9b. Variable ratio -- agregation avec la moyenne -------------------------
 panel_rates <- data.table(
   year    = c(2022L, 2022L),
   commune = c(11002L, 11007L),
@@ -352,17 +398,17 @@ result_ratio <- rebase_series(
 )
 # commune 11002 : taux = mean(0.62, 0.58) = 0.60
 
-# --- 9c. Split 1:N : données par arrondissement vers NUTS3 --------------------
-# Étape 1 : préparer les poids
+# --- 9c. Split 1:N : donnees par arrondissement vers NUTS3 --------------------
+# Etape 1 : preparer les poids
 tpl2 <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
 tpl2[code_from == "63000" & code_to == "BE335", weight := 0.857]
 tpl2[code_from == "63000" & code_to == "BE336", weight := 0.143]
 
-# Étape 2 : enregistrer pour la session
+# Etape 2 : enregistrer pour la session
 register_split_weights("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl2,
                        variable = "population")
 
-# Étape 3 : rebase
+# Etape 3 : rebase
 arr_panel <- data.table(
   year    = c(2020L, 2021L, 2020L, 2021L),
   arr     = c(63000L, 63000L, 11000L, 11000L),
@@ -377,10 +423,10 @@ result_1n <- rebase_series(
   version_map = list("NIS_ARRONDISSEMENT_2019" = 2020:2021),
   to          = "NUTS3_2021",
   master_data = master_data
-  # split = "population" est la valeur par défaut
+  # split = "population" est la valeur par defaut
 )
-# BE335 : 120000 * 0.857 ≈ 102840
-# BE336 : 120000 * 0.143 ≈ 17160
+# BE335 : 120000 * 0.857 ~ 102840
+# BE336 : 120000 * 0.143 ~  17160
 
 # Passage des poids directement (usage ponctuel sans registre)
 result_direct <- rebase_series(
@@ -396,7 +442,7 @@ result_direct <- rebase_series(
 
 clear_split_weights()
 
-# --- 9d. Périodes non couvertes — warning rcl_missing_periods ------------------
+# --- 9d. Periodes non couvertes -- warning rcl_missing_periods -----------------
 data_mixed <- data.table(year = 2022:2024, commune = 21004L, pop = c(1, 2, 3))
 withCallingHandlers(
   rebase_series(
@@ -409,14 +455,14 @@ withCallingHandlers(
     master_data = master_data
   ),
   rcl_missing_periods = function(w) {
-    message("Périodes ignorées : ", conditionMessage(w))
+    message("Periodes ignorees : ", conditionMessage(w))
     invokeRestart("muffleWarning")
   }
 )
 
 
 # ==============================================================================
-# 10. Correspondance floue de noms — fuzzy_match_names()
+# 10. Correspondance floue de noms -- fuzzy_match_names()
 # ==============================================================================
 
 fuzzy_match_names(
@@ -429,13 +475,13 @@ fuzzy_match_names(
 #   input_name  matched_name  matched_code  distance  is_confident
 #   Bruxeles    Bruxelles        21004       0.037      TRUE
 #   Antwerpn    Antwerpen        11002       0.037      TRUE
-#   Liege       Liège            62063       0.150      TRUE
+#   Liege       Liege            62063       0.150      TRUE
 #   Naemur      Namur            92094       0.167      TRUE
 #   Vervirs     Verviers         63079       0.042      TRUE
 
 
 # ==============================================================================
-# 11. Visualisation (requiert le package visNetwork en option)
+# 11. Visualisation (requiert visNetwork)
 # ==============================================================================
 
 # Graphe des relations entre classifications
@@ -444,7 +490,7 @@ visualize_classification_graph()
 # Matrice de conversions
 visualize_conversion_matrix()
 
-# Hiérarchie NIS 2019
+# Hierarchie NIS 2019
 visualize_hierarchy("NIS_2019", master_data)
 
 
@@ -452,16 +498,17 @@ visualize_hierarchy("NIS_2019", master_data)
 # 12. Utilitaires
 # ==============================================================================
 
-# Toutes les conversions disponibles dans le package
-list_available_conversions()
-
-# Chemin de conversion détaillé
+# Chemin de conversion detaille avec semantique de perimetre
 check_conversion_path("POSTAL", "NUTS3_2021")
-# $is_simple  TRUE
-# $path       "POSTAL -> NIS_COMMUNE_2019 -> NUTS_LAU_2021 -> NUTS3_2021"
+# $is_simple          TRUE
+# $path               "POSTAL -> NIS_COMMUNE_2019 -> NUTS_LAU_2021 -> NUTS3_2021"
+# $perimeter_status   "preserving"
+# $straddle_free      TRUE
 
 check_conversion_path("NIS_COMMUNE_2025", "NUTS3_2021")
-# Passe par NIS 2019 en intermédiaire
+# $is_simple          FALSE
+# $perimeter_status   "crossing"
+# $straddle_free      FALSE
 
 # Reconstruire le snapshot depuis les fichiers bruts (si data/raw/ est disponible)
 # master_data <- rebuild_master_data()

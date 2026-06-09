@@ -7,10 +7,20 @@
 list_available_conversions()
 }
 \value{
-data.table describing available conversions
+data.table with columns \code{from}, \code{to}, \code{relation},
+  \code{perimeter_relation}, \code{notes}.
 }
 \description{
-List all available conversion paths
+Returns a data.table with one row per declared edge in
+\code{CONVERSION_GRAPH_EDGES}.  The \code{perimeter_relation} column
+summarises the spatial semantics of each edge (see
+\code{\link{is_perimeter_preserving}}):
+\describe{
+  \item{temporal}{Same system, different edition.}
+  \item{identity}{Exact 1:1 correspondence, no splitting.}
+  \item{nesting}{Many fine units aggregate into one coarser unit (N:1).}
+  \item{overlap}{A source unit straddles multiple target units (1:N / M:N).}
+}
 }
 \examples{
 list_available_conversions()

@@ -34,6 +34,6 @@ Identify codes from names (convenience wrapper)
 \examples{
 \donttest{
   master_data <- load_master_data()
-  identify_from_names(c("Bruxelles", "Antwerpen", "Gent", "Liège"), master_data)
+  identify_from_names(c("Bruxelles", "Antwerpen", "Gent", "Liege"), master_data)
 }
 }

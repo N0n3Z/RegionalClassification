@@ -19,7 +19,7 @@ make_panel <- function() {
   )
 }
 
-# ── Test R1: fusion N:1 — values are summed for merged communes ───────────────
+# -- Test R1: fusion N:1 -- values are summed for merged communes ---------------
 test_that("rebase_series sums values for fused communes", {
   result <- rebase_series(
     make_panel(),
@@ -37,7 +37,7 @@ test_that("rebase_series sums values for fused communes", {
   expect_equal(result[year == 2022L & commune == "11002", population], 26500)
 })
 
-# ── Test R2: no-op conversion (from == to) ────────────────────────────────────
+# -- Test R2: no-op conversion (from == to) ------------------------------------
 test_that("rebase_series returns data unchanged when source == target", {
   data <- data.table(year = 2025L, commune = 21004L, pop = 185000)
   result <- rebase_series(
@@ -53,7 +53,7 @@ test_that("rebase_series returns data unchanged when source == target", {
   expect_equal(result$pop, 185000)
 })
 
-# ── Test R3: 2025 data untouched, only 2022 data converted ───────────────────
+# -- Test R3: 2025 data untouched, only 2022 data converted -------------------
 test_that("rebase_series preserves 2025 values and only converts 2022 chunk", {
   result <- rebase_series(
     make_panel(),
@@ -69,7 +69,7 @@ test_that("rebase_series preserves 2025 values and only converts 2022 chunk", {
   expect_equal(result[year == 2025L & commune == "21004", population], 185000)
 })
 
-# ── Test R4: multiple value columns aggregated independently ─────────────────
+# -- Test R4: multiple value columns aggregated independently -----------------
 test_that("rebase_series aggregates multiple value columns", {
   data <- data.table(
     year    = c(2022L, 2022L),
@@ -90,7 +90,7 @@ test_that("rebase_series aggregates multiple value columns", {
   expect_equal(result[commune == "11002", empl],  7000)
 })
 
-# ── Test R5: custom aggregation function ─────────────────────────────────────
+# -- Test R5: custom aggregation function -------------------------------------
 test_that("rebase_series respects custom fun argument", {
   data <- data.table(
     year    = c(2022L, 2022L),
@@ -110,7 +110,7 @@ test_that("rebase_series respects custom fun argument", {
   expect_equal(result[commune == "11002", rate], mean(c(0.4, 0.6)))
 })
 
-# ── Test R6: uncovered periods trigger a warning and are dropped ──────────────
+# -- Test R6: uncovered periods trigger a warning and are dropped --------------
 test_that("rebase_series warns and drops uncovered periods", {
   data <- data.table(year = 2022:2023, commune = 21004L, pop = c(1, 2))
   expect_warning(
@@ -129,7 +129,7 @@ test_that("rebase_series warns and drops uncovered periods", {
   expect_equal(result$year, 2022L)
 })
 
-# ── Test R7: error for invalid classification ─────────────────────────────────
+# -- Test R7: error for invalid classification ---------------------------------
 test_that("rebase_series errors for invalid classification in version_map", {
   data <- data.table(year = 2022L, commune = 21004L, pop = 1)
   expect_error(
@@ -141,7 +141,7 @@ test_that("rebase_series errors for invalid classification in version_map", {
   )
 })
 
-# ── Test R8: error for invalid column names ───────────────────────────────────
+# -- Test R8: error for invalid column names -----------------------------------
 test_that("rebase_series errors when column not found in data", {
   data <- data.table(year = 2022L, commune = 21004L, pop = 1)
   expect_error(
@@ -153,7 +153,7 @@ test_that("rebase_series errors when column not found in data", {
   )
 })
 
-# ── Test R9: split = NULL replicates values and emits rcl_ambiguous_split ─────
+# -- Test R9: split = NULL replicates values and emits rcl_ambiguous_split -----
 test_that("rebase_series with split=NULL replicates split values and warns", {
   expect_warning(
     result <- rebase_series(
@@ -173,7 +173,7 @@ test_that("rebase_series with split=NULL replicates split values and warns", {
   expect_equal(result[arr == "BE336", pop], 100000)
 })
 
-# ── Test R10: split = "population" uses equal weights when none registered ────
+# -- Test R10: split = "population" uses equal weights when none registered ----
 test_that("rebase_series split='population' falls back to equal weights with warning", {
   clear_split_weights()
   expect_warning(
@@ -194,7 +194,7 @@ test_that("rebase_series split='population' falls back to equal weights with war
   expect_equal(result[arr == "BE336", pop], 50000)
 })
 
-# ── Test R11: split with registered population weights ────────────────────────
+# -- Test R11: split with registered population weights ------------------------
 test_that("rebase_series uses registered population weights for splits", {
   clear_split_weights()
   register_split_weights(
@@ -222,7 +222,7 @@ test_that("rebase_series uses registered population weights for splits", {
   clear_split_weights()
 })
 
-# ── Test R12: split with explicit weight data.table ───────────────────────────
+# -- Test R12: split with explicit weight data.table ---------------------------
 test_that("rebase_series accepts explicit weight data.table for splits", {
   w <- data.table(
     code_from = c(63000L, 63000L),
@@ -243,7 +243,7 @@ test_that("rebase_series accepts explicit weight data.table for splits", {
   expect_equal(result[arr == "BE336", pop], 30000)
 })
 
-# ── Test R13: output column order and types ───────────────────────────────────
+# -- Test R13: output column order and types -----------------------------------
 test_that("rebase_series output contains exactly period, code, value columns", {
   result <- rebase_series(
     make_panel(),
@@ -258,9 +258,9 @@ test_that("rebase_series output contains exactly period, code, value columns", {
   expect_equal(sort(names(result)), sort(c("year", "commune", "population")))
 })
 
-# ── Tests for split_weights_template() ────────────────────────────────────────
+# -- Tests for split_weights_template() ----------------------------------------
 
-# ── Test T1: template has correct structure for ambiguous pair ────────────────
+# -- Test T1: template has correct structure for ambiguous pair ----------------
 test_that("split_weights_template returns correct structure for ambiguous pair", {
   tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
   expect_true(is.data.table(tpl))
@@ -270,22 +270,22 @@ test_that("split_weights_template returns correct structure for ambiguous pair",
   expect_true(is.numeric(tpl$weight))
 })
 
-# ── Test T2: template only contains ambiguous (1:N) codes ────────────────────
+# -- Test T2: template only contains ambiguous (1:N) codes --------------------
 test_that("split_weights_template only includes codes that split into multiple targets", {
   tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
-  # All codes in the template must appear more than once (each maps to ≥2 targets)
+  # All codes in the template must appear more than once (each maps to >=2 targets)
   counts <- tpl[, .N, by = code_from]
   expect_true(all(counts$N >= 2L))
 })
 
-# ── Test T3: equal weights initialised and sum to 1 per source code ───────────
+# -- Test T3: equal weights initialised and sum to 1 per source code -----------
 test_that("split_weights_template initialises equal weights summing to 1", {
   tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
   weight_sums <- tpl[, .(total = sum(weight)), by = code_from]
   expect_true(all(abs(weight_sums$total - 1) < 1e-9))
 })
 
-# ── Test T4: Verviers (63000) is present with 2 targets ──────────────────────
+# -- Test T4: Verviers (63000) is present with 2 targets ----------------------
 test_that("split_weights_template includes Verviers arrondissement with two NUTS3 codes", {
   tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
   verviers <- tpl[code_from == "63000"]
@@ -295,7 +295,7 @@ test_that("split_weights_template includes Verviers arrondissement with two NUTS
   expect_equal(sum(verviers$weight), 1, tolerance = 1e-9)
 })
 
-# ── Test T5: non-ambiguous pair returns empty table with message ──────────────
+# -- Test T5: non-ambiguous pair returns empty table with message --------------
 test_that("split_weights_template returns empty table when no ambiguous codes exist", {
   expect_message(
     tpl <- split_weights_template("NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data),
@@ -306,7 +306,7 @@ test_that("split_weights_template returns empty table when no ambiguous codes ex
   expect_equal(sort(names(tpl)), sort(c("code_from", "code_to", "weight")))
 })
 
-# ── Test T6: errors for invalid classification ────────────────────────────────
+# -- Test T6: errors for invalid classification --------------------------------
 test_that("split_weights_template errors for invalid classification", {
   expect_error(
     split_weights_template("MAUVAISE_CLASSIF", "NUTS3_2021", master_data),
@@ -314,9 +314,9 @@ test_that("split_weights_template errors for invalid classification", {
   )
 })
 
-# ── Tests value_type = "ratio" ─────────────────────────────────────────────────
+# -- Tests value_type = "ratio" -------------------------------------------------
 
-# ── Test R14: 1:N split with ratio — values replicated unchanged ──────────────
+# -- Test R14: 1:N split with ratio -- values replicated unchanged --------------
 test_that("rebase_series replicates ratio values unchanged for 1:N splits", {
   data <- data.table(year = 2022L, arr = 63000L, rate = 0.42)
   # Verviers split with equal weights + ratio replication: the advisory warnings
@@ -336,7 +336,7 @@ test_that("rebase_series replicates ratio values unchanged for 1:N splits", {
   expect_equal(result[arr == "BE336", rate], 0.42)
 })
 
-# ── Test R15: N:1 merge with ratio and fun = mean ─────────────────────────────
+# -- Test R15: N:1 merge with ratio and fun = mean -----------------------------
 test_that("rebase_series averages ratio values for N:1 merges with fun=mean", {
   data <- data.table(
     year    = c(2022L, 2022L),
@@ -359,7 +359,7 @@ test_that("rebase_series averages ratio values for N:1 merges with fun=mean", {
   expect_equal(result[commune == "11002", rate], mean(c(0.30, 0.50)))
 })
 
-# ── Test R16: value_type="ratio" with fun=sum emits a warning ─────────────────
+# -- Test R16: value_type="ratio" with fun=sum emits a warning -----------------
 test_that("rebase_series warns when value_type='ratio' combined with fun=sum", {
   data <- data.table(year = 2022L, commune = 11002L, rate = 0.5)
   expect_warning(

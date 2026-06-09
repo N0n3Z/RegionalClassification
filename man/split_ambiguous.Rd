@@ -60,7 +60,7 @@ function distributes value columns proportionally using supplied or
 registered weights.
 }
 \examples{
-\dontrun{
+\donttest{
   arr_salaries <- data.table(
     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
     total_wage = c(5e9, 3e9, 1e9),

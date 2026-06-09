@@ -1,6 +1,6 @@
 library(data.table)
 
-# ── validate_codes ────────────────────────────────────────────────────────────
+# -- validate_codes ------------------------------------------------------------
 
 test_that("validate_codes returns TRUE for known codes, FALSE for unknowns", {
   result <- validate_codes(c(21004L, 99999L, 11002L), "NIS_COMMUNE_2019", master_data)
@@ -36,7 +36,7 @@ test_that("validate_codes works for INTERNAL_ARRONDISSEMENT", {
 })
 
 
-# ── get_label ─────────────────────────────────────────────────────────────────
+# -- get_label -----------------------------------------------------------------
 
 test_that("get_label returns French names for NIS_COMMUNE_2019", {
   result <- get_label(c(21004L, 11002L), "NIS_COMMUNE_2019", master_data, lang = "fr")
@@ -74,7 +74,7 @@ test_that("get_label works for POSTAL", {
 })
 
 
-# ── get_crosswalk ─────────────────────────────────────────────────────────────
+# -- get_crosswalk -------------------------------------------------------------
 
 test_that("get_crosswalk returns a data.table with named columns", {
   result <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
@@ -103,7 +103,7 @@ test_that("get_crosswalk errors for invalid classification", {
   )
 })
 
-# ── get_crosswalk with weights ────────────────────────────────────────────────
+# -- get_crosswalk with weights ------------------------------------------------
 
 test_that("get_crosswalk weights=TRUE adds weight column with value 1 for simple pair", {
   result <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data, weights = TRUE)

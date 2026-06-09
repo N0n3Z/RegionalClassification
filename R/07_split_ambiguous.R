@@ -30,7 +30,7 @@
 #'   produce one row each.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   arr_salaries <- data.table(
 #'     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
 #'     total_wage = c(5e9, 3e9, 1e9),
@@ -197,7 +197,7 @@ split_ambiguous <- function(
 #' @param variable   Name of the weighting variable (default: "population")
 #' @return Invisible NULL (called for side effect)
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Register population-based Verviers split (indicative values)
 #'   register_split_weights(
 #'     from       = "NIS_ARRONDISSEMENT_2019",
@@ -318,7 +318,7 @@ clear_split_weights <- function() {
 #' \donttest{
 #'   master_data <- load_master_data()
 #'
-#'   # 1. Inspect the template — equal weights are the starting point
+#'   # 1. Inspect the template -- equal weights are the starting point
 #'   tpl <- split_weights_template(
 #'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
 #'   )
@@ -387,9 +387,41 @@ split_weights_template <- function(from, to, master_data) {
                         .(code_from, code_to, weight = 1 / .N), by = code_from][
                         , .(code_from, code_to, weight)]
 
+  # Phase 4c: look up weights with primitive-overlap-edge anchoring.
+  # If weights are not registered for the user-supplied (from, to) pair, also
+  # try the first overlap edge in the conversion path.  This lets a user
+  # register weights once for (NIS_ARR_2019 -> NUTS3_2021) and have them
+  # automatically apply when converting NIS_ARR_2019 -> NUTS2_2021 or any
+  # other pair that traverses that same overlap edge.
+  .get_reg_weights <- function(variable = "population") {
+    reg <- get_split_weights(from, to, variable = variable)
+    if (!is.null(reg)) return(reg)
+    # Fallback: primitive overlap edge in path
+    path_check <- tryCatch(check_conversion_path(from, to), error = function(e) NULL)
+    if (is.null(path_check) || is.null(path_check$edges_used) ||
+        length(path_check$edges_used) == 0L)
+      return(NULL)
+    overlap_edges <- Filter(
+      function(e) .edge_perimeter_relation(e) == "overlap",
+      path_check$edges_used
+    )
+    for (e in overlap_edges) {
+      reg2 <- get_split_weights(e$from, e$to, variable = variable)
+      if (!is.null(reg2)) {
+        if (verbose)
+          message(sprintf(
+            "  Weights anchored to primitive overlap edge: %s -> %s [variable: %s]",
+            e$from, e$to, variable
+          ))
+        return(reg2)
+      }
+    }
+    NULL
+  }
+
   resolved <-
     if (is.null(weights)) {
-      reg <- get_split_weights(from, to)
+      reg <- .get_reg_weights()
       if (!is.null(reg)) {
         if (verbose) message("  Using default weights from registry.")
         .merge_weights(equal_wts, reg)
@@ -399,7 +431,7 @@ split_weights_template <- function(from, to, master_data) {
       }
 
     } else if (is.character(weights) && length(weights) == 1) {
-      reg <- get_split_weights(from, to, variable = weights)
+      reg <- .get_reg_weights(variable = weights)
       if (is.null(reg)) {
         warn(sprintf("Weight variable '%s' not found in registry for %s -> %s. Using equal weights.",
                      weights, from, to),

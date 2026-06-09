@@ -3,7 +3,7 @@
 \docType{data}
 \name{rc_communes_2019}
 \alias{rc_communes_2019}
-\title{Sample communes — NIS 2019}
+\title{Sample communes -- NIS 2019}
 \format{
 A `data.table` with 12 rows and 7 columns:
 \describe{
@@ -13,7 +13,7 @@ A `data.table` with 12 rows and 7 columns:
   \item{population}{Integer. Resident population (fictional).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
-  \item{taux_activite}{Numeric. Activity rate, 0–1 (fictional).}
+  \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 }
 }
 \usage{

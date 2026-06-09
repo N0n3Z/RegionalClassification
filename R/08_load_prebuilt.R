@@ -96,7 +96,7 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
 #'                  Defaults to inst/extdata/ (accessible after package install).
 #' @return master_data list (same as load_master_data() output), invisibly
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Only needed when raw source files in data/raw/ change
 #'   master_data <- rebuild_master_data()
 #' }

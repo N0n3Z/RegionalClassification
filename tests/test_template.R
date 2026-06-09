@@ -1,5 +1,5 @@
 # ==============================================================================
-# tests/test_template.R — Template pour écrire ses propres tests
+# tests/test_template.R -- Template pour ecrire ses propres tests
 # ==============================================================================
 #
 # UTILISATION
@@ -12,9 +12,9 @@
 # -------------------
 # Chaque test est une liste avec les champs suivants :
 #
-#   description  (obligatoire) Texte libre décrivant ce que le test vérifie.
+#   description  (obligatoire) Texte libre decrivant ce que le test verifie.
 #   type         (obligatoire) Type de test : voir les sections ci-dessous.
-#   ...          (variable)    Paramètres propres à chaque type.
+#   ...          (variable)    Parametres propres a chaque type.
 #
 # TYPES DISPONIBLES
 # -----------------
@@ -28,19 +28,19 @@
 
 
 # ==============================================================================
-# 1. DÉFINIR VOS TESTS
+# 1. DEFINIR VOS TESTS
 # ==============================================================================
 
 MY_TESTS <- list(
 
   # ----------------------------------------------------------------------------
-  # TYPE "convert" — convert_codes()
+  # TYPE "convert" -- convert_codes()
   #
   # Champs :
   #   input     Vecteur de codes source (integer ou character)
   #   from      Classification source   (ex: "NIS_COMMUNE_2019")
   #   to        Classification cible    (ex: "NUTS3_2027")
-  #   expected  Vecteur des codes attendus en sortie, dans le même ordre
+  #   expected  Vecteur des codes attendus en sortie, dans le meme ordre
   #             que input. Utilisez NA pour les codes sans correspondance.
   # ----------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ MY_TESTS <- list(
   ),
 
   list(
-    description = "Antwerpen (11002) passe de BE211 (2021) à BE261 (2027)",
+    description = "Antwerpen (11002) passe de BE211 (2021) a BE261 (2027)",
     type        = "convert",
     input       = c(11002L),
     from        = "NIS_COMMUNE_2019",
@@ -90,9 +90,9 @@ MY_TESTS <- list(
   ),
 
   list(
-    description = "Commune BEFORE_2019 fusionnée -> NUTS3 2021",
+    description = "Commune BEFORE_2019 fusionnee -> NUTS3 2021",
     type        = "convert",
-    # 55022 = Fosses-la-Ville (fusionné en 2019 -> 58001 = Mettet)
+    # 55022 = Fosses-la-Ville (fusionne en 2019 -> 58001 = Mettet)
     input       = c(55022L),
     from        = "NIS_COMMUNE_BEFORE_2019",
     to          = "NUTS3_2021",
@@ -100,23 +100,23 @@ MY_TESTS <- list(
   ),
 
   # ----------------------------------------------------------------------------
-  # TYPE "dataset" — convert_dataset()
+  # TYPE "dataset" -- convert_dataset()
   #
   # Champs :
-  #   dt            data.table (ou data.frame) d'entrée
+  #   dt            data.table (ou data.frame) d'entree
   #   code_col      Nom de la colonne contenant les codes source
-  #   from          Classification source (NULL = auto-détection)
+  #   from          Classification source (NULL = auto-detection)
   #   to            Classification cible
-  #   target_col    Nom attendu de la nouvelle colonne ajoutée
+  #   target_col    Nom attendu de la nouvelle colonne ajoutee
   #   check_fn      function(result) -> TRUE/FALSE
-  #                 Fonction de validation sur le résultat retourné.
+  #                 Fonction de validation sur le resultat retourne.
   # ----------------------------------------------------------------------------
 
   list(
     description = "convert_dataset : dataset salarial communes -> NUTS3 2021",
     type        = "dataset",
     dt          = data.table::data.table(
-      region  = c("Bruxelles", "Anvers", "Liège"),
+      region  = c("Bruxelles", "Anvers", "Liege"),
       commune = c(21004L, 11002L, 62063L),
       salaire = c(3500, 2900, 2600)
     ),
@@ -132,14 +132,14 @@ MY_TESTS <- list(
   ),
 
   list(
-    description = "convert_dataset : auto-détection depuis codes NUTS3",
+    description = "convert_dataset : auto-detection depuis codes NUTS3",
     type        = "dataset",
     dt          = data.table::data.table(
       nuts = c("BE100", "BE211", "BE332"),
       val  = c(100, 200, 300)
     ),
     code_col    = "nuts",
-    from        = NULL,       # auto-détection
+    from        = NULL,       # auto-detection
     to          = "NUTS3_2027",
     target_col  = "cd_nuts3_2027",
     check_fn    = function(r) {
@@ -149,21 +149,21 @@ MY_TESTS <- list(
   ),
 
   # ----------------------------------------------------------------------------
-  # TYPE "split" — split_ambiguous()
+  # TYPE "split" -- split_ambiguous()
   #
   # Champs :
-  #   dt          data.table d'entrée
+  #   dt          data.table d'entree
   #   code_col    Colonne contenant les codes source
-  #   value_cols  Colonnes de valeurs à redistribuer
+  #   value_cols  Colonnes de valeurs a redistribuer
   #   from        Classification source
   #   to          Classification cible
-  #   weights     NULL (poids égaux) ou data.table(code_from, code_to, weight)
+  #   weights     NULL (poids egaux) ou data.table(code_from, code_to, weight)
   #   value_type  "additive" (totaux) ou "ratio" (taux)
   #   check_fn    function(result) -> TRUE/FALSE
   # ----------------------------------------------------------------------------
 
   list(
-    description = "split_ambiguous : Verviers (63000) divisé 50/50 (poids égaux)",
+    description = "split_ambiguous : Verviers (63000) divise 50/50 (poids egaux)",
     type        = "split",
     dt          = data.table::data.table(
       arr_code   = c(11000L, 63000L),
@@ -173,11 +173,11 @@ MY_TESTS <- list(
     value_cols  = "masse_sal",
     from        = "NIS_ARRONDISSEMENT_2019",
     to          = "NUTS3_2021",
-    weights     = NULL,       # poids égaux -> 50/50
+    weights     = NULL,       # poids egaux -> 50/50
     value_type  = "additive",
     check_fn    = function(r) {
       nrow(r) == 3L &&                                          # 63000 -> 2 lignes
-      abs(sum(r$masse_sal) - 6e9) < 1 &&                       # total préservé
+      abs(sum(r$masse_sal) - 6e9) < 1 &&                       # total preserve
       abs(r[cd_nuts3_2021 == "BE335", masse_sal] - 5e8) < 1e3  # 50% de 1e9
     }
   ),
@@ -206,24 +206,24 @@ MY_TESTS <- list(
   ),
 
   # ----------------------------------------------------------------------------
-  # TYPE "diagnose" — diagnose_classification()
+  # TYPE "diagnose" -- diagnose_classification()
   #
   # Champs :
-  #   dt              data.table d'entrée
+  #   dt              data.table d'entree
   #   code_col        Colonne contenant les codes
-  #   classification  Classification à vérifier (NULL = auto-détection)
+  #   classification  Classification a verifier (NULL = auto-detection)
   #   check_fn        function(result) -> TRUE/FALSE
-  #                   Le résultat est la liste retournée par diagnose_classification().
+  #                   Le resultat est la liste retournee par diagnose_classification().
   # ----------------------------------------------------------------------------
 
   list(
     description = "diagnose : jeu NUTS3 2021 complet -> COMPLETE",
     type        = "diagnose",
-    dt          = NULL,       # NULL = utiliser tous les codes de référence (voir check_fn)
+    dt          = NULL,       # NULL = utiliser tous les codes de reference (voir check_fn)
     code_col    = "nuts3",
     classification = "NUTS3_2021",
     check_fn    = function(r, master_data) {
-      # Construit un jeu complet à la volée
+      # Construit un jeu complet a la volee
       dt_full <- data.table::data.table(nuts3 = master_data$nuts3_ref_2021$cd_nuts3)
       res <- diagnose_classification(dt_full, "nuts3", master_data,
                                      classification = "NUTS3_2021", verbose = FALSE)
@@ -232,7 +232,7 @@ MY_TESTS <- list(
   ),
 
   list(
-    description = "diagnose : code inconnu BE999 détecté",
+    description = "diagnose : code inconnu BE999 detecte",
     type        = "diagnose",
     dt          = data.table::data.table(nuts3 = c("BE100", "BE211", "BE999")),
     code_col    = "nuts3",
@@ -243,13 +243,13 @@ MY_TESTS <- list(
   ),
 
   list(
-    description = "diagnose : auto-détection sur communes NIS 2019",
+    description = "diagnose : auto-detection sur communes NIS 2019",
     type        = "diagnose",
     dt          = data.table::data.table(
       code = c(21004L, 11002L, 44021L, 62063L, 63079L)
     ),
     code_col    = "code",
-    classification = NULL,   # auto-détection
+    classification = NULL,   # auto-detection
     check_fn    = function(r, master_data) {
       r$recommendation      == "NIS_COMMUNE_2019" &&
       r$classification_type == "NIS_COMMUNE" &&
@@ -258,11 +258,11 @@ MY_TESTS <- list(
   ),
 
   # ----------------------------------------------------------------------------
-  # TYPE "custom" — test libre
+  # TYPE "custom" -- test libre
   #
   # Champs :
   #   fn    function(master_data) -> TRUE/FALSE
-  #         Votre logique complète. Retournez TRUE si le test passe.
+  #         Votre logique complete. Retournez TRUE si le test passe.
   # ----------------------------------------------------------------------------
 
   list(
@@ -280,14 +280,14 @@ MY_TESTS <- list(
 
 
 # ==============================================================================
-# 2. RUNNER — ne pas modifier
+# 2. RUNNER -- ne pas modifier
 # ==============================================================================
 
-#' Exécuter une liste de tests personnalisés
+#' Executer une liste de tests personnalises
 #'
 #' @param tests  Liste de tests (voir template ci-dessus)
 #' @param master_data  Sortie de build_master_table()
-#' @return invisible(list) avec le détail de chaque résultat
+#' @return invisible(list) avec le detail de chaque resultat
 run_custom_tests <- function(tests, master_data) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) stop("data.table requis")
@@ -367,7 +367,7 @@ run_custom_tests <- function(tests, master_data) {
             )
             test$check_fn(result, master_data)
           } else {
-            # dt = NULL : la check_fn gère tout elle-même
+            # dt = NULL : la check_fn gere tout elle-meme
             test$check_fn(NULL, master_data)
           }
         },
@@ -385,33 +385,33 @@ run_custom_tests <- function(tests, master_data) {
         pass <- pass + 1L
         results[[i]] <- list(status = "PASS", description = desc)
       } else {
-        cat("  FAIL — check_fn a retourné FALSE\n\n")
+        cat("  FAIL -- check_fn a retourne FALSE\n\n")
         fail <- fail + 1L
         results[[i]] <- list(status = "FAIL", description = desc,
                              error = "check_fn returned FALSE")
       }
 
     }, error = function(e) {
-      cat(sprintf("  FAIL — %s\n\n", e$message))
+      cat(sprintf("  FAIL -- %s\n\n", e$message))
       fail <<- fail + 1L
       results[[i]] <<- list(status = "FAIL", description = desc, error = e$message)
     })
   }
 
-  cat(sprintf("%s\n  RÉSULTATS : %d/%d tests passés\n%s\n\n",
+  cat(sprintf("%s\n  RESULTATS : %d/%d tests passes\n%s\n\n",
               bar, pass, length(tests), bar))
 
   return(invisible(results))
 }
 
-# Opérateur null-coalesce interne (évite de dépendre d'un package externe)
+# Operateur null-coalesce interne (evite de dependre d'un package externe)
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
 
 # ==============================================================================
-# 3. EXÉCUTION
+# 3. EXECUTION
 # ==============================================================================
-# Décommentez la ligne ci-dessous pour lancer vos tests immédiatement
-# après avoir sourcé ce fichier (nécessite que master_data soit chargé).
+# Decommentez la ligne ci-dessous pour lancer vos tests immediatement
+# apres avoir source ce fichier (necessite que master_data soit charge).
 #
 # run_custom_tests(MY_TESTS, master_data)

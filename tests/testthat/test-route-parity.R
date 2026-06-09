@@ -1,6 +1,6 @@
 library(data.table)
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Parity between the conversion GRAPH (check_conversion_path / get_conversion_matrix)
 # and the EXECUTOR (route_conversion). Historically these were two independent
 # sources of truth: check_conversion_path() did a generic multi-hop BFS on the
@@ -9,13 +9,17 @@ library(data.table)
 # fail at execution (e.g. NUTS3_2021 -> NUTS1_2021). The executor now composes
 # single-hop handlers along a path in the handler graph, so every simple route
 # the graph declares must be executable. This test guards that invariant.
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 test_that("every simple conversion in the matrix is executable (graph <-> executor parity)", {
   mtx    <- get_conversion_matrix()
   simple <- mtx[is_simple == TRUE & from != to]
 
-  ok  <- mapply(nbbbenuts:::.route_is_executable, simple$from, simple$to)
+  # Executability is now tested against the CROSSWALK graph (.xw_path via
+  # .route_is_executable), i.e. what route_conversion() can actually run -- not
+  # mere reachability in the declared CONVERSION_GRAPH_EDGES graph.
+  ok  <- mapply(nbbbenuts:::.route_is_executable, simple$from, simple$to,
+                MoreArgs = list(md = master_data))
   bad <- simple[!ok]
 
   expect_equal(
@@ -27,7 +31,7 @@ test_that("every simple conversion in the matrix is executable (graph <-> execut
   )
 })
 
-# ── Multi-hop NUTS aggregation: previously raised rcl_no_route ────────────────
+# -- Multi-hop NUTS aggregation: previously raised rcl_no_route ----------------
 test_that("NUTS3_2021 -> NUTS1_2021 is executable and matches manual chaining", {
   r_multi <- convert_codes("BE211", "NUTS3_2021", "NUTS1_2021", master_data)
   expect_equal(nrow(r_multi), 1L)
@@ -45,7 +49,7 @@ test_that("NUTS3_2021 -> NUTS0 aggregates all the way to country level", {
   expect_true(all(r$code_to == "BE"))
 })
 
-# ── Province -> region: M:N (Brabant spans 3 regions), requires allow_ambiguous ─
+# -- Province -> region: M:N (Brabant spans 3 regions), requires allow_ambiguous -
 test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is M:N (Brabant ambiguity)", {
   # Non-Brabant province: 1 row, correct region, but requires allow_ambiguous
   # because the graph declares province->region as M:N.
@@ -67,7 +71,7 @@ test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is M:N (Brabant ambiguity)", {
   )
 })
 
-# ── POSTAL multi-hop now flows through the generic composer ───────────────────
+# -- POSTAL multi-hop now flows through the generic composer -------------------
 test_that("POSTAL -> NUTS3_2027 still works after removing the POSTAL special case", {
   r <- convert_codes(c(1000L, 2000L), "POSTAL", "NUTS3_2027", master_data)
   expect_equal(nrow(r), 2L)

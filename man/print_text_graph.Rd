@@ -12,3 +12,4 @@ invisible(NULL)
 \description{
 For use when visNetwork is not available.
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ data.table with standardized change information
 \description{
 Parse NIS change table
 }
+\keyword{internal}

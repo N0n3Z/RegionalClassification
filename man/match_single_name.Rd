@@ -21,3 +21,4 @@ data.table with match results
 \description{
 Match a single name against a reference table
 }
+\keyword{internal}

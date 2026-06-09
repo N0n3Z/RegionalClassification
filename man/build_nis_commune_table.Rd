@@ -17,3 +17,4 @@ data.table with commune info and parent codes
 \description{
 Build a commune-level table with full NIS hierarchy for a given version
 }
+\keyword{internal}

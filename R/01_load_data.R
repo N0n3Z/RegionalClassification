@@ -39,6 +39,7 @@ load_all_raw_data <- function(data_dir = get_raw_data_path(),
 #' @param sheet Sheet name for Excel files (NULL for default)
 #' @param filter_spec List with 'column' and 'value' for filtering, or NULL
 #' @return data.table
+#' @keywords internal
 load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
 
   ext <- tolower(tools::file_ext(filepath))
@@ -180,6 +181,7 @@ parse_refnis_hierarchy <- function(refnis_dt,
 #' @param reference_date Date to filter validity. NULL = use current (max DT_VLDT_STOP).
 #'   Use as.Date("2018-12-31") for pre-2019 historical NUTS assignments.
 #' @return list with NUTS hierarchy and commune-level mapping
+#' @keywords internal
 parse_nuts_nis_conversion <- function(conv_dt, reference_date = NULL) {
 
   dt <- copy(conv_dt)
@@ -227,6 +229,7 @@ parse_nuts_nis_conversion <- function(conv_dt, reference_date = NULL) {
 #'
 #' @param nuts_arr_dt data.table from NUTS_ARRONDISSEMENT.csv
 #' @return list of data.tables by NUTS version year
+#' @keywords internal
 parse_nuts_arrondissement <- function(nuts_arr_dt) {
 
   dt <- copy(nuts_arr_dt)
@@ -269,6 +272,7 @@ parse_nuts_arrondissement <- function(nuts_arr_dt) {
 #' @param col_nis  Name of the NIS 2025 commune code column
 #' @param col_nuts3 Name of the NUTS3 2027 code column
 #' @return data.table with columns cd_commune_2025 (integer) and cd_nuts3_2027 (character)
+#' @keywords internal
 parse_nis2025_nuts2027 <- function(conv_dt,
                                    col_nis   = FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nis,
                                    col_nuts3 = FILE_MAPPING$CONVERSION_NIS2025_NUTS2027$col_nuts3) {
@@ -306,6 +310,7 @@ parse_nis2025_nuts2027 <- function(conv_dt,
 #' @param col_old Name of old NIS code column
 #' @param col_new Name of new NIS code column
 #' @return data.table with cd_refnis_before2019 (integer) and cd_refnis_2019 (integer)
+#' @keywords internal
 parse_refnis_change_before2019 <- function(
     change_dt,
     col_old = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_old,
@@ -336,13 +341,14 @@ parse_refnis_change_before2019 <- function(
 #'
 #' @param change_dt data.table from REFNIS_CHANGE_2025.xlsx
 #' @return data.table with standardized change information
+#' @keywords internal
 parse_nis_changes <- function(change_dt) {
 
   dt <- copy(change_dt)
 
   # Rename by matching known source column names (case-insensitive).
   # The file may contain a typo variant (NUT_VERSION_OLD vs NUTS_VERSION_OLD)
-  # and the order could change — so we rename by name, not by position.
+  # and the order could change -- so we rename by name, not by position.
   required <- c(CD_REFNIS_OLD = "cd_refnis_old",
                 CD_REFNIS_NEW = "cd_refnis_new",
                 NATURE        = "nature")

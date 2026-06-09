@@ -20,7 +20,8 @@ cd_nuts2_2027, cd_nuts1_2027 to the NIS 2019 and BEFORE_2019 master tables.
 **Known limitation:** three communes changed province between 2019 and 2025
 (CHANGE_PROV/CHANGE_DSTR in nis_changes), shifting their NUTS3 region.  For
 these communes the derived cd_nuts3_2027 value is WRONG.  The conversion
-executor no longer reads this column: `NIS_COMMUNE_2019 → NUTS3_2027` is
+executor no longer reads this column: `NIS_COMMUNE_2019 -> NUTS3_2027` is
 routed via `NIS_COMMUNE_2025` (authoritative data).  Phase 4 of the
 refactoring plan will rebuild the pre-computed snapshot with correct values.
 }
+\keyword{internal}

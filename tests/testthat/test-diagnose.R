@@ -1,6 +1,6 @@
 library(data.table)
 
-# ── Test D1: check mode — COMPLETE status ─────────────────────────────────────
+# -- Test D1: check mode -- COMPLETE status -------------------------------------
 test_that("diagnose_classification check mode returns COMPLETE for full coverage", {
   all_nuts3 <- nbbbenuts:::.list_codes_for("NUTS3_2021", master_data)
   dt <- data.table(nuts3 = all_nuts3, val = seq_along(all_nuts3))
@@ -14,7 +14,7 @@ test_that("diagnose_classification check mode returns COMPLETE for full coverage
   expect_equal(result$coverage_rate, 1)
 })
 
-# ── Test D2: check mode — INCOMPLETE status ───────────────────────────────────
+# -- Test D2: check mode -- INCOMPLETE status -----------------------------------
 test_that("diagnose_classification detects missing codes", {
   dt <- data.table(nuts3 = c("BE100", "BE211"), val = 1:2)
   result <- diagnose_classification(dt, "nuts3", master_data,
@@ -26,7 +26,7 @@ test_that("diagnose_classification detects missing codes", {
   expect_true(result$coverage_rate < 1)
 })
 
-# ── Test D3: check mode — COMPLETE_WITH_UNKNOWNS ──────────────────────────────
+# -- Test D3: check mode -- COMPLETE_WITH_UNKNOWNS ------------------------------
 test_that("diagnose_classification detects unknown codes", {
   all_nuts3 <- nbbbenuts:::.list_codes_for("NUTS3_2021", master_data)
   dt <- data.table(nuts3 = c(all_nuts3, "ZZZZ"), val = seq_along(c(all_nuts3, "ZZZZ")))
@@ -37,7 +37,7 @@ test_that("diagnose_classification detects unknown codes", {
   expect_equal(result$status, "COMPLETE_WITH_UNKNOWNS")
 })
 
-# ── Test D4: check mode — duplicate codes detected ────────────────────────────
+# -- Test D4: check mode -- duplicate codes detected ----------------------------
 test_that("diagnose_classification counts duplicate codes", {
   dt <- data.table(nuts3 = c("BE100", "BE100", "BE211"), val = 1:3)
   result <- diagnose_classification(dt, "nuts3", master_data,
@@ -46,7 +46,7 @@ test_that("diagnose_classification counts duplicate codes", {
   expect_equal(result$n_duplicates, 1L)
 })
 
-# ── Test D5: check mode — rcl_invalid_classification for unknown id ───────────
+# -- Test D5: check mode -- rcl_invalid_classification for unknown id -----------
 test_that("diagnose_classification errors for unknown classification identifier", {
   dt <- data.table(code = "BE100", val = 1)
   expect_error(
@@ -56,7 +56,7 @@ test_that("diagnose_classification errors for unknown classification identifier"
   )
 })
 
-# ── Test D6: check mode — rcl_invalid_input for missing column ────────────────
+# -- Test D6: check mode -- rcl_invalid_input for missing column ----------------
 test_that("diagnose_classification errors when code column not found", {
   dt <- data.table(x = "BE100", val = 1)
   expect_error(
@@ -66,7 +66,7 @@ test_that("diagnose_classification errors when code column not found", {
   )
 })
 
-# ── Test D7: detect mode — recommends the best matching classification ─────────
+# -- Test D7: detect mode -- recommends the best matching classification ---------
 test_that("diagnose_classification detect mode recommends correct classification", {
   all_nuts3 <- nbbbenuts:::.list_codes_for("NUTS3_2021", master_data)
   dt <- data.table(nuts3 = head(all_nuts3, 20), val = 1:20)
@@ -76,7 +76,7 @@ test_that("diagnose_classification detect mode recommends correct classification
   expect_true(is.data.table(result$candidates))
 })
 
-# ── Test D8: now covers all VALID_CLASSIFICATIONS (no NULL ref for any) ────────
+# -- Test D8: now covers all VALID_CLASSIFICATIONS (no NULL ref for any) --------
 test_that("diagnose_classification covers every VALID_CLASSIFICATION", {
   skip_if(is.null(master_data$communes))
 
@@ -93,7 +93,7 @@ test_that("diagnose_classification covers every VALID_CLASSIFICATION", {
   }
 })
 
-# ── Test D9: check mode works for NIS classifications previously unsupported ───
+# -- Test D9: check mode works for NIS classifications previously unsupported ---
 test_that("diagnose_classification works for NUTS2_2021", {
   dt <- data.table(code = c("BE10", "BE21"), val = 1:2)
   result <- diagnose_classification(dt, "code", master_data,
