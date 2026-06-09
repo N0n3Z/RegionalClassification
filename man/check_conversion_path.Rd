@@ -7,17 +7,32 @@
 check_conversion_path(from, to)
 }
 \arguments{
-\item{from}{Source classification identifier}
+\item{from}{Source classification identifier.}
 
-\item{to}{Target classification identifier}
+\item{to}{Target classification identifier.}
 }
 \value{
-list with:
-  - is_simple: logical
-  - path: character vector of nodes in the conversion path
-  - relations: character vector of relationship types along the path
-  - explanation: human-readable explanation
-  - edges_used: list of edges in the path
+A named list with the following fields:
+\describe{
+  \item{is_simple}{Logical.  \code{TRUE} if every edge in the path is 1:1
+    or N:1.}
+  \item{path}{Character vector of node identifiers along the shortest path,
+    or \code{NULL} when no path exists.}
+  \item{relations}{Character vector of relationship types along the path
+    (e.g. \code{"1:1"}, \code{"N:1"}).}
+  \item{explanation}{Human-readable description of why the path is simple
+    or ambiguous.}
+  \item{edges_used}{List of edge objects (from \code{CONVERSION_GRAPH_EDGES})
+    for each hop in the path.}
+  \item{perimeter_relations}{Character vector — one entry per hop — with
+    the perimeter semantic of that edge: \code{"temporal"}, \code{"identity"},
+    \code{"nesting"}, or \code{"overlap"}.  Empty for the identity path
+    (\code{from == to}).}
+  \item{perimeter_status}{\code{"preserving"} if no hop is \code{"overlap"},
+    \code{"crossing"} otherwise.}
+  \item{straddle_free}{Logical.  \code{TRUE} when \code{perimeter_status}
+    is \code{"preserving"}.}
+}
 }
 \description{
 A conversion is "simple" if there exists a path where every edge
@@ -25,7 +40,7 @@ has a 1:1 or N:1 relationship (no M:N or 1:N that would create ambiguity
 in the target values).
 }
 \examples{
-# Simple 1:1 path
+# Simple, perimeter-preserving path
 check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
 
 # Ambiguous path (Verviers splits two NUTS3 regions)
@@ -33,4 +48,8 @@ check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
 
 # Multi-hop path via intermediate classification
 check_conversion_path("POSTAL", "NUTS3_2027")
+}
+\seealso{
+\code{\link{is_perimeter_preserving}} for a simple logical wrapper,
+  \code{\link{print_conversion_check}} for a human-readable summary.
 }

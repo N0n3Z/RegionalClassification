@@ -31,5 +31,13 @@ that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
     entities where every row is already a distinct code.}
   \item{detectable}{`TRUE` for classifications included in the
     `detect_classification()` integer matching loop.}
+  \item{aggregates}{Character vector of the node id(s) this node is the direct
+    aggregation of (the finer level it groups). `character(0)` for base/leaf
+    levels. The aggregation graph is a DAG, not a tree: an arrondissement is
+    aggregated by BOTH a province and a region, and `NUTS0` aggregates both
+    `NUTS1_2021` and `NUTS1_2027`. Province -> region is deliberately NOT an
+    aggregation (province 20000 Brabant spans 3 regions); a region aggregates
+    arrondissements directly. Used by `nomenclature_children()` /
+    `nomenclature_parents()` and validated against the conversion graph.}
 }
 }

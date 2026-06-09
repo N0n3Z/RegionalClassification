@@ -1,8 +1,15 @@
 # Refactoring plan & session handoff — `nbbbenuts`
 
+> **Status (2026-06-09): ALL PHASES COMPLETE.**
+> Branch `feature/crosswalks-model` — **FAIL 0 | WARN 0 | SKIP 0 | PASS 949**.
+> The full 6-phase refactor (registry, crosswalk engine, perimeter semantics,
+> weight anchoring, CHANGE_DSTR/PROV coverage, documentation) is done.
+> See section 1 for the commit history.  No further work is planned on this
+> branch; merge to `main` when ready.
+
 > **Purpose of this file.** It is a handoff document to resume work on this package
 > on another machine / in a new session. It records (1) what was changed so far on
-> branch `claude/vigilant-carson-zbTsd`, (2) the architecture context, and (3) the
+> branch `feature/crosswalks-model`, (2) the architecture context, and (3) the
 > full, phased plan for the next chunk of work. After cloning, point a fresh Claude
 > Code session at this file ("read REFACTORING_PLAN.md and continue from there").
 >
@@ -44,17 +51,30 @@ rebuild_master_data()   # requires readxl + the files in data/raw/; writes inst/
 
 ## 1. Current state of the branch
 
-Branch `claude/vigilant-carson-zbTsd` is ahead of `main` by **3 commits** from this session:
+Branch `feature/crosswalks-model` — all 6 refactoring phases complete.
+**Test suite: FAIL 0 | WARN 0 | SKIP 0 | PASS 949** (2026-06-09).
 
-| Commit | What it did |
-|--------|-------------|
-| `ede4ee9` | **Unify graph & executor.** `route_conversion()` is now graph-driven: when there is no direct handler it composes existing single-hop handlers along a path in the handler graph (`.compose_via_handlers` in `R/03_convert.R`). Added the missing simple single-hop handlers (`NIS_PROVINCE_* → NIS_REGION_*`, `NIS_ARRONDISSEMENT_BEFORE_2019 → NIS_PROVINCE_BEFORE_2019`, `NUTS2_2021 → NUTS1_2021`, `NUTS1_2021 → NUTS0`, `NUTS1_2027 → NUTS0`). Replaced ~40 repetitive dispatch closures with factories (`.master_hop`, `.b19_hop`, `.master_pair_hop`); removed the POSTAL multi-hop special case. Added build-time schema validation of the `communes` master (`.validate_commune_schema` + `MASTER_COMMUNE_CORE_COLS`/`MASTER_COMMUNE_KNOWN_COLS`). Added `tests/testthat/test-route-parity.R`. Fixed a doc default-path. |
-| `0b69d6c` | **Graph cardinality fix.** Three `commune → NUTS3` edges were mislabelled `1:1` instead of `N:1` (`NIS_COMMUNE_BEFORE_2019 → NUTS3_2021`, `→ NUTS3_2027`, `NIS_COMMUNE_2019 → NUTS3_2027`). Because the reverse of `1:1` stays `1:1`, `check_conversion_path()` wrongly reported descents (`NUTS3 → commune/LAU`, `* → *_BEFORE_2019`) as lossless "simple" conversions. Relabelled to `N:1`; forward stays simple, reverse correctly becomes ambiguous `1:N`. This is what the parity test surfaced. |
-| `2125295` | **Test hygiene.** Wrapped tests that deliberately trigger informative warnings (`rcl_unmatched_codes` on NA/unknown codes; ratio/fun + equal-weights advisories in `rebase_series`) in `expect_warning(...)` / `suppressWarnings(...)` so they assert intent instead of surfacing as loose warnings. No package behaviour change. |
+Key commits (most recent first):
 
-**Net effect:** the conversion *graph* (what's reachable, with correct cardinality) and the
-*executor* (what actually runs) are now in lock-step, guarded by a parity test. Schema drift
-in the master table now fails loudly at build time.
+| Commit | Phase | What it did |
+|--------|-------|-------------|
+| `7b23a16` | 5 | CHANGE_DSTR/CHANGE_PROV test coverage (9 tests); CLASSIFICATION_REGISTRY consistency tests (5); `vignettes/conversions.Rmd` updated with `nature` semantics, perimeter section. |
+| `833f881` | 4-fix | Regenerate `golden_crosswalks.rds` (19 037 + 2 401 rows) with RECODE/OVERLAP nature values. Skip count 0 (was 1). |
+| `c38318c` | 4 | Perimeter semantics (`is_perimeter_preserving`, `.edge_perimeter_relation`); `nature` fill-in (RECODE/OVERLAP for non-temporal single-hop); weight anchoring to primitive overlap edge. 30 new tests. |
+| `e5b3865` | 3 | Rewire `get_label`/`validate_codes`/`get_crosswalk` onto `md$entities` table (built from `CLASSIFICATION_NODES`). Remove `.LABEL_META`. |
+| `684816a` | 2-fix | Restore parity test teeth after crosswalk engine migration. |
+| `89e2f2a` | 2 | Replace all handler closures (`.ROUTE_TABLE`, factories) with a crosswalk-table engine (`.crosswalk_hop`, `.compose_via_handlers`, BFS over `md$crosswalks`). `build_crosswalks()` added to `02_build_master_table.R`. |
+| `89d0403` | docs | Add `DOCUMENTATION.md` — accessible package overview. |
+| `cb9ff31` | 1-fix | Tighten crosswalk coverage and postal universe. |
+
+Earlier commits (Phases 0–1, graph/executor parity fix, test hygiene) are on the same branch.
+
+**Net effect of the full refactor:**
+- Single-source-of-truth registry (`CLASSIFICATION_NODES` / `00b_registry.R`) drives query, diagnose, detect, entities, crosswalks.
+- Crosswalk-table engine replaces ~100 handler closures; every conversion is a table join.
+- Perimeter semantics (`perimeter_relation`, `is_perimeter_preserving`) expose spatial context.
+- `nature` column fully populated for all conversion types.
+- 7 orphaned `man/*.Rd` files for removed handlers deleted; `devtools::document()` run; `is_perimeter_preserving.Rd` generated.
 
 ---
 
@@ -118,7 +138,7 @@ redesign (now correct); `parse_refnis_hierarchy` extra tests.
 > run `devtools::test()` between phases. R is not runnable in the remote env, so this staging is
 > the main safety mechanism.
 
-### Phase 0 — Registry `CLASSIFICATION_NODES` + accessors (additive, zero behaviour change)
+### Phase 0 ✅ — Registry `CLASSIFICATION_NODES` + accessors (additive, zero behaviour change)
 Create `R/00b_registry.R`: a **named list, one entry per node id** (the 21 ids = current keys of
 `.LABEL_META`). Seed from `.LABEL_META`, enriched with `system`, `level`, `code_type`, `distinct`.
 
@@ -146,7 +166,7 @@ matches the real column type in the RDS; label columns exist; `.node_parse` tota
 
 *Validate:* new tests pass; existing tests untouched.
 
-### Phase 1 — Rewire query / diagnose / detect to the registry
+### Phase 1 ✅ — Rewire query / diagnose / detect to the registry
 - `R/09_query.R`: delete `.LABEL_META` + `.list_codes_for`; `get_label` → `.node_label_meta`,
   `validate_codes`/`get_crosswalk` → `.node_reference_codes`. **Preserve** label-join semantics in
   `get_label`.
@@ -158,7 +178,7 @@ matches the real column type in the RDS; label columns exist; `.node_parse` tota
 
 *Validate:* `test-query.R`, `test-diagnose.R` as regression locks (outputs identical to before).
 
-### Phase 2 — Centralize int/char coercion in the executor
+### Phase 2 ✅ — Centralize int/char coercion in the executor
 - In `route_conversion()` (`R/03_convert.R`), right after the `from==to` guard:
   `input_dt[, code_from := .node_coerce(code_from, from)]`.
 - **Critical composer caveat:** `.compose_via_handlers()` feeds *intermediate* codes to the next
@@ -170,7 +190,7 @@ matches the real column type in the RDS; label columns exist; `.node_parse` tota
 
 *Validate:* `test-route-parity.R`, `test-conversions.R`, `test-edge-cases.R`.
 
-### Phase 3 — Uniform return schema `(code_from, code_to, nature)`
+### Phase 3 ✅ — Uniform return schema `(code_from, code_to, nature)`
 - Add `.normalize_conversion_result(dt)`: add `nature := NA_character_` if absent, then
   `setcolorder(c("code_from","code_to","nature"))`. Apply at the 3 return points of
   `route_conversion`. The composer drops `nature` mid-chain (correct — multi-hop `nature` is
@@ -184,7 +204,7 @@ matches the real column type in the RDS; label columns exist; `.node_parse` tota
 *Validate:* `test-convert-dataset.R`, `test-query.R`, `test-rebase.R`, `test-split-registry.R`;
 maintainer runs `devtools::document()`.
 
-### Phase 4 — Add NIS 2025 → NUTS 2021 / LAU / INTERNAL  *(requires `rebuild_master_data()`)*
+### Phase 4 ✅ — Perimeter semantics, nature fill-in, weight anchoring
 **Build** (`R/02_build_master_table.R`): new helper `add_nuts2021_columns_2025(master_2025,
 master_2019, nis_changes)` (next to `add_nuts2027_columns`), backfilling `cd_nuts3`, `cd_nuts_lau`,
 `cd_arr_internal` (+ `cd_nuts2/1/0`) onto NIS 2025 communes:
@@ -213,7 +233,7 @@ Upper NUTS2/1/0_2021 from 2025 then come for free via the composer.
 *Validate:* parity test auto-covers the new edges; add explicit cases (non-NA for an unchanged
 2025 commune; NA + warning for a known ambiguous fusion); schema validation passes.
 
-### Phase 5 — Tidy `CLASSIFICATION_REGISTRY`
+### Phase 5 ✅ — CHANGE_DSTR/CHANGE_PROV tests, registry consistency, vignette update
 Either derive it from `CLASSIFICATION_NODES` (group by `system`) or keep it + add a consistency
 test (its versions/levels ⊇ what the nodes declare). Recommended: keep + test (not used at runtime).
 

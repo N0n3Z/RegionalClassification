@@ -19,10 +19,13 @@ route_conversion(input_dt, from, to, md)
 data.table with code_from, code_to, nature
 }
 \description{
-Looks up the "FROM__TO" key in .ROUTE_TABLE for a direct single-hop handler.
-When no direct handler exists, composes existing single-hop handlers along a
-path in the handler graph (.compose_via_handlers). This keeps execution in
-lock-step with what check_conversion_path() declares reachable: there is a
-single source of truth for topology (the graph), and execution covers every
-multi-hop path the graph supports without a hand-written handler per pair.
+For a direct (from, to) edge present in md$crosswalks, performs a single
+table lookup via .crosswalk_hop().  Otherwise, composes single-hop crosswalk
+lookups along the shortest path in the crosswalk graph (.xw_path, built from
+md$crosswalks so every hop is guaranteed to have rows).
+}
+\details{
+Output codes are re-coerced to the canonical type of each node
+(.node_coerce, R/00b_registry.R) after the lookup, preserving the contract
+that NIS codes are integer and NUTS codes are character.
 }

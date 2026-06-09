@@ -17,5 +17,9 @@ build_name_reference(target, md, language = "both")
 data.table with ref_name, ref_code, ref_language
 }
 \description{
-Build a reference table of names and codes for a given classification
+Phase 3: driven entirely by the registry (.node_reference_codes) instead of
+a hardcoded switch over source-table columns.  Any classification that has
+at least one non-NA label (name_fr or name_nl) in the entities table is
+now supported automatically.  An abort is raised only when no labels are
+available (e.g. NUTS2, NUTS1, NUTS0 which carry no names).
 }
