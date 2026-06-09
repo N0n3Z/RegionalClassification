@@ -1,256 +1,841 @@
-# Documentation — `nbbbenuts` (RegionalClassification)
+# Documentation technique -- `nbbbenuts`
 
-> Document d'ensemble, accessible et complet, sur le package et l'état des travaux.
-> Pour le détail d'exécution du refactor en cours, voir `REFACTOR_CROSSWALKS.md`.
-> Pour les règles projet (commandes, conventions), voir `CLAUDE.md`.
+> Reference technique complete du package R de conversion de codes geographiques belges.
+> Pour les instructions d'utilisation rapide, voir `vignettes/introduction.Rmd`.
+> Pour l'historique du refactoring, voir `REFACTORING_PLAN.md`.
 
 ---
 
-## 1. À quoi sert le package
+## Table des matieres
 
-`nbbbenuts` est un package R qui **convertit des codes géographiques belges** entre
-plusieurs systèmes de classification et à travers le temps :
+1. [Vue d'ensemble](#1-vue-densemble)
+2. [Les 22 classifications supportees](#2-les-22-classifications-supportees)
+3. [Le graphe de conversion](#3-le-graphe-de-conversion)
+4. [Semantique de perimetre](#4-semantique-de-perimetre)
+5. [La colonne `nature`](#5-la-colonne-nature)
+6. [API complete](#6-api-complete)
+   - 6.1 Chargement des donnees
+   - 6.2 Conversion de codes
+   - 6.3 Conversion d'un dataset
+   - 6.4 Inspection des chemins
+   - 6.5 Validation et labels
+   - 6.6 Tables de correspondance
+   - 6.7 Detection et diagnostic
+   - 6.8 Poids et desagregation
+   - 6.9 Rebasage longitudinal
+   - 6.10 Correspondance floue
+   - 6.11 Objet `nomenclature`
+   - 6.12 Visualisation
+7. [Architecture interne](#7-architecture-interne)
+8. [Modele de donnees `master_data`](#8-modele-de-donnees-master_data)
+9. [Classes d'erreur et avertissements](#9-classes-derreur-et-avertissements)
+10. [Suite de tests](#10-suite-de-tests)
+11. [Reconstruction du snapshot](#11-reconstruction-du-snapshot)
 
-- **Systèmes** : NIS (codes Statbel : communes, arrondissements, provinces, régions),
-  NUTS (codes Eurostat : NUTS0/1/2/3, LAU), codes **postaux**, et une classification
-  **interne** (arrondissements 2 chiffres, avec Verviers scindé 65/66).
-- **Versions dans le temps** : NIS `BEFORE_2019` / `2019` / `2025` (les communes
-  fusionnent au fil des réformes), NUTS `2021` / `2027`.
+---
 
-Exemple d'usage typique : on a un jeu de données indexé par code postal et on veut
-le réexprimer en NUTS3, ou rebaser un panel communal 2019→2025 malgré les fusions.
+## 1. Vue d'ensemble
+
+`nbbbenuts` convertit des **codes geographiques belges** entre systemes de classification
+et a travers le temps. Il couvre quatre systemes :
+
+| Systeme | Identifiant | Exemples de codes |
+|---------|-------------|-------------------|
+| **NIS** (Statbel) | `NIS_*_{BEFORE_2019,2019,2025}` | `21004` (Bruxelles), `63000` (arr. Verviers) |
+| **NUTS** (Eurostat) | `NUTS{0,1,2,3}_202{1,7}`, `NUTS_LAU_2021` | `"BE100"`, `"BE211"` |
+| **Postal** (bpost) | `POSTAL` | `1000`, `2000` |
+| **Interne** | `INTERNAL_ARRONDISSEMENT` | `"21"` (Bxl), `"65"` (Verviers FR), `"66"` (Verviers DE) |
+
+Deux dimensions temporelles :
+- **NIS** : `BEFORE_2019` (591 communes), `2019` (583), `2025` (567) -- les communes
+  fusionnent lors des reformes territoriales.
+- **NUTS** : `2021` (en vigueur) et `2027` (Reglement UE 2026/195).
+
+**Proprietes cles de l'API :**
+- Codes NIS et POSTAL sont de type **integer** ; codes NUTS et INTERNAL sont de type
+  **character**.
+- `convert_codes()` renvoie toujours un `data.table(code_from, code_to, nature)`.
+- Les conversions ambigues (1:N, M:N) sont bloquees par defaut ; `allow_ambiguous = TRUE`
+  leve cette garde.
+- `devtools::test()` doit passer (FAIL 0 | WARN 0 | SKIP 8 | PASS 949) avant tout commit.
+
+---
+
+## 2. Les 22 classifications supportees
 
 ```r
-library(nbbbenuts)
-md <- load_master_data()                         # charge la table de référence (rapide)
+get_all_classification_nodes()
+```
 
-convert_codes(c(21004L, 11002L), "NIS_COMMUNE_2019", "NUTS3_2021", md)
-convert_codes(c(1000L, 2000L),  "POSTAL",           "NIS_COMMUNE_2019", md)
+| Identifiant                       | Systeme  | Niveau         | Version     | Type  |
+|-----------------------------------|----------|----------------|-------------|-------|
+| `NIS_COMMUNE_BEFORE_2019`         | NIS      | commune        | BEFORE_2019 | int   |
+| `NIS_ARRONDISSEMENT_BEFORE_2019`  | NIS      | arrondissement | BEFORE_2019 | int   |
+| `NIS_PROVINCE_BEFORE_2019`        | NIS      | province       | BEFORE_2019 | int   |
+| `NIS_REGION_BEFORE_2019`          | NIS      | region         | BEFORE_2019 | int   |
+| `NIS_COMMUNE_2019`                | NIS      | commune        | 2019        | int   |
+| `NIS_ARRONDISSEMENT_2019`         | NIS      | arrondissement | 2019        | int   |
+| `NIS_PROVINCE_2019`               | NIS      | province       | 2019        | int   |
+| `NIS_REGION_2019`                 | NIS      | region         | 2019        | int   |
+| `NIS_COMMUNE_2025`                | NIS      | commune        | 2025        | int   |
+| `NIS_ARRONDISSEMENT_2025`         | NIS      | arrondissement | 2025        | int   |
+| `NIS_PROVINCE_2025`               | NIS      | province       | 2025        | int   |
+| `NIS_REGION_2025`                 | NIS      | region         | 2025        | int   |
+| `NUTS_LAU_2021`                   | NUTS     | lau            | 2021        | chr   |
+| `NUTS3_2021`                      | NUTS     | nuts3          | 2021        | chr   |
+| `NUTS2_2021`                      | NUTS     | nuts2          | 2021        | chr   |
+| `NUTS1_2021`                      | NUTS     | nuts1          | 2021        | chr   |
+| `NUTS0`                           | NUTS     | nuts0          | NA          | chr   |
+| `NUTS3_2027`                      | NUTS     | nuts3          | 2027        | chr   |
+| `NUTS2_2027`                      | NUTS     | nuts2          | 2027        | chr   |
+| `NUTS1_2027`                      | NUTS     | nuts1          | 2027        | chr   |
+| `POSTAL`                          | POSTAL   | postal         | NA          | int   |
+| `INTERNAL_ARRONDISSEMENT`         | INTERNAL | arrondissement | NA          | chr   |
+
+**Alias acceptes** : les identifiants tolerent plusieurs formes abreges
+(ex. `"CP"`, `"CODE_POSTAL"`, `"POSTAL"` ; `"COMMUNE_2019"`, `"NIS_COM_2019"`).
+Voir `normalize_classification_id()`.
+
+**Registre machine** : `CLASSIFICATION_NODES` (liste nommee de 22 entrees, `R/00b_registry.R`)
+contient pour chaque noeud :
+
+```
+system, level, version, code_type, source_table, version_filter,
+code_col, label_fr_col, label_nl_col, distinct, detectable, aggregates
 ```
 
 ---
 
-## 2. Le concept central : le **périmètre géographique**
+## 3. Le graphe de conversion
 
-L'unité fondamentale n'est pas le *code* mais le **périmètre** : un territoire délimité
-sur la carte. Un même périmètre reçoit **plusieurs codes** selon le système
-(p.ex. la Région bruxelloise = NIS `4000`, NUTS1 `BE1`, NUTS2 `BE10`…). Convertir, c'est
-soit **changer d'étiquette** (même territoire), soit **suivre un territoire qui évolue**.
+### 3.1 Aretes primitives
 
-Quatre **types de conversion**, du plus simple au plus complexe :
+Le graphe est declare dans `CONVERSION_GRAPH_EDGES` (`R/00_config.R`). Chaque arete
+specifie : `from`, `to`, `relation` (`1:1` / `N:1` / `1:N` / `M:N`), `notes`,
+et optionnellement `no_reverse`, `ambiguous_codes`, `coverage`.
 
-| Type | Nature | Cardinalité | Exemple | Données |
-|------|--------|-------------|---------|---------|
-| **A — Recodage** | même périmètre, code différent | 1:1 ou N:1 | `NIS_COMMUNE_2019 → NUTS3_2021` | exact, agrégation simple |
-| **B — Temporel stable** | code change, territoire inchangé | 1:1 | majorité des communes 2019→2025 | exact (`nature = UNCHANGED`) |
-| **C — Temporel modifié** | le territoire évolue | N:1 (forward) | fusions de communes | agrégation nécessaire (`FUSION`) |
-| **D — Chevauchement** | un périmètre source enjambe une frontière cible | 1:N / M:N | Verviers → BE335 + BE336 | **désagrégation par poids** |
+Cardinalites :
 
-Les cas **D** sont les seuls qui exigent des **poids exogènes** (population, emploi,
-surface…) fournis par l'utilisateur pour répartir une donnée de part et d'autre de la
-frontière.
+| Cardinalite | Signification | Exemple |
+|-------------|---------------|---------|
+| `1:1` | bijection exacte | `NIS_COMMUNE_2019 -> NUTS_LAU_2021` |
+| `N:1` | agregation (N sources -> 1 cible) | `NIS_COMMUNE_2019 -> NUTS3_2021` |
+| `1:N` | eclatement (1 source -> N cibles) | `NIS_COMMUNE_2025 -> NUTS3_2021` pour 3 fusions cross-NUTS3 |
+| `M:N` | chevauchement complet | `NIS_PROVINCE_2019 -> NIS_REGION_2019` (Brabant 20000) |
+
+### 3.2 Aretes inverses
+
+Chaque arete est automatiquement inversee au chargement du graphe (sauf `no_reverse = TRUE`)
+avec la cardinalite symetrique (`1:1` reste `1:1`, `N:1` devient `1:N`, etc.).
+
+`no_reverse = TRUE` protege les aretes dont l'inversion serait semantiquement incorrecte.
+Exemple : l'inverse de `NIS_COMMUNE_2025 -> NUTS3_2021` (`1:N`) est `1:N` depuis la
+perspective NUTS3 (beaucoup de communes partagent un NUTS3), pas `N:1`.
+
+### 3.3 Recherche de chemin (BFS)
+
+`find_conversion_path()` (`R/05_conversion_check.R`) fait deux passes :
+1. **Passe 1** : BFS sur les aretes `1:1` et `N:1` uniquement -- cherche un chemin simple.
+2. **Passe 2** : BFS sur toutes les aretes -- si aucun chemin simple n'existe.
+
+Si une **arete directe** est declaree entre `from` et `to` avec une cardinalite non-simple,
+elle prend le dessus sur le chemin indirect trouve par BFS (protection contre les faux simples).
+
+### 3.4 Conversion multi-saut
+
+Les chemins multi-sauts sont **composes** dans `execute_conversion()` :
+chaque saut intermedaire est execute via `md$crosswalks` ; les resultats sont joints.
+La colonne `nature` reste `NA` pour les chemins composes (la nature n'est definie
+que pour les aretes primitives).
+
+### 3.5 Conversions notables
+
+- **`NUTS3_2021 <-> NUTS3_2027`** : **pas de lien direct**. Trois communes ont change
+  de province entre 2019 et 2025, deplaceant leur NUTS3. La conversion doit passer par NIS :
+  `NUTS3_2021 -> NIS_COMMUNE -> NIS_COMMUNE_2025 -> NUTS3_2027`.
+- **`province -> region`** est `M:N` (Brabant 20000 couvre 3 regions). Utiliser
+  `NIS_COMMUNE_* -> NIS_REGION_*` (N:1) pour un chemin sans ambiguite.
+- **Verviers** (`NIS_ARRONDISSEMENT_2019 = 63000`) est le seul arrondissement 1:N
+  vers NUTS3 (BE335 francophone + BE336 germanophone).
 
 ---
 
-## 3. Les 22 classifications supportées
+## 4. Semantique de perimetre
 
-Identifiant interne sous la forme lisible utilisée dans les appels :
+Chaque arete porte une **semantique de perimetre** calculee par `.edge_perimeter_relation()`
+et reportee dans `check_conversion_path()` (champ `perimeter_relations`) ainsi que dans
+`list_available_conversions()` (colonne `perimeter_relation`).
 
-- **NIS** : `NIS_{COMMUNE,ARRONDISSEMENT,PROVINCE,REGION}_{BEFORE_2019,2019,2025}`
-- **NUTS 2021** : `NUTS_LAU_2021`, `NUTS3_2021`, `NUTS2_2021`, `NUTS1_2021`, `NUTS0`
-- **NUTS 2027** : `NUTS3_2027`, `NUTS2_2027`, `NUTS1_2027` (NUTS0 partagé)
-- **POSTAL**, **INTERNAL_ARRONDISSEMENT**
+| Valeur      | Definition | Exemples |
+|-------------|------------|---------|
+| `temporal`  | Meme systeme, versions differentes. Les limites peuvent evoluer edition par edition mais sans chevauchement entre systemes. | `NIS_COMMUNE_2019 -> NIS_COMMUNE_2025` |
+| `identity`  | Arete `1:1` -- correspondance bijective, meme territoire effectif. | `NIS_COMMUNE_2019 -> NUTS_LAU_2021` |
+| `nesting`   | Arete `N:1` -- N unites fines s'agglomerent en 1 unite grossiere. Le perimetre source est entierement contenu dans la cible. | `NIS_COMMUNE_2019 -> NUTS3_2021` |
+| `overlap`   | Arete `1:N` ou `M:N` -- une unite source **enjambe** plusieurs cibles. Seule categorie qui brise la preservation du perimetre. | `NIS_ARRONDISSEMENT_2019 -> NUTS3_2021` |
 
-`get_all_classification_nodes()` les liste ; `list_available_conversions()` montre les
-liens possibles et leur cardinalité.
-
----
-
-## 4. Les fonctions principales (API)
-
-| Fonction | Rôle |
-|----------|------|
-| `load_master_data()` | charge la table de référence pré-construite (rapide, sans fichiers bruts) |
-| `convert_codes(codes, from, to, md, allow_ambiguous=)` | **cœur** : convertit un vecteur de codes. Renvoie `data.table(code_from, code_to, nature)` |
-| `convert_dataset(dt, code_col, from, to, md)` | convertit une colonne d'un tableau, en gardant les autres colonnes |
-| `check_conversion_path(from, to)` / `print_conversion_check()` | indique si une conversion est « simple » (exacte) ou ambiguë, et le chemin emprunté |
-| `validate_codes(codes, classification, md)` | vérifie l'appartenance de codes à une classification |
-| `get_label(codes, classification, md)` | renvoie les libellés (FR/NL) |
-| `get_crosswalk(from, to, md)` | table de correspondance complète entre deux classifications |
-| `detect_classification(codes, md)` / `diagnose_classification(...)` | détection automatique + diagnostic de couverture |
-| `split_ambiguous(...)` + `register_split_weights(...)` | **désagrégation pondérée** des cas D (Verviers, etc.) |
-| `rebase_series(...)` | rebasage longitudinal d'un panel sur une version cible (agrégation/split) |
-| `fuzzy_match_names(...)` | rattachement de noms (mal orthographiés) à des codes |
-| `rebuild_master_data()` | reconstruit la table de référence depuis les fichiers bruts (`data/raw/`) |
-
-**Garde-fou** : par défaut, `convert_codes` **refuse** une conversion ambiguë (type D)
-et lève une erreur typée `rcl_ambiguous_conversion`. Il faut `allow_ambiguous = TRUE`
-pour obtenir toutes les correspondances, puis `split_ambiguous()` pour répartir les
-données avec des poids.
+**Statut global d'un chemin :**
+- `"preserving"` : aucun saut n'est `overlap`.
+- `"crossing"` : au moins un saut est `overlap`.
 
 ```r
-# Verviers : ambigu sans allow_ambiguous
-convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", md, allow_ambiguous = TRUE)
-#  -> 2 lignes : 63000 -> BE335 et 63000 -> BE336
+is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
+is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE
+is_perimeter_preserving("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")  # TRUE (temporal)
 ```
 
 ---
 
-## 5. Architecture interne (comment ça marche)
+## 5. La colonne `nature`
 
-### 5.1 Le registre des classifications — `CLASSIFICATION_NODES` (`R/00b_registry.R`)
-**Source de vérité unique** décrivant chaque nœud : `system`, `level`, `version`,
-`code_type` (integer/character), `source_table`, colonne du code, colonnes de libellés,
-et `aggregates` (le niveau plus fin qu'il agrège — voir §6.2). Tout en dérive : la
-validation, la détection, les libellés, la coercition de type. *Avant*, cette
-connaissance était dupliquée en 5 endroits ; elle est désormais centralisée.
+`convert_codes()` renvoie toujours `(code_from, code_to, nature)`. Les valeurs de `nature` :
 
-### 5.2 Le graphe de conversion — `CONVERSION_GRAPH_EDGES` (`R/00_config.R`)
-Déclare les **liens primitifs** entre nœuds, chacun avec une **cardinalité**
-(`1:1`, `N:1`, `1:N`, `M:N`). Le moteur fait une **recherche de chemin (BFS)** sur ce
-graphe (`R/05_conversion_check.R`) : une conversion est « simple » si tout le chemin est
-en `1:1`/`N:1`. Les chemins multi-sauts sont **composés** automatiquement.
+| Valeur         | Quand | Arete |
+|----------------|-------|-------|
+| `UNCHANGED`    | Conversion temporelle NIS, commune inchangee | temporal |
+| `FUSION`       | Conversion temporelle NIS, plusieurs communes fusionnees en une | temporal |
+| `CHANGE_DSTR`  | Conversion temporelle NIS, commune deplacee dans un autre arrondissement | temporal |
+| `CHANGE_PROV`  | Conversion temporelle NIS, commune deplacee dans une autre province | temporal |
+| `RECODE`       | Conversion non temporelle sans enjambement (nesting N:1, identity 1:1) | nesting / identity |
+| `OVERLAP`      | Conversion non temporelle avec enjambement (1:N ou M:N) | overlap |
+| `NA`           | Chemin multi-saut compose (nature intermediaire non definie) | multi-saut |
 
-### 5.3 L'exécuteur — `route_conversion` (`R/03_convert.R`)
-Pour chaque saut, applique un *handler* (aujourd'hui une table `.ROUTE_TABLE` de
-fonctions), sinon **compose** les sauts le long du chemin. Le résultat est normalisé au
-schéma `(code_from, code_to, nature)`. La cohérence graphe ⇄ exécuteur est verrouillée
-par `tests/testthat/test-route-parity.R`.
+**Cas BEFORE_2019 -> 2019** : seules `UNCHANGED` et `FUSION` peuvent apparaitre ;
+15 communes "orphelines" de BEFORE_2019 n'ont pas de correspondant en 2019 (`code_to = NA`).
 
-### 5.4 La table de référence (`master_data`)
-Chargée via `load_master_data()` depuis `inst/extdata/*.rds`. Aujourd'hui :
-- `communes` : table large, une ligne par (commune, version NIS), avec toutes les
-  colonnes NUTS/internes ;
-- `postal`, `nis_changes` (transitions de version avec `nature`) ;
-- **nouveau (Phase 1 du refactor)** : `entities` et `crosswalks` (voir §7).
+**Cas 2019 -> 2025 -- comptes exacts :**
+- `UNCHANGED` : 553 communes
+- `FUSION` : 27 communes source (13 paires de fusions)
+- `CHANGE_DSTR` : 2 communes (44045 -> 46029, 73040 -> 71072)
+- `CHANGE_PROV` : 1 commune (11056 -> 46030)
 
-### 5.5 L'objet `nomenclature` (`R/00c_nomenclature.R`)
-Interface **programmatique** additive : `nomenclature("NIS","commune","2019")` construit
-un objet structuré (validé contre le registre), avec accesseurs
-(`nom_system/level/version`), introspection (`list_nomenclatures`, `nomenclature_levels`)
-et liens d'agrégation (`nomenclature_children`/`nomenclature_parents`). Les chaînes
-continuent de fonctionner partout (coexistence).
+**Symetrie temporelle** : la nature est preservee sur le chemin inverse.
+`convert_codes(46030L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", md, allow_ambiguous=TRUE)`
+renvoie `CHANGE_PROV` pour la ligne `code_to == 11056`.
 
 ---
 
-## 6. Ce qui a été fait — journal des travaux
+## 6. API complete
 
-### 6.1 Unification graphe ⇄ exécuteur + filet de parité
-L'exécuteur ne savait faire que les sauts directs codés à la main : certaines conversions
-multi-sauts pourtant déclarées « simples » échouaient (`NUTS3_2021 → NUTS0`, etc.).
-→ Ajout d'un **composeur générique** + des handlers mono-saut manquants ; suppression du
-cas spécial POSTAL. Ajout du test de parité `test-route-parity.R` qui garantit que *toute*
-conversion déclarée simple est réellement exécutable. La duplication des ~50 handlers a
-été réduite via des *factories*.
+### 6.1 Chargement des donnees
 
-### 6.2 Corrections de fond sur la cardinalité (qualité des résultats)
-Le test de parité a révélé de vraies erreurs de modélisation, corrigées :
-- **`commune → NUTS3` est `N:1`, pas `1:1`** : plusieurs communes partagent un NUTS3.
-  L'erreur faisait croire que la descente `NUTS3 → commune` était une conversion exacte,
-  alors qu'elle est ambiguë.
-- **`province → région` est `M:N`** : la province du **Brabant** (20000) couvre les 3
-  régions. Ajout d'un lien direct `commune → région` (`N:1`) pour garder ce chemin simple.
-- **`2019 → 2025` est `N:1`** (chaque commune 2019 → une seule commune 2025) ; l'inverse
-  `2025 → 2019` est `1:N` pour les fusions.
-- **Verviers** : `arrondissement → NUTS3` est `1:N` (pas M:N) — un seul arrondissement
-  ambigu.
-- **`NUTS3_2021 ↔ NUTS3_2027` supprimé** : 3 communes ont changé de province entre 2019 et
-  2025, déplaçant leur NUTS3 → une simple table de renommage serait **fausse** pour elles.
-  La conversion vers 2027 passe désormais par les données officielles via NIS 2025.
+#### `load_master_data(path = NULL)`
 
-### 6.3 Registre source-de-vérité + schéma de retour uniforme
-- Création de `CLASSIFICATION_NODES` ; `query` / `detect` / `diagnose` / labels rebranchés
-  dessus (fin des 5 copies dupliquées). Coercition de type integer/caractère centralisée.
-- `convert_codes()` renvoie désormais un schéma **uniforme** `(code_from, code_to, nature)`.
-- **Nouveaux chemins `NIS_COMMUNE_2025 → NUTS3_2021 / INTERNAL`** : backfill au build pour
-  les communes inchangées ; les **3 fusions cross-NUTS3** (46029, 46030, 71072) sont
-  traitées en `1:N`. Validation de schéma de la table `communes` au build.
+Charge la table de reference pre-construite depuis `inst/extdata/*.rds`.
+Rapide (pas de fichiers bruts). Retourne une liste nommee avec :
+`communes`, `postal`, `nis_changes`, `entities`, `crosswalks`.
 
-### 6.4 Objet `nomenclature` (interface programmatique)
-Couche additive pour manipuler les classifications dynamiquement et naviguer la
-hiérarchie d'agrégation, sans casser l'API « chaîne ». (Branche `feature/nomenclature-object`.)
+```r
+master_data <- load_master_data()
+```
 
-### 6.5 Refonte de la `master_data` en modèle normalisé — **Phase 0 + 1 faites**
-Constat : la table `communes` large a des colonnes à sens conditionnel à la version, et
-les cas 1:N/M:N « fuient » hors du modèle (reconstruits par du code ad hoc). Cible : un
-modèle **normalisé** (voir §7). Réalisé jusqu'ici :
-- `entities` + `crosswalks` construits **depuis les sources** au build ;
-- **filet de sécurité** : fixture *golden* (sorties du moteur actuel figées) +
-  test de **parité par arête** (le crosswalk reproduit exactement le moteur).
-Le moteur n'est **pas encore** branché sur les crosswalks (Phase 2 à venir).
-La Phase 1 a été **durcie** (assertion de couverture, univers postal cohérent, identité
-de contenu confirmée) et l'ensemble de la suite passe (**962 tests**).
+#### `rebuild_master_data(data_dir = NULL, output_dir = NULL)`
+
+Reconstruit le snapshot depuis les fichiers bruts (`data/raw/`). Necessite `readxl`.
+Sauvegarde dans `inst/extdata/` via `save_master_tables()`.
+
+#### `load_all_raw_data(data_dir)` / `build_master_table(raw)` / `save_master_tables(md)`
+
+Etapes intermediaires du pipeline de construction, exposees pour usage avance.
 
 ---
 
-## 7. Le modèle cible `entities` + `crosswalks`
+### 6.2 Conversion de codes
 
-Pour rendre le modèle de données **isomorphe au modèle conceptuel** :
+#### `convert_codes(codes, from, to, master_data, allow_ambiguous = FALSE)`
 
-- **`entities(classification_id, code, name_fr, name_nl)`** — les membres de chaque nœud.
-- **`crosswalks(from_id, to_id, code_from, code_to, relation, nature)`** — **une ligne par
-  lien primitif**. Les cas D deviennent **natifs** : Verviers = 2 lignes
-  (`63000→BE335`, `63000→BE336`). Plus de handler spécial.
-- **`weights(...)`** (à venir) — poids exogènes **ancrés** aux lignes de chevauchement.
+**Fonction centrale.** Convertit un vecteur de codes.
 
-Bénéfices : fin des colonnes version-conditionnelles, 1:N/M:N en données (pas en code),
-hiérarchies non dupliquées, exécuteur réduit à « lire la table de l'arête puis composer ».
+**Parametres :**
+- `codes` : vecteur de codes source (integer ou character selon la classification).
+- `from`, `to` : identifiants de classification (voir section 2).
+- `master_data` : objet retourne par `load_master_data()`.
+- `allow_ambiguous` : si `FALSE` (defaut), leve `rcl_ambiguous_conversion` pour tout
+  chemin contenant un saut `1:N` ou `M:N`.
+
+**Retour :** `data.table(code_from, code_to, nature)`.
+
+**Comportement pour les codes inconnus :** une ligne avec `code_to = NA` est retournee ;
+l'avertissement `rcl_unmatched_codes` est emis.
+
+**Erreurs typees :**
+- `rcl_no_route` : aucun chemin dans le graphe entre `from` et `to`.
+- `rcl_ambiguous_conversion` : chemin non-simple et `allow_ambiguous = FALSE`.
+
+```r
+# Simple N:1
+convert_codes(c(21004L, 11002L), "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+
+# Temporel avec nature
+convert_codes(c(11002L, 11007L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+# code_from  code_to  nature
+#     11002    11002  UNCHANGED
+#     11007    11002  FUSION
+
+# Ambigu -- Verviers
+convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+              master_data, allow_ambiguous = TRUE)
+# code_from  code_to  nature
+#     63000    BE335  OVERLAP
+#     63000    BE336  OVERLAP
+```
 
 ---
 
-## 8. Feuille de route (refactor crosswalks — détail dans `REFACTOR_CROSSWALKS.md`)
+### 6.3 Conversion d'un dataset
 
-| Phase | Contenu | État |
-|-------|---------|------|
-| **0** | Figer les sorties « golden » du moteur actuel | ✅ fait |
-| **1** | Construire `entities` + `crosswalks` (additif) + parité | ✅ fait |
-| **2** | Brancher l'exécuteur sur `crosswalks` (suppression des handlers) | ⏳ à venir |
-| **3** | Lecteurs (detect/diagnose/query/fuzzy) sur `entities` | ⏳ |
-| **4** | Sémantique de périmètre 1re classe (`perimeter_relation`, `is_perimeter_preserving`), `nature` partout (RECODE/OVERLAP), **poids ancrés au périmètre** + poids par colonne | ⏳ |
-| **5** | Clarifier `CHANGE_DSTR`/`CHANGE_PROV` (recodage à commune entière ?) + vignette « modèle de périmètre » | ⏳ |
+#### `convert_dataset(dt, code_col, to, master_data, from = NULL, target_col = NULL, keep_code = TRUE, verbose = TRUE, allow_ambiguous = FALSE, na_action = "warn")`
 
-**Règle d'or** : ne pas faire la Phase 2 tant que `test-crosswalks-parity.R` n'est pas vert.
+Convertit une colonne d'un `data.table` (ou `data.frame`). Ajoute `target_col` (nom
+auto-genere si `NULL`). Si `from = NULL`, auto-detecte la classification source via
+`detect_classification()`.
+
+**Parametres specifiques :**
+- `target_col` : nom de la colonne resultat. Defaut : `"cd_{to_lower}"`.
+- `keep_code` : conserver la colonne source ? Defaut `TRUE`.
+- `na_action` : `"warn"` (defaut, garde les NA), `"keep"` (silencieux), `"drop"` (supprime les lignes).
+
+```r
+dt <- data.table(commune = c(21004L, 11002L), pop = c(180000, 530000))
+convert_dataset(dt, "commune", "NUTS3_2021", master_data, from = "NIS_COMMUNE_2019")
+#    commune      pop  cd_nuts3_2021
+# 1:   21004   180000         BE100
+# 2:   11002   530000         BE211
+```
 
 ---
 
-## 9. État des branches
+### 6.4 Inspection des chemins
 
-| Branche | Contenu |
+#### `check_conversion_path(from, to)`
+
+Retourne une liste nommee :
+
+| Champ | Type | Contenu |
+|-------|------|---------|
+| `is_simple` | logical | `TRUE` si tous les sauts sont `1:1` ou `N:1` |
+| `path` | character | vecteur des noeuds du chemin |
+| `relations` | character | vecteur des cardinalites par saut |
+| `explanation` | character | texte lisible |
+| `edges_used` | list | aretes utilisees (elements de `CONVERSION_GRAPH_EDGES`) |
+| `ambiguous_codes` | integer/character | codes ambigus (si applicables) |
+| `coverage` | character | couverture (si applicable) |
+| `perimeter_relations` | character | semantique par saut : `"temporal"` / `"identity"` / `"nesting"` / `"overlap"` |
+| `perimeter_status` | character | `"preserving"` ou `"crossing"` |
+| `straddle_free` | logical | `TRUE` si `perimeter_status == "preserving"` |
+
+#### `is_perimeter_preserving(from, to)`
+
+Raccourci logique : `TRUE` si preserving, `FALSE` si crossing, `NA` si pas de chemin.
+
+#### `print_conversion_check(from, to)`
+
+Affiche un resume lisible (simple/ambigu, perimeter status, path, relations).
+Retourne le resultat `check_conversion_path()` de maniere invisible.
+
+#### `list_available_conversions()`
+
+Retourne un `data.table` de toutes les aretes du graphe (incluant les inverses) avec :
+`from`, `to`, `relation`, `perimeter_relation`, `notes`.
+
+```r
+la <- list_available_conversions()
+la[perimeter_relation == "temporal"]   # aretes entre versions NIS
+la[perimeter_relation == "overlap"]    # aretes avec enjambement
+```
+
+#### `get_conversion_matrix()`
+
+Retourne un `data.table` (N x N) avec : `from`, `to`, `is_simple`, `relation_chain`.
+Couteux (O(N^2) appels a `check_conversion_path()`).
+
+---
+
+### 6.5 Validation et labels
+
+#### `validate_codes(codes, classification, master_data)`
+
+Verifie l'appartenance des codes a une classification.
+Retourne `data.table(code, is_valid)`.
+
+```r
+validate_codes(c(21004L, 99999L), "NIS_COMMUNE_2019", master_data)
+#    code  is_valid
+#   21004      TRUE
+#   99999     FALSE
+```
+
+#### `get_label(codes, classification, master_data, lang = "fr")`
+
+Retourne `data.table(code, label)`. `lang` : `"fr"` (defaut) ou `"nl"`.
+Codes inconnus -> `label = NA`.
+
+---
+
+### 6.6 Tables de correspondance
+
+#### `get_crosswalk(from, to, master_data, weights = FALSE)`
+
+Retourne la table de correspondance complete entre deux classifications.
+Si `weights = TRUE`, ajoute une colonne `weight` (utilise les poids enregistres via
+`register_split_weights()`, ou 0.5 egal pour les paires ambigues sans poids).
+
+```r
+cw <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+# 583 lignes (une par commune 2019), avec code_from, code_to
+
+get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data, weights = TRUE)
+# Colonne weight : 0.5/0.5 pour Verviers (63000) par defaut
+```
+
+---
+
+### 6.7 Detection et diagnostic
+
+#### `detect_classification(codes, master_data)`
+
+Essaie d'identifier automatiquement la classification a partir des valeurs.
+Retourne la classification la plus probable (string) ou `NULL`.
+
+#### `diagnose_classification(dt, col, master_data, classification = NULL, verbose = TRUE)`
+
+- Si `classification` est fourni : verifie la couverture par rapport a la classification
+  de reference et affiche un tableau de bord.
+- Si `classification = NULL` : auto-detection, classe toutes les classifications par
+  taux de correspondance et recommande la meilleure.
+
+**Retour invisible :** liste avec `coverage_rate`, `n_missing`, `n_unknown`,
+`n_duplicates`, `missing_codes`, `unknown_codes`, `status`.
+
+`status` possible : `"COMPLETE"`, `"INCOMPLETE"`, `"COMPLETE_WITH_UNKNOWNS"`,
+`"INCOMPLETE_WITH_UNKNOWNS"`, `"EMPTY"`, `"ALL_UNKNOWN"`.
+
+---
+
+### 6.8 Poids et desagregation
+
+#### `split_ambiguous(dt, code_col, value_cols, from, to, master_data, value_type = "additive")`
+
+Repartit les valeurs d'un `data.table` sur les cibles multiples d'une conversion
+ambigue (`1:N` ou `M:N`).
+
+- `value_type = "additive"` : les valeurs sont multipliees par le poids.
+- `value_type = "ratio"` : les valeurs sont recopiees a l'identique dans chaque cible.
+
+Utilise les poids enregistres (voir ci-dessous), ou 0.5/0.5 egal si aucun poids.
+
+#### `split_weights_template(from, to, master_data)`
+
+Retourne un `data.table(code_from, code_to, weight)` pre-rempli avec des poids egaux
+(1/N). Sert de point de depart pour definir des poids personnalises.
+
+```r
+tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+# code_from  code_to  weight
+#     63000    BE335     0.5
+#     63000    BE336     0.5
+
+tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
+tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
+```
+
+#### `register_split_weights(from, to, weights_dt, variable = "default")`
+
+Enregistre des poids personnalises pour la session (environment interne, pas persistent).
+`variable` permet de distinguer plusieurs jeux de poids (ex. `"population"`, `"emploi"`).
+
+#### `get_split_weights(from, to, variable = "default")`
+
+Recupere les poids enregistres. Leve `rcl_no_weights` si aucun poids n'est enregistre.
+
+#### `list_split_weights()`
+
+Retourne un `data.table` listant tous les jeux de poids enregistres dans la session.
+
+#### `clear_split_weights()`
+
+Efface tous les poids enregistres dans la session.
+
+---
+
+### 6.9 Rebasage longitudinal
+
+#### `rebase_series(dt, period_col, code_col, value_cols, version_map, to, master_data, fun = sum, value_type = "additive", split = "default")`
+
+Convertit un panel longitudinal spanning plusieurs versions NIS vers une version cible.
+
+**Parametres :**
+- `period_col` : colonne des periodes (annee, trimestre, etc.).
+- `code_col` : colonne des codes geographiques.
+- `value_cols` : colonnes de valeurs a convertir.
+- `version_map` : `list("NIS_COMMUNE_2019" = 2022L, "NIS_COMMUNE_2025" = 2025L)`.
+  Chaque entree associe une classification a un ou plusieurs periodes.
+- `to` : classification cible.
+- `fun` : fonction d'agregation pour `value_type = "additive"` (defaut `sum`).
+- `value_type` : `"additive"` (ex. effectifs) ou `"ratio"` (ex. taux).
+- `split` : `"default"` (utilise les poids enregistres) ou objet `data.table` de poids.
+
+**Avertissements emis :**
+- `rcl_missing_periods` : certaines periodes du dataset ne sont pas couvertes par `version_map`.
+
+```r
+panel <- data.table(
+  year = c(2022L, 2022L, 2025L),
+  commune = c(11002L, 11007L, 11002L),
+  pop = c(530000, 42000, 590000)
+)
+
+rebase_series(
+  panel,
+  period_col  = "year",
+  code_col    = "commune",
+  value_cols  = "pop",
+  version_map = list("NIS_COMMUNE_2019" = 2022L, "NIS_COMMUNE_2025" = 2025L),
+  to          = "NIS_COMMUNE_2025",
+  master_data = master_data
+)
+# 2022 : commune 11002 -> 530000 + 42000 = 572000 (fusionne)
+# 2025 : 590000 (inchange)
+```
+
+---
+
+### 6.10 Correspondance floue
+
+#### `fuzzy_match_names(names, target, master_data, max_dist = 0.3, language = "both")`
+
+Rattache des noms (orthographe approchee) a des codes officiels.
+Necessite le package `stringdist` (Suggests).
+
+**Retour :** `data.table(input_name, matched_name, matched_code, distance, is_confident)`.
+
+```r
+fuzzy_match_names(
+  c("Bruxeles", "Antwerpn", "Liege"),
+  target = "NIS_COMMUNE_2019",
+  master_data,
+  max_dist = 0.3
+)
+```
+
+#### `identify_from_names(names, master_data, ...)`
+
+Variante de `fuzzy_match_names` avec auto-detection de la classification cible.
+
+---
+
+### 6.11 Objet `nomenclature`
+
+Interface programmatique pour manipuler les classifications dynamiquement.
+
+#### `nomenclature(system, level, version = NA)`
+
+Construit un objet `nomenclature` valide contre `CLASSIFICATION_NODES`.
+
+```r
+n <- nomenclature("NIS", "commune", "2019")
+nom_system(n)   # "NIS"
+nom_level(n)    # "commune"
+nom_version(n)  # "2019"
+```
+
+#### `list_nomenclatures()` / `nomenclature_levels(system)` / `nomenclature_versions(system, level)`
+
+Introspection de l'espace des classifications valides.
+
+#### `nomenclature_children(n)` / `nomenclature_parents(n)`
+
+Navigation dans la hierarchie d'agregation definie par le champ `aggregates` de
+`CLASSIFICATION_NODES`.
+
+#### `is_nomenclature(x)`
+
+Test de type.
+
+---
+
+### 6.12 Visualisation
+
+Ces fonctions necessitent `visNetwork` (Suggests).
+
+#### `visualize_classification_graph(master_data = NULL)`
+
+Graphe interactif des relations entre classifications (noeuds = classifications,
+aretes = conversions avec cardinalite).
+
+#### `visualize_conversion_matrix(master_data = NULL)`
+
+Matrice de faisabilite des conversions (simple / ambigu / impossible).
+
+#### `visualize_hierarchy(version, master_data, max_communes = 20)`
+
+Arbre hierarchique NIS pour une version donnee (`"NIS_2019"` ou `"NIS_2025"`).
+
+---
+
+## 7. Architecture interne
+
+```
+R/
+ 00_config.R          -- CLASSIFICATION_REGISTRY, CONVERSION_GRAPH_EDGES, constantes NIS
+ 00b_registry.R       -- CLASSIFICATION_NODES (source de verite unique, 22 noeuds)
+ 00c_nomenclature.R   -- objet nomenclature + S3 methods
+ 01_load_data.R       -- chargement et parsing des fichiers bruts (Excel)
+ 02_build_master_table.R -- construction de entities + crosswalks + tables sources
+ 03_convert.R         -- convert_codes(), execute_conversion(), route_conversion()
+ 04_fuzzy_match.R     -- fuzzy_match_names(), identify_from_names()
+ 05_conversion_check.R-- check_conversion_path(), BFS, build_conversion_graph()
+ 06_visualize.R       -- visualize_*()
+ 07_dataset_convert.R -- convert_dataset()
+ 07_detect.R          -- detect_classification()
+ 07_diagnose.R        -- diagnose_classification()
+ 07_split_ambiguous.R -- split_ambiguous(), split_weights_template(), registre de poids
+ 08_load_prebuilt.R   -- load_master_data(), save_master_tables()
+ 09_query.R           -- validate_codes(), get_label(), get_crosswalk(), .node_reference_codes()
+ 10_rebase.R          -- rebase_series()
+ classifications.R    -- documentation de classification_reference (?classification_reference)
+ data.R               -- documentation des datasets internes
+ zzz.R                -- utils::globalVariables() (suppresser les NOTEs R CMD CHECK)
+```
+
+### 7.1 Flot d'une conversion
+
+```
+convert_codes(codes, from, to, md)
+  |
+  +-- check_conversion_path(from, to)      -- valide et trouve le chemin (cache BFS)
+  |     build_conversion_graph()           -- construit l'adjacence depuis CONVERSION_GRAPH_EDGES
+  |     find_conversion_path()             -- passe 1 (simple) puis passe 2 (tous)
+  |
+  +-- execute_conversion(codes, from, to, md)
+        route_conversion(from, to, md)     -- lecture de md$crosswalks pour le saut direct
+        .crosswalk_hop(from, to, md)       -- lookup data.table [from_id == F & to_id == T]
+        .compose_via_crosswalks(path, md)  -- composition pour les chemins multi-sauts
+        .normalize_conversion_result()     -- force le schema (code_from, code_to, nature)
+                                           -- remplit nature = RECODE / OVERLAP selon perimetre
+```
+
+### 7.2 `CLASSIFICATION_NODES`
+
+Chaque entree est une liste avec :
+
+```r
+CLASSIFICATION_NODES[["NIS_COMMUNE_2019"]]
+# $system        "NIS"
+# $level         "commune"
+# $version       "2019"
+# $code_type     "integer"
+# $source_table  "communes"
+# $version_filter "2019"
+# $code_col      "cd_commune"
+# $label_fr_col  "tx_commune_fr"
+# $label_nl_col  "tx_commune_nl"
+# $distinct      FALSE
+# $detectable    TRUE
+# $aggregates    character(0)   # commune est un noeud feuille
+```
+
+Le champ `aggregates` forme un DAG (pas un arbre) : `NIS_ARRONDISSEMENT_2019` est agrege
+par la province ET par la region ; `NUTS0` agrege `NUTS1_2021` ET `NUTS1_2027`.
+
+### 7.3 Moteur de conversion (Phase 2)
+
+L'executeur lit **exclusivement** `md$crosswalks` pour chaque saut individuel.
+Les anciens handlers fermes ont ete supprimes. Le test `test-route-parity.R` garantit
+que toute conversion declaree simple est executee correctement et que les crosswalks
+reproduisent exactement les resultats du moteur (fixture golden + parite par arete).
+
+### 7.4 Normalisation du resultat
+
+`.normalize_conversion_result(dt, from, to)` remplit la colonne `nature` :
+- Chemins temporels (meme systeme, versions differentes) : nature deja portee par
+  `md$crosswalks` (`UNCHANGED`/`FUSION`/`CHANGE_DSTR`/`CHANGE_PROV`).
+- Chemins non-temporels : nature = `"RECODE"` si perimetre `identity`/`nesting`,
+  `"OVERLAP"` si perimetre `overlap`.
+- Chemins multi-sauts (appel sans `from`/`to`) : nature reste `NA`.
+
+---
+
+## 8. Modele de donnees `master_data`
+
+`load_master_data()` retourne une liste avec cinq tables :
+
+### `communes` -- table large
+
+Une ligne par `(cd_commune, nis_version)`. Colonnes principales :
+
+```
+cd_commune     int   -- code NIS de la commune
+nis_version    chr   -- "BEFORE_2019" | "2019" | "2025"
+tx_commune_fr  chr   -- nom francais
+tx_commune_nl  chr   -- nom neerlandais
+cd_arr         int   -- code arrondissement NIS
+cd_prov        int   -- code province NIS
+cd_region      int   -- code region NIS
+cd_nuts_lau    chr   -- code NUTS LAU 2021
+cd_nuts3       chr   -- code NUTS3 2021
+cd_nuts2       chr   -- code NUTS2 2021
+cd_nuts1       chr   -- code NUTS1 2021
+cd_nuts3_2027  chr   -- code NUTS3 2027 (NULL si pas encore calcule)
+cd_internal    chr   -- code INTERNAL_ARRONDISSEMENT (2 chiffres)
+```
+
+### `postal` -- codes postaux
+
+```
+cd_postal  int   -- code postal (4 chiffres)
+cd_commune int   -- commune NIS 2019 correspondante
+```
+
+### `nis_changes` -- transitions de version
+
+```
+from_version  chr   -- "BEFORE_2019" ou "2019"
+to_version    chr   -- "2019" ou "2025"
+code_from     int   -- code source
+code_to       int   -- code cible
+nature        chr   -- "UNCHANGED" | "FUSION" | "CHANGE_DSTR" | "CHANGE_PROV"
+```
+
+### `entities` -- enumeration des membres par classification
+
+```
+classification_id  chr   -- identifiant de la classification
+code               chr   -- code (toujours character ici, coerce si besoin)
+name_fr            chr   -- nom francais
+name_nl            chr   -- nom neerlandais
+```
+
+Une ligne par `(classification_id, code)`. Sert a `validate_codes()`, `get_label()`,
+`detect_classification()`.
+
+### `crosswalks` -- liens primitifs entre classifications
+
+```
+from_id   chr   -- classification source
+to_id     chr   -- classification cible
+code_from chr   -- code source
+code_to   chr   -- code cible (NA si code source sans correspondant)
+relation  chr   -- "1:1" | "N:1" | "1:N" | "M:N"
+nature    chr   -- nature de la conversion (voir section 5)
+```
+
+Une ligne par lien primitif. C'est la table lue par `route_conversion()` pour chaque
+saut du chemin. La fixture golden (`tests/testthat/fixtures/golden_crosswalks.rds`)
+fige son contenu ; tout changement dans les crosswalks impose de regenerer la fixture
+avec `gen_golden()`.
+
+---
+
+## 9. Classes d'erreur et avertissements
+
+Toutes les erreurs et avertissements utilisant `rlang::abort()` / `rlang::warn()` portent
+une classe `rcl_*`. Interceptables avec `tryCatch(..., rcl_xxx = handler)`.
+
+| Classe | Type | Declencheur |
+|--------|------|-------------|
+| `rcl_no_route` | erreur | `convert_codes()` : aucun chemin de `from` vers `to` |
+| `rcl_ambiguous_conversion` | erreur | `convert_codes()` : chemin non-simple et `allow_ambiguous = FALSE` |
+| `rcl_unmatched_codes` | warning | codes inconnus dans la source, `code_to = NA` |
+| `rcl_missing_periods` | warning | `rebase_series()` : periodes non couvertes par `version_map` |
+| `rcl_no_weights` | erreur | `get_split_weights()` : aucun poids enregistre pour la paire |
+| `rcl_invalid_weights` | erreur | poids qui ne somment pas a 1, ou codes absents |
+| `rcl_schema_error` | erreur | table `communes` non conforme au schema attendu au build |
+
+---
+
+## 10. Suite de tests
+
+```
+tests/testthat/
+  helper-master_data.R         -- charge master_data une fois (session-level fixture)
+  helper-golden.R              -- gen_golden() : regenere la fixture golden
+
+  test-conversions.R           -- cas principaux convert_codes() (NIS, NUTS, POSTAL)
+  test-conversion-check.R      -- check_conversion_path(), is_perimeter_preserving()
+  test-perimeter-semantics.R   -- .edge_perimeter_relation(), straddle_free
+  test-temporal-nature.R       -- CHANGE_DSTR / CHANGE_PROV / UNCHANGED / FUSION
+  test-crosswalks-golden.R     -- golden fixture : sorties figees du moteur
+  test-crosswalks-parity.R     -- parite crosswalk <-> moteur par arete
+  test-route-parity.R          -- toute conversion simple est executable
+  test-registry.R              -- CLASSIFICATION_NODES : structure, count (22)
+  test-registry-consistency.R  -- coherence CLASSIFICATION_NODES <-> CLASSIFICATION_REGISTRY
+  test-split-registry.R        -- registre de poids (register/get/clear)
+  test-convert-dataset.R       -- convert_dataset()
+  test-rebase.R                -- rebase_series()
+  test-diagnose.R              -- diagnose_classification()
+  test-query.R                 -- validate_codes(), get_label(), get_crosswalk()
+  test-misc.R                  -- alias, normalize_classification_id(), edge cases
+  test-edge-cases.R            -- codes NA, vecteurs vides, from == to
+  test-nomenclature.R          -- objet nomenclature, S3 methods, hierarchie
+  test-fuzzy.R                 -- fuzzy_match_names() (skip si stringdist absent)
+  test-load.R                  -- load_master_data(), structure des tables
+```
+
+**Etat cible :** FAIL 0 | WARN 0 | SKIP 8 | PASS 949.
+Les 8 SKIPs sont des tests `fuzzy_match_names` gardes par `skip_if_not_installed("stringdist")`.
+
+**Regle golden** : toute modification qui change le contenu des crosswalks ou les valeurs
+de `nature` impose de regenerer la fixture :
+
+```r
+devtools::load_all(".")
+source("tests/testthat/helper-golden.R")
+gen_golden()   # ecrit tests/testthat/fixtures/golden_crosswalks.rds
+# puis git add + commit la fixture
+```
+
+Ne **jamais** supprimer `golden_crosswalks.rds` -- regenerer uniquement.
+
+---
+
+## 11. Reconstruction du snapshot
+
+Le package fonctionne normalement sur le snapshot pre-construit (`inst/extdata/*.rds`).
+La reconstruction est necessaire uniquement apres modification des fichiers bruts.
+
+### Fichiers bruts requis (`data/raw/`)
+
+| Fichier | Contenu |
 |---------|---------|
-| `main` | Registre source-de-vérité, corrections de cardinalité, schéma de retour uniforme, chemins NIS 2025→NUTS 2021, README à jour. **Base stable.** |
-| `feature/nomenclature-object` | `main` + objet `nomenclature` (Phase A) + champ `aggregates`. |
-| `feature/crosswalks-model` | `feature/nomenclature-object` + `entities`/`crosswalks` (Phase 0+1) + golden/parité. **Branche la plus avancée.** |
+| `CONVERSION_NIS2019_NUTS2021.xlsx` | NIS 2019 vers NUTS 2021 (Statbel) |
+| `CONVERSION_NIS2025_NUTS2027.xlsx` | NIS 2025 vers NUTS 2027 (Statbel) |
+| `NIS_CHANGES.xlsx` | Transitions de version NIS (BEFORE_2019 -> 2019 -> 2025) avec nature |
+| `POSTAL_NIS.xlsx` | Codes postaux -> communes NIS |
+| `NUTS2021_LABELS.xlsx` | Libelles NUTS 2021 FR/NL |
+| `NUTS2027_LABELS.xlsx` | Libelles NUTS 2027 FR/NL |
 
----
-
-## 10. Développement & tests
+### Commandes
 
 ```r
-devtools::load_all(".")     # charger le package
-devtools::test()            # suite testthat — À FAIRE EN PREMIER pour confirmer l'état
-devtools::document()        # régénérer man/ + NAMESPACE après changement roxygen
-devtools::check()           # R CMD check complet avant de déclarer terminé
-rebuild_master_data()       # reconstruire inst/extdata/*.rds depuis data/raw/ (readxl)
+# Reconstruction complete
+master_data <- rebuild_master_data()       # charge les bruts, construit, sauvegarde
+
+# Ou etapes separees
+raw   <- load_all_raw_data("data/raw/")
+md    <- build_master_table(raw)
+save_master_tables(md)                     # ecrit inst/extdata/*.rds
 ```
 
-Conventions : développer sur une branche de travail, jamais directement sur `main` ;
-erreurs/avertissements en classes typées `rcl_*` ; après modif roxygen, `document()`.
-Le package tourne normalement sur le snapshot `inst/extdata/*.rds` ; `data/raw/` n'est
-nécessaire que pour `rebuild_master_data()`.
+### Schema de validation
 
-### Durcissements Phase 1 (faits — `962 tests passent`)
-1. ✅ Assertion de **couverture** ajoutée dans `test-crosswalks-parity.R` : toute clé de
-   route (hors BEFORE_2019 optionnel) doit avoir des lignes de crosswalk → un trou échoue
-   bruyamment au lieu d'être silencieusement skippé.
-2. ✅ `POSTAL → NIS_COMMUNE_2025` : crosswalk bâti sur l'univers **p19** (cohérent avec
-   `entities`/`.list_codes_for`) + test vérifiant explicitement l'hypothèse p25 ⊆ p19.
-3. ✅ `communes.rds`/`nis_changes.rds` confirmés **content-identiques** à `main` (Phase 1
-   purement additive).
+`build_master_table()` valide le schema de la table `communes` au build et leve
+`rcl_schema_error` si des colonnes obligatoires sont absentes ou si les types
+ne correspondent pas au registre `CLASSIFICATION_NODES`.
 
 ---
 
-*Glossaire express* — **NIS** : codes Statbel ; **NUTS** : nomenclature territoriale
-Eurostat ; **LAU** : unité administrative locale (= commune) ; **crosswalk** : table de
-correspondance entre deux classifications ; **nature** : raison d'un changement temporel
-(`UNCHANGED`/`FUSION`/`CHANGE_DSTR`/`CHANGE_PROV`) ; **Verviers** : arrondissement scindé
-entre NUTS3 francophone (BE335) et germanophone (BE336), cas D canonique.
+## Glossaire
+
+| Terme | Definition |
+|-------|------------|
+| **NIS** | Nomenclature INS/NIS de Statbel (Institut National de Statistique belge) |
+| **NUTS** | Nomenclature des Unites Territoriales Statistiques d'Eurostat |
+| **LAU** | Local Administrative Unit (= commune belge dans la nomenclature NUTS) |
+| **crosswalk** | Table de correspondance entre deux classifications (une ligne par lien primitif) |
+| **nature** | Qualification d'une conversion : UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV / RECODE / OVERLAP / NA |
+| **perimetre** | Territoire physique delimite sur la carte (distinct du code qui l'etiquette) |
+| **semantique de perimetre** | Classification d'un saut selon son impact perimetre : temporal / identity / nesting / overlap |
+| **straddle** | Un perimetre source qui enjambe deux ou plusieurs perimetres cibles (arete `overlap`) |
+| **Verviers** | Arrondissement NIS 63000 -- seul cas 1:N vers NUTS3 (BE335 FR + BE336 DE) |
+| **BFS** | Breadth-First Search -- algorithme de recherche de chemin dans le graphe de conversion |
+| **fixture golden** | Snapshot des sorties du moteur, verifie a chaque run pour detecter toute regression |
