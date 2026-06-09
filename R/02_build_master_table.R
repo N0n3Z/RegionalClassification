@@ -119,10 +119,7 @@ build_master_table <- function(raw_data) {
   }
   master_2019 <- merge(master_2019, internal_map, by = "cd_nuts3", all.x = TRUE)
 
-  # --- 5b. Add NUTS 2027 codes for NIS 2019 (remapped from NUTS 2021) ---
-  master_2019 <- add_nuts2027_columns(master_2019)
-
-  # --- 5c. Build NUTS3 2021 reference and embed names into master_2019 ---
+  # --- 5b. Build NUTS3 2021 reference and embed names into master_2019 ---
   nuts3_ref_2021 <- nuts_nis$arrondissements[, .(cd_nuts3 = cd_nuts,
                                                    tx_nuts3_fr = tx_descr_fr,
                                                    tx_nuts3_nl = tx_descr_nl)]
@@ -154,7 +151,6 @@ build_master_table <- function(raw_data) {
     master_before2019 <- merge(comm_before2019, nuts_comm_pre2019,
                                by.x = "cd_commune", by.y = "cd_refnis",
                                all.x = TRUE)
-    master_before2019 <- add_nuts2027_columns(master_before2019)
     master_before2019 <- merge(master_before2019, internal_map, by = "cd_nuts3", all.x = TRUE)
     master_before2019 <- merge(master_before2019, nuts3_ref_2021, by = "cd_nuts3", all.x = TRUE)
 
@@ -356,8 +352,8 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #'   rcl_ambiguous_backfill warning. cd_nuts_lau stays NA for fusions (LAU
 #'   is a 1:1 commune identifier and is undefined after a merge).
 #'
-#' The 2025 master must already carry cd_nuts3_2027 etc. (added by
-#' add_nuts2027_columns before this call, via the NIS 2025 NUTS 2027 file).
+#' The 2025 master must already carry cd_nuts3_2027 etc. (added from the
+#' NIS 2025 NUTS 2027 source file during the 2025 master build step).
 #'
 #' @param master_2025 data.table for NIS 2025 communes (from build_master_table)
 #' @param master_2019 data.table for NIS 2019 communes (fully enriched)
@@ -437,45 +433,6 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
                   n_nuts3, nrow(result), nrow(ambig)))
 
   result
-}
-
-#' Derive NUTS 2027 columns for NIS 2019 / BEFORE_2019 communes (build-time only)
-#'
-#' Applies the NUTS2021_TO_NUTS2027 code-rename table to add cd_nuts3_2027,
-#' cd_nuts2_2027, cd_nuts1_2027 to the NIS 2019 and BEFORE_2019 master tables.
-#'
-#' **Known limitation:** three communes changed province between 2019 and 2025
-#' (CHANGE_PROV/CHANGE_DSTR in nis_changes), shifting their NUTS3 region.  For
-#' these communes the derived cd_nuts3_2027 value is WRONG.  The conversion
-#' executor no longer reads this column: `NIS_COMMUNE_2019 -> NUTS3_2027` is
-#' routed via `NIS_COMMUNE_2025` (authoritative data).  Phase 4 of the
-#' refactoring plan will rebuild the pre-computed snapshot with correct values.
-#'
-#' @param master data.table with cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0 columns
-#' @return data.table with added cd_nuts3_2027, cd_nuts2_2027, cd_nuts1_2027
-#' @keywords internal
-add_nuts2027_columns <- function(master) {
-
-  master <- copy(master)
-
-  nuts3_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 5]
-  nuts2_map <- NUTS2021_TO_NUTS2027[nchar(nuts_2021) == 4]
-
-  # NUTS3
-  master <- merge(master, nuts3_map, by.x = "cd_nuts3", by.y = "nuts_2021", all.x = TRUE)
-  setnames(master, "nuts_2027", "cd_nuts3_2027")
-  master[is.na(cd_nuts3_2027), cd_nuts3_2027 := cd_nuts3]
-
-  # NUTS2
-  master <- merge(master, nuts2_map, by.x = "cd_nuts2", by.y = "nuts_2021", all.x = TRUE)
-  setnames(master, "nuts_2027", "cd_nuts2_2027")
-  master[is.na(cd_nuts2_2027), cd_nuts2_2027 := cd_nuts2]
-
-  # NUTS1 and NUTS0 are unchanged for Belgium
-  master[, cd_nuts1_2027 := cd_nuts1]
-  master[, cd_nuts0_2027 := cd_nuts0]
-
-  return(master)
 }
 
 #' Save master table and all auxiliary tables to processed directory

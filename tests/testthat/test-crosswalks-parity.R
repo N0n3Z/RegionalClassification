@@ -53,4 +53,19 @@ if (is.null(md$crosswalks)) {
     )
   })
 
+  # --- Anti-drift: graph edge ambiguous_codes must match crosswalk reality ---
+  # The NIS_COMMUNE_2025 -> NUTS3_2021 edge hard-codes ambiguous_codes and
+  # coverage in CONVERSION_GRAPH_EDGES (00_config.R).  This test ensures those
+  # values stay in sync with the actual crosswalk table after each rebuild.
+  test_that("graph edge ambiguous_codes matches NIS_COMMUNE_2025 -> NUTS3_2021 crosswalk", {
+    e <- Find(function(x) x$from == "NIS_COMMUNE_2025" && x$to == "NUTS3_2021",
+              CONVERSION_GRAPH_EDGES)
+    skip_if(is.null(e), "NIS_COMMUNE_2025 -> NUTS3_2021 edge not found in graph")
+
+    xw <- md$crosswalks[from_id == "NIS_COMMUNE_2025" & to_id == "NUTS3_2021"]
+    real_ambig <- xw[, .N, by = code_from][N > 1L, sort(as.integer(code_from))]
+
+    expect_setequal(e$ambiguous_codes, real_ambig)
+  })
+
 }

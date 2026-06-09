@@ -176,14 +176,34 @@ test_that("convert_codes returns nature='RECODE' for identity (from == to)", {
   expect_equal(r$nature, "RECODE")
 })
 
-test_that("convert_codes returns nature='OVERLAP' for 1:N conversion", {
-  # NIS_COMMUNE_2025 -> NUTS3_2021 is a 1:N edge (3 fused communes straddle NUTS3)
-  # All rows in the result carry nature="OVERLAP" (edge-level classification)
-  r <- suppressWarnings(suppressMessages(
-    convert_codes(c(21001L, 21004L), "NIS_COMMUNE_2025", "NUTS3_2021",
+test_that("convert_codes nature is row-level for 1:N crossing conversion", {
+  # NIS_COMMUNE_2025 -> NUTS3_2021: 3 fused communes straddle NUTS3 boundaries
+  # (codes 46029, 46030, 71072 each appear twice in the result).
+  # All other communes map to a single NUTS3 -> nature = "RECODE".
+  # nature = "OVERLAP" only for rows whose code_from produces multiple targets.
+
+  # (a) Non-ambiguous commune: one-to-one mapping -> RECODE
+  r_normal <- suppressWarnings(suppressMessages(
+    convert_codes(21004L, "NIS_COMMUNE_2025", "NUTS3_2021",
                   master_data, allow_ambiguous = TRUE)
   ))
-  expect_true(all(r$nature == "OVERLAP"))
+  expect_equal(r_normal$nature, "RECODE")
+
+  # (b) Ambiguous commune: maps to two NUTS3 regions -> both rows OVERLAP
+  r_ambig <- suppressWarnings(suppressMessages(
+    convert_codes(46029L, "NIS_COMMUNE_2025", "NUTS3_2021",
+                  master_data, allow_ambiguous = TRUE)
+  ))
+  expect_equal(nrow(r_ambig), 2L)
+  expect_true(all(r_ambig$nature == "OVERLAP"))
+
+  # (c) Mixed batch: non-ambiguous rows RECODE, ambiguous rows OVERLAP
+  r_mixed <- suppressWarnings(suppressMessages(
+    convert_codes(c(21004L, 46029L), "NIS_COMMUNE_2025", "NUTS3_2021",
+                  master_data, allow_ambiguous = TRUE)
+  ))
+  expect_equal(r_mixed[code_from == 21004L, nature], "RECODE")
+  expect_true(all(r_mixed[code_from == 46029L, nature] == "OVERLAP"))
 })
 
 test_that("convert_codes temporal nature still carries UNCHANGED/FUSION for NIS edges", {

@@ -146,10 +146,14 @@ normalize_classification_id <- function(class_id) {
 #
 # Phase 4b: when `from` and `to` are supplied, fills any remaining NA nature
 # values according to the edge's perimeter semantics:
-#   - identity / nesting (1:1 or N:1, non-temporal) -> "RECODE"
-#   - overlap (1:N or M:N)                          -> "OVERLAP"
-#   - temporal                                       -> kept as-is (crosswalk
-#       already carries UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV)
+#   - identity / nesting (1:1 or N:1, non-temporal) -> "RECODE" (all rows)
+#   - overlap (1:N or M:N): row-level -- "OVERLAP" when a code_from maps to
+#       more than one code_to in the result; "RECODE" otherwise.
+#       This keeps nature consistent with the temporal regime where values vary
+#       per row, and makes dt[nature == "OVERLAP"] directly filterable to the
+#       handful of ambiguous codes (e.g. 3 fused communes out of 567).
+#   - temporal: kept as-is (crosswalk already carries UNCHANGED / FUSION /
+#       CHANGE_DSTR / CHANGE_PROV)
 # Multi-hop paths are called *without* from/to so nature stays NA there.
 .normalize_conversion_result <- function(dt, from = NULL, to = NULL) {
   if (!"nature" %in% names(dt)) dt[, nature := NA_character_]
@@ -175,7 +179,13 @@ normalize_classification_id <- function(class_id) {
         } else if (isTRUE(pc$straddle_free)) {
           dt[is.na(nature), nature := "RECODE"]
         } else {
-          dt[is.na(nature), nature := "OVERLAP"]
+          # Crossing path (at least one overlap edge): classify per row based
+          # on whether this code_from produces multiple targets in the result.
+          # Rows with code_to = NA (unmatched codes) are left as NA.
+          dt[, .n_to := .N, by = code_from]
+          dt[is.na(nature) & !is.na(code_to) & .n_to >  1L, nature := "OVERLAP"]
+          dt[is.na(nature) & !is.na(code_to) & .n_to <= 1L, nature := "RECODE"]
+          dt[, .n_to := NULL]
         }
       }
     }

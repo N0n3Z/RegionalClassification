@@ -295,7 +295,7 @@ CONVERSION_GRAPH_EDGES <- list(
   # The two NUTS3 systems cover DIFFERENT geographic areas: 3 communes changed
   # province/arrondissement between 2019 and 2025, shifting their NUTS3 region
   # (e.g. commune 11056: BE211 in 2021 -> BE276 in 2027).  A pure code-rename
-  # table (NUTS2021_TO_NUTS2027) is therefore incorrect for these communes.
+  # approach is therefore incorrect for these communes.
   # The correct path for any 2019-based data is:
   #   NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 -> NUTS3_2027
   # using the authoritative REFNIS_2025-NUTS_2027.xlsx file.
@@ -462,24 +462,3 @@ get_processed_data_path <- function() {
   return(file.path("inst", "extdata"))
 }
 
-# --- NUTS 2021 -> NUTS 2027 mapping ---
-# Source: EU Regulation 2026/195 (JO L 27.1.2026), applicable from 1 January 2027.
-# Only changed codes are listed; all others remain identical between versions.
-NUTS2021_TO_NUTS2027 <- data.table::data.table(
-  nuts_2021 = c(
-    # NUTS2 changes
-    "BE21", "BE23",
-    # NUTS3: Antwerpen (BE21 -> BE26)
-    "BE211", "BE212", "BE213",
-    # NUTS3: Limburg (partial renumbering)
-    "BE223", "BE224",
-    # NUTS3: Oost-Vlaanderen (BE23 -> BE27)
-    "BE231", "BE232", "BE233", "BE234", "BE235", "BE236"
-  ),
-  nuts_2027 = c(
-    "BE26", "BE27",
-    "BE261", "BE262", "BE263",
-    "BE226", "BE227",
-    "BE271", "BE272", "BE273", "BE274", "BE275", "BE276"
-  )
-)
