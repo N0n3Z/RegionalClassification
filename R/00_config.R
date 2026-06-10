@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # 00_config.R - Package configuration and classification metadata
 # ==============================================================================
 # This file contains the minimal hardcoded definitions that CANNOT be derived

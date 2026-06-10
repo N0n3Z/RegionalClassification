@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # 00b_registry.R  -  Single-source-of-truth classification node registry
 # ==============================================================================
 # CLASSIFICATION_NODES is the one place that records, per node id:
@@ -161,9 +161,9 @@ CLASSIFICATION_NODES <- list(
   #
   # NUTS_LAU_2021 (Local Administrative Units): in Belgium, LAU 2021 codes are
   # in bijection with NIS 2019 commune codes -- same geographic entities, same
-  # perimeter, with cd_nuts_lau == as.character(cd_commune) for 581/582 communes
-  # (the remaining one has a distinct Eurostat-assigned code).  Labels are
-  # borrowed from the commune (tx_commune_fr / tx_commune_nl).
+  # perimeter, with cd_nuts_lau == as.character(cd_commune) for all mapped
+  # communes; 2 communes are absent from the Eurostat LAU file (cd_nuts_lau NA).
+  # Labels are borrowed from the commune (tx_commune_fr / tx_commune_nl).
   # Kept as a distinct node because LAU is the formal lowest level of the
   # Eurostat NUTS hierarchy (LAU < NUTS3 < NUTS2 < NUTS1 < NUTS0); removing it
   # would break the hierarchy and the NIS_COMMUNE_2019 -> NUTS3_2021 path.

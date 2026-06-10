@@ -34,7 +34,7 @@ cd_arr_internal for NIS 2025 communes from the NIS 2019 master:
   is a 1:1 commune identifier and is undefined after a merge).
 }
 \details{
-The 2025 master must already carry cd_nuts3_2027 etc. (added by
-add_nuts2027_columns before this call, via the NIS 2025 NUTS 2027 file).
+The 2025 master must already carry cd_nuts3_2027 etc. (added from the
+NIS 2025 NUTS 2027 source file during the 2025 master build step).
 }
 \keyword{internal}

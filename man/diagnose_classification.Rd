@@ -69,8 +69,9 @@ by how well they match the dataset codes and recommends the closest one.
 
 \examples{
 \donttest{
+  master_data <- load_master_data()
   # Check mode
-  nuts3_data <- data.table(nuts3 = c("BE100","BE211","BE332"), val = 1:3)
+  nuts3_data <- data.table::data.table(nuts3 = c("BE100","BE211","BE332"), val = 1:3)
   diagnose_classification(nuts3_data, "nuts3", master_data,
                           classification = "NUTS3_2021")
 

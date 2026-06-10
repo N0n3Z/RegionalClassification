@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # 02_build_master_table.R - Build the combined master classification table
 # ==============================================================================
 
@@ -110,8 +110,8 @@ build_master_table <- function(raw_data) {
                        all.x = TRUE)
 
   # --- 5. Add internal arrondissement code ---
-  if ("2021" %in% names(nuts_arr)) {
-    internal_map <- nuts_arr[["2021"]]
+  if (VER_NUTS_2021 %in% names(nuts_arr)) {
+    internal_map <- nuts_arr[[VER_NUTS_2021]]
   } else if ("2016" %in% names(nuts_arr)) {
     internal_map <- nuts_arr[["2016"]]
   } else {
@@ -223,7 +223,7 @@ build_master_table <- function(raw_data) {
       cd_refnis_old = nis_change_before2019$cd_refnis_before2019,
       cd_refnis_new = nis_change_before2019$cd_refnis_2019,
       nature        = "FUSION",
-      from_version  = "BEFORE_2019"
+      from_version  = VER_BEFORE_2019
     )
     nis_changes_unified <- rbindlist(list(nis_changes_unified, before2019_std),
                                      use.names = TRUE)

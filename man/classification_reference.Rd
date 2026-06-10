@@ -46,7 +46,7 @@ version variants), the extra parts are omitted.
 
 | Canonical identifier | Description                            |
 |----------------------|----------------------------------------|
-| `NUTS_LAU_2021`      | Local Administrative Units (2021)      |
+| `NUTS_LAU_2021`      | Local Administrative Units (2021) -- in Belgium, bijection 1:1 with `NIS_COMMUNE_2019` (same territory, Eurostat coding) |
 | `NUTS3_2021`         | NUTS level 3 (2021)                    |
 | `NUTS2_2021`         | NUTS level 2 (2021)                    |
 | `NUTS1_2021`         | NUTS level 1 (2021)                    |

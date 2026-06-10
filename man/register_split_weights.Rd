@@ -29,7 +29,7 @@ same conversion pair.
   register_split_weights(
     from       = "NIS_ARRONDISSEMENT_2019",
     to         = "NUTS3_2021",
-    weights_dt = data.table(
+    weights_dt = data.table::data.table(
       code_from = c(63000L, 63000L),
       code_to   = c("BE335", "BE336"),
       weight    = c(0.857, 0.143)

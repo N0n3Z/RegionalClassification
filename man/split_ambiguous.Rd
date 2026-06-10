@@ -61,7 +61,8 @@ registered weights.
 }
 \examples{
 \donttest{
-  arr_salaries <- data.table(
+  master_data <- load_master_data()
+  arr_salaries <- data.table::data.table(
     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
     total_wage = c(5e9, 3e9, 1e9),
     avg_salary = c(2900, 2700, 2400)
@@ -75,7 +76,7 @@ registered weights.
                   value_type = "additive")
 
   # Manual population weights for Verviers
-  weights <- data.table(
+  weights <- data.table::data.table(
     code_from = c(63000L, 63000L),
     code_to   = c("BE335", "BE336"),
     weight    = c(0.857, 0.143)
