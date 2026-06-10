@@ -12,7 +12,7 @@ library(data.table)
 #      (forward + auto-reversed) must have crosswalk rows.  Prevents a silent gap
 #      that would cause silent NA outputs for missing edges.
 #   2. Postal universe assumption -- p25 codes <= p19 codes; guards the universe
-#      used when building the POSTAL -> NIS_COMMUNE_2025 crosswalk.
+#      used when building the POSTAL -> NIS_MUNICIPALITY_2025 crosswalk.
 #
 # Primary regression guard is now test-crosswalks-golden.R.
 # ==============================================================================
@@ -31,7 +31,7 @@ if (is.null(md$crosswalks)) {
   # was built correctly).  The primary regression guard for crosswalk correctness
   # is test-crosswalks-golden.R.
   # Note: md$crosswalks includes both forward and reverse single-hop entries
-  # (e.g. NUTS_LAU_2021__NIS_COMMUNE_2019 as well as NIS_COMMUNE_2019__NUTS_LAU_2021)
+  # (e.g. NUTS_LAU_2021__NIS_MUNICIPALITY_2019 as well as NIS_MUNICIPALITY_2019__NUTS_LAU_2021)
   # plus shortcut entries pre-computed by the old handlers.  It does NOT cover
   # all CONVERSION_GRAPH_EDGES (which also declares multi-hop edges composed at
   # runtime).  A simple subset check in either direction is therefore not useful.
@@ -40,7 +40,7 @@ if (is.null(md$crosswalks)) {
   })
 
   # --- Postal universe assumption -------------------------------------------
-  # POSTAL->NIS_COMMUNE_2025 crosswalk is built on the p19 universe (same as
+  # POSTAL->NIS_MUNICIPALITY_2025 crosswalk is built on the p19 universe (same as
   # .list_codes_for(CLS_POSTAL, md)).  This is valid only if every p25 postal
   # code already appears in p19.
   test_that("all p25 postal codes are present in p19 (POSTAL universe assumption)", {
@@ -54,15 +54,15 @@ if (is.null(md$crosswalks)) {
   })
 
   # --- Anti-drift: graph edge ambiguous_codes must match crosswalk reality ---
-  # The NIS_COMMUNE_2025 -> NUTS3_2021 edge hard-codes ambiguous_codes and
+  # The NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 edge hard-codes ambiguous_codes and
   # coverage in CONVERSION_GRAPH_EDGES (00_config.R).  This test ensures those
   # values stay in sync with the actual crosswalk table after each rebuild.
-  test_that("graph edge ambiguous_codes matches NIS_COMMUNE_2025 -> NUTS3_2021 crosswalk", {
-    e <- Find(function(x) x$from == CLS_NIS_COMMUNE_2025 && x$to == CLS_NUTS3_2021,
+  test_that("graph edge ambiguous_codes matches NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 crosswalk", {
+    e <- Find(function(x) x$from == CLS_NIS_MUNICIPALITY_2025 && x$to == CLS_NUTS_DISTRICT_2021,
               CONVERSION_GRAPH_EDGES)
-    skip_if(is.null(e), "NIS_COMMUNE_2025 -> NUTS3_2021 edge not found in graph")
+    skip_if(is.null(e), "NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 edge not found in graph")
 
-    xw <- md$crosswalks[from_id == CLS_NIS_COMMUNE_2025 & to_id == CLS_NUTS3_2021]
+    xw <- md$crosswalks[from_id == CLS_NIS_MUNICIPALITY_2025 & to_id == CLS_NUTS_DISTRICT_2021]
     real_ambig <- xw[, .N, by = code_from][N > 1L, sort(as.integer(code_from))]
 
     expect_setequal(e$ambiguous_codes, real_ambig)

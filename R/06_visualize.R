@@ -16,7 +16,7 @@
 #' @examples
 #' \donttest{
 #'   visualize_classification_graph()
-#'   visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
+#'   visualize_classification_graph(highlight_from = "NIS_MUNICIPALITY_2019")
 #'   visualize_classification_graph(output_file = "classification_graph.html")
 #' }
 #' @export
@@ -171,7 +171,7 @@ print_text_graph <- function() {
   cat("  (N:1 a chaque etape)\n\n")
 
   cat("--- NUTS Hierarchy (2021) ---\n")
-  cat("  LAU -> NUTS3 -> NUTS2 -> NUTS1 -> NUTS0\n")
+  cat("  LAU -> NUTS3 -> NUTS2 -> NUTS1 -> NUTS_COUNTRY\n")
   cat("  (N:1 a chaque etape)\n\n")
 
   cat("--- Cross-classification links ---\n")

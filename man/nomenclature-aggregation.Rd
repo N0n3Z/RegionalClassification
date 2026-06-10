@@ -25,7 +25,7 @@ aggregated by BOTH a province and a region).
 }
 \details{
 The aggregation structure is a DAG, not a tree: an arrondissement has two
-parents (province and region), and \code{NUTS0} aggregates both the 2021 and
+parents (province and region), and \code{NUTS_COUNTRY} aggregates both the 2021 and
 2027 NUTS1 levels. Province -> region is deliberately not an aggregation
 (province 20000 "Brabant" spans three regions).
 }

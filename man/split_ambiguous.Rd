@@ -71,7 +71,7 @@ registered weights.
   # Equal weights (default)
   split_ambiguous(arr_salaries, "arr_code",
                   value_cols = c("total_wage", "avg_salary"),
-                  from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+                  from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
                   master_data,
                   value_type = "additive")
 
@@ -83,7 +83,7 @@ registered weights.
   )
   split_ambiguous(arr_salaries, "arr_code",
                   value_cols = "total_wage",
-                  from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+                  from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
                   master_data,
                   weights    = weights,
                   value_type = "additive")

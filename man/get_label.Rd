@@ -31,7 +31,7 @@ without a name in the master data (NUTS2/NUTS1 levels and NUTS 2027) return
 \examples{
 \donttest{
   master_data <- load_master_data()
-  get_label(c(21004L, 11002L), "NIS_COMMUNE_2019", master_data)
-  get_label(c("BE100", "BE211"), "NUTS3_2021", master_data, lang = "nl")
+  get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+  get_label(c("BE100", "BE211"), "NUTS_DISTRICT_2021", master_data, lang = "nl")
 }
 }

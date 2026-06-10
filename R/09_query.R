@@ -32,7 +32,7 @@
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   validate_codes(c(21004L, 99999L, 11002L), "NIS_COMMUNE_2019", master_data)
+#'   validate_codes(c(21004L, 99999L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
 #' }
 #' @export
 validate_codes <- function(codes, classification, master_data) {
@@ -62,8 +62,8 @@ validate_codes <- function(codes, classification, master_data) {
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   get_label(c(21004L, 11002L), "NIS_COMMUNE_2019", master_data)
-#'   get_label(c("BE100", "BE211"), "NUTS3_2021", master_data, lang = "nl")
+#'   get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+#'   get_label(c("BE100", "BE211"), "NUTS_DISTRICT_2021", master_data, lang = "nl")
 #' }
 #' @export
 get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) {
@@ -120,11 +120,11 @@ get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) 
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
-#'   get_crosswalk("POSTAL", "NIS_COMMUNE_2019", master_data)
+#'   get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
+#'   get_crosswalk("POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 #'
 #'   # With weights for the ambiguous Verviers split
-#'   get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data,
+#'   get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
 #'                 weights = TRUE)
 #' }
 #' @export

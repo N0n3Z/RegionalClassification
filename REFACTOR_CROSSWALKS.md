@@ -38,7 +38,7 @@ dénormalisée**. Défauts structurels :
 - **Types de retour.** entities/crosswalks stockent les codes en **character**. Le moteur doit
   **re-coercer en sortie** au type canonique du nœud (`.node_code_type` / `.node_coerce`,
   `R/00b_registry.R`) pour préserver les retours actuels (ex. `NIS_REGION_2019 → 2000L`
-  integer ; `NUTS3_2021 → "BE335"` character). Sans ça, des tests integer cassent
+  integer ; `NUTS_DISTRICT_2021 → "BE335"` character). Sans ça, des tests integer cassent
   (`expect_equal(r$code_to, 2000L)`).
 
 ---
@@ -76,8 +76,8 @@ gen_golden <- function() {
                nature    = r$nature)
   }))
   # + paires multi-hop représentatives
-  multihop <- list(c("POSTAL","NUTS3_2027"), c("NUTS3_2021","NUTS0"),
-                   c("NIS_COMMUNE_2019","NUTS3_2027"), c("INTERNAL_ARRONDISSEMENT","NUTS2_2021"),
+  multihop <- list(c("POSTAL","NUTS_DISTRICT_2027"), c("NUTS_DISTRICT_2021","NUTS_COUNTRY"),
+                   c("NIS_MUNICIPALITY_2019","NUTS_DISTRICT_2027"), c("NBB_DISTRICT_2021","NUTS_PROVINCE_2021"),
                    c("NUTS_LAU_2021","NIS_REGION_2019"))
   # ... idem, empilé ...
   saveRDS(list(per_edge = per_edge, multihop = ...), "tests/testthat/fixtures/golden_crosswalks.rds")
@@ -120,18 +120,18 @@ Patrons (set complet = `names(.ROUTE_TABLE)`) :
 | Famille d'arêtes | Source (déjà disponible dans le build) |
 |---|---|
 | `NIS_COMMUNE_v → NIS_ARR/PROV/REGION_v`, `→ NUTS_LAU/NUTS3/2/1/0_2021`, `→ cd_arr_internal` | `unique(master_v[, .(cd_commune, <to_col>)])` |
-| `POSTAL → NIS_COMMUNE_2019/2025` | `postal_map_v[, .(cd_postal, cd_commune_nis)]` |
-| `NUTS3_2021→NUTS2`, `NUTS2→NUTS1`, `NUTS1→NUTS0`, `NUTS3↔INTERNAL`, `LAU→NIS_COMMUNE_2019` (rev), `INTERNAL→NUTS3` (rev), `NUTS3_2021→NIS_ARR_2019` (rev) | `unique(master_2019[!is.na(<col>), .(<from_col>, <to_col>)])` |
-| `NIS_ARRONDISSEMENT_2019 → NUTS3_2021` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_nuts3), .(cd_arr, cd_nuts3)])` → 63000 = 2 lignes |
-| `NIS_ARRONDISSEMENT_2019 → INTERNAL` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_arr_internal), .(cd_arr, cd_arr_internal)])` |
+| `POSTAL → NIS_MUNICIPALITY_2019/2025` | `postal_map_v[, .(cd_postal, cd_commune_nis)]` |
+| `NUTS_DISTRICT_2021→NUTS2`, `NUTS2→NUTS1`, `NUTS1→NUTS_COUNTRY`, `NUTS3↔INTERNAL`, `LAU→NIS_MUNICIPALITY_2019` (rev), `INTERNAL→NUTS3` (rev), `NUTS_DISTRICT_2021→NIS_ARR_2019` (rev) | `unique(master_2019[!is.na(<col>), .(<from_col>, <to_col>)])` |
+| `NIS_DISTRICT_2019 → NUTS_DISTRICT_2021` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_nuts3), .(cd_arr, cd_nuts3)])` → 63000 = 2 lignes |
+| `NIS_DISTRICT_2019 → INTERNAL` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_arr_internal), .(cd_arr, cd_arr_internal)])` |
 | `NIS_PROVINCE_v → NIS_REGION_v` (**Brabant M:N**) | `unique(master_v[, .(cd_province, cd_region)])` → 20000 = 3 lignes |
-| `NIS_COMMUNE_2019 → NIS_COMMUNE_2025` (**temporel, nature**) | `nis_changes[from_version=="2019", .(cd_refnis_old, cd_refnis_new, nature)]` + lignes `UNCHANGED` pour les codes 2019 absents de la table |
-| `NIS_COMMUNE_2025 → NIS_COMMUNE_2019` (**reverse 1:N, nature**) | idem inversé (un 2025 fusionné → plusieurs 2019) |
-| `NIS_COMMUNE_BEFORE_2019 → NIS_COMMUNE_2019` (temporel) | `nis_changes[from_version=="BEFORE_2019"]` + `UNCHANGED` |
-| `NIS_COMMUNE_2025 → NUTS3/2/1_2027` | `master_2025[, .(cd_commune, cd_nuts3_2027/...)]` |
-| `NIS_COMMUNE_2025 → NUTS3_2021` (**3 fusions 1:N**) | **relocaliser** la logique de `.convert_comm2025_to_nuts3_2021` (backfill `add_nuts2021_columns_2025` + expansion des codes ambigus via `nis_changes`) en constructeur de build |
-| `NIS_COMMUNE_2019/BEFORE → NUTS3_2027` (dérivé) | composer 2019→2025→2027 **une fois** au build (réutiliser `master_2025` cd_nuts3_2027 via le mapping de changements) |
-| `NIS_COMMUNE_2025 → NUTS2/1_2027`, etc. | hiérarchie 2027 depuis `master_2025` |
+| `NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025` (**temporel, nature**) | `nis_changes[from_version=="2019", .(cd_refnis_old, cd_refnis_new, nature)]` + lignes `UNCHANGED` pour les codes 2019 absents de la table |
+| `NIS_MUNICIPALITY_2025 → NIS_MUNICIPALITY_2019` (**reverse 1:N, nature**) | idem inversé (un 2025 fusionné → plusieurs 2019) |
+| `NIS_MUNICIPALITY_BEFORE_2019 → NIS_MUNICIPALITY_2019` (temporel) | `nis_changes[from_version=="BEFORE_2019"]` + `UNCHANGED` |
+| `NIS_MUNICIPALITY_2025 → NUTS3/2/1_2027` | `master_2025[, .(cd_commune, cd_nuts3_2027/...)]` |
+| `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2021` (**3 fusions 1:N**) | **relocaliser** la logique de `.convert_comm2025_to_nuts3_2021` (backfill `add_nuts2021_columns_2025` + expansion des codes ambigus via `nis_changes`) en constructeur de build |
+| `NIS_MUNICIPALITY_2019/BEFORE → NUTS_DISTRICT_2027` (dérivé) | composer 2019→2025→2027 **une fois** au build (réutiliser `master_2025` cd_nuts3_2027 via le mapping de changements) |
+| `NIS_MUNICIPALITY_2025 → NUTS2/1_2027`, etc. | hiérarchie 2027 depuis `master_2025` |
 
 - `relation` : reprise de `CONVERSION_GRAPH_EDGES` (`R/00_config.R`) pour l'arête forward, ou de
   sa réciproque (flip `N:1↔1:N`, `1:1`, `M:N` — cf. `build_conversion_graph`,
@@ -263,8 +263,8 @@ conversions non-temporelles ; vérifier que `convert_dataset` (`R/07_dataset_con
 
 ### 4c. Poids ancrés au périmètre (Q3) — `R/07_split_ambiguous.R`
 - Registre/table `weights(from_id, to_id, code_from, code_to, variable, weight)` **keyé sur
-  l'arête overlap primitive** (le périmètre qui enjambe : `NIS_ARRONDISSEMENT_2019→NUTS3_2021`
-  pour Verviers, `NIS_COMMUNE_2025→NUTS3_2021` pour 46029/46030/71072,
+  l'arête overlap primitive** (le périmètre qui enjambe : `NIS_DISTRICT_2019→NUTS_DISTRICT_2021`
+  pour Verviers, `NIS_MUNICIPALITY_2025→NUTS_DISTRICT_2021` pour 46029/46030/71072,
   `NIS_PROVINCE_*→NIS_REGION_*` pour Brabant), **pas** la paire utilisateur.
 - `.resolve_weights` localise l'arête overlap du chemin
   (`check_conversion_path()$edges_used` filtré sur `perimeter_relation=="overlap"`) et y résout

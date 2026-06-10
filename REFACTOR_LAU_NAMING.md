@@ -9,7 +9,7 @@
 1. **`NUTS_LAU_2021` : on garde, on documente.** LAU 2021 (niveau Eurostat) ≡ code commune
    NIS 2019 *en Belgique* (bijection 1:1 ; `cd_nuts_lau` ≡ `cd_commune`). La redondance est sur la
    **valeur**, pas sur la **sémantique** : LAU est le niveau local *standard* de la hiérarchie NUTS
-   (LAU ⊂ NUTS3 ⊂ NUTS2 ⊂ NUTS1 ⊂ NUTS0). Le retirer casserait l'API, amputerait la hiérarchie NUTS
+   (LAU ⊂ NUTS3 ⊂ NUTS2 ⊂ NUTS1 ⊂ NUTS_COUNTRY). Le retirer casserait l'API, amputerait la hiérarchie NUTS
    et irait à l'encontre du principe « 1 nœud = 1 (système, version, niveau) ». Décision retenue
    après arbitrage : **conserver + documenter la bijection** (coût quasi nul, zéro breaking change).
 2. **Centraliser les identifiants de nomenclatures et de versions** en constantes (`CLS_*`,
@@ -31,18 +31,18 @@ nœuds reste **22**.
 
 - **`R/00b_registry.R`** : commentaire sur l'entrée `NUTS_LAU_2021` — « En Belgique, LAU 2021 =
   code commune NIS 2019 (bijection 1:1) ; labels empruntés à la commune (`tx_commune_fr/nl`). »
-- **`R/classifications.R`** : noter la bijection `NIS_COMMUNE_2019 ↔ NUTS_LAU_2021` (1:1, même
+- **`R/classifications.R`** : noter la bijection `NIS_MUNICIPALITY_2019 ↔ NUTS_LAU_2021` (1:1, même
   périmètre, étiquette Eurostat).
 - **`vignettes/conversions.Rmd`** (+ `DOCUMENTATION.md`) : une phrase — LAU 2021 et la commune
   NIS 2019 désignent le même territoire sous deux systèmes, d'où la conversion 1:1.
 - **(Recommandé) Test verrouillant la bijection** — nouveau `tests/testthat/test-lau-bijection.R` :
-  pour toutes les communes 2019, `convert_codes(communes, "NIS_COMMUNE_2019", "NUTS_LAU_2021")`
+  pour toutes les communes 2019, `convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021")`
   rend le même code (à la coercition `character` près) et la réciproque
-  `NUTS_LAU_2021 → NIS_COMMUNE_2019` est 1:1. Documente **et** garantit la bijection dans le temps
+  `NUTS_LAU_2021 → NIS_MUNICIPALITY_2019` est 1:1. Documente **et** garantit la bijection dans le temps
   (alerte si une édition future la rompait).
 
 **Vérification A** : `devtools::test()` reste vert ; `length(VALID_CLASSIFICATIONS) == 22` ;
-`convert_codes(.., "NIS_COMMUNE_2019", "NUTS_LAU_2021")` reste 1:1. Aucun rebuild.
+`convert_codes(.., "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021")` reste 1:1. Aucun rebuild.
 
 ---
 
@@ -69,8 +69,8 @@ exister **avant** → les déclarer **en tête de `R/00_config.R`** (dispo aussi
   VER_BEFORE_2019 <- "BEFORE_2019"; VER_2019 <- "2019"; VER_2025 <- "2025"
   VER_NUTS_2021   <- "2021";        VER_NUTS_2027 <- "2027"
   # Classification ids (doivent égaler names(CLASSIFICATION_NODES) — 22 nœuds, LAU conservé)
-  CLS_NIS_COMMUNE_2019 <- "NIS_COMMUNE_2019"   # ... une constante par nœud (22)
-  CLS_ALL <- c(CLS_NIS_COMMUNE_2019, ...)      # pour le test de cohérence
+  CLS_NIS_MUNICIPALITY_2019 <- "NIS_MUNICIPALITY_2019"   # ... une constante par nœud (22)
+  CLS_ALL <- c(CLS_NIS_MUNICIPALITY_2019, ...)      # pour le test de cohérence
   ```
 - **B2 — `CONVERSION_GRAPH_EDGES`** : remplacer les littéraux `from=`/`to=` par les `CLS_*`.
 - **B3 — Versions** : remplacer les littéraux par `VER_*` dans `R/02_build_master_table.R`

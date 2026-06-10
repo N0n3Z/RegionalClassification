@@ -18,7 +18,7 @@
 #' @param dt             data.table (or data.frame)
 #' @param code_col       Name of the column containing geographic codes
 #' @param master_data    Output from build_master_table()
-#' @param classification Classification identifier (e.g. "NUTS3_2021"), or
+#' @param classification Classification identifier (e.g. "NUTS_DISTRICT_2021"), or
 #'   NULL to auto-rank all candidates.
 #' @param verbose        Print a formatted diagnostic report? Default TRUE.
 #' @return Invisibly, a list with diagnostic details (see Value section).
@@ -53,7 +53,7 @@
 #'   # Check mode
 #'   nuts3_data <- data.table::data.table(nuts3 = c("BE100","BE211","BE332"), val = 1:3)
 #'   diagnose_classification(nuts3_data, "nuts3", master_data,
-#'                           classification = "NUTS3_2021")
+#'                           classification = "NUTS_DISTRICT_2021")
 #'
 #'   # Detect mode
 #'   diagnose_classification(nuts3_data, "nuts3", master_data)

@@ -32,8 +32,8 @@
               !is.na(from_n$version) && !is.na(to_n$version)
   temporal <- both_ver && from_n$version != to_n$version
 
-  if (temporal)                            return("temporal")
   if (edge$relation %in% c("1:N", "M:N")) return("overlap")
+  if (temporal)                            return("temporal")
   if (edge$relation == "1:1")             return("identity")
   "nesting"   # N:1
 }
@@ -72,13 +72,13 @@
 #'   \code{\link{print_conversion_check}} for a human-readable summary.
 #' @examples
 #' # Simple, perimeter-preserving path
-#' check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
+#' check_conversion_path("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
 #'
 #' # Ambiguous path (Verviers splits two NUTS3 regions)
-#' check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+#' check_conversion_path("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 #'
 #' # Multi-hop path via intermediate classification
-#' check_conversion_path("POSTAL", "NUTS3_2027")
+#' check_conversion_path("POSTAL", "NUTS_DISTRICT_2027")
 #' @export
 check_conversion_path <- function(from, to) {
 
@@ -122,7 +122,7 @@ check_conversion_path <- function(from, to) {
 
   # If a direct declared edge exists between from and to, its cardinality takes
   # precedence over any indirect BFS path. This prevents a multi-hop simple path
-  # (e.g. via INTERNAL_ARRONDISSEMENT) from masking a direct 1:N or M:N edge.
+  # (e.g. via NBB_DISTRICT_2021) from masking a direct 1:N or M:N edge.
   direct_edge <- Find(function(e) e$from == from_norm && e$to == to_norm,
                       CONVERSION_GRAPH_EDGES)
   if (!is.null(direct_edge) && !(direct_edge$relation %in% c("1:1", "N:1"))) {
@@ -210,15 +210,17 @@ check_conversion_path <- function(from, to) {
 #'
 #' A conversion is perimeter-preserving when no edge along the (shortest) path
 #' has a `1:N` or `M:N` cardinality in the forward direction -- i.e. no source
-#' unit straddles two or more target units. Temporal edges (same system,
-#' different edition) are always considered perimeter-preserving.
+#' unit straddles two or more target units. Cardinality takes precedence over
+#' temporal classification: a backward temporal edge (e.g. 2025 -> 2019) has
+#' `1:N` cardinality and is therefore NOT perimeter-preserving.
 #'
 #' Typical results:
 #' \itemize{
-#'   \item \code{NIS_COMMUNE_2019 -> NUTS3_2021}: `TRUE`  (N:1, nesting)
-#'   \item \code{NIS_COMMUNE_2025 -> NUTS3_2021}: `FALSE` (1:N, fused communes
+#'   \item \code{NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021}: `TRUE`  (N:1, nesting)
+#'   \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021}: `FALSE` (1:N, fused communes
 #'     straddle NUTS3 boundaries)
-#'   \item \code{NIS_COMMUNE_2019 -> NIS_COMMUNE_2025}: `TRUE`  (temporal)
+#'   \item \code{NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025}: `TRUE`  (forward temporal, N:1)
+#'   \item \code{NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019}: `FALSE` (backward temporal, 1:N)
 #' }
 #'
 #' @param from Source classification identifier.
@@ -227,8 +229,8 @@ check_conversion_path <- function(from, to) {
 #'   if any edge is an overlap (1:N / M:N), and `NA` if no conversion path
 #'   exists.
 #' @examples
-#' is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
-#' is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE
+#' is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")   # TRUE
+#' is_perimeter_preserving("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # FALSE
 #' @export
 is_perimeter_preserving <- function(from, to) {
   result <- check_conversion_path(from, to)
@@ -263,7 +265,7 @@ build_conversion_graph <- function() {
 
     # Add reverse edge with flipped relation, unless no_reverse = TRUE.
     # no_reverse guards cases where the reversed cardinality would be misleading
-    # (e.g. the reverse of NIS_COMMUNE_2025 -> NUTS3_2021 (1:N) is 1:N from
+    # (e.g. the reverse of NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (1:N) is 1:N from
     # NUTS3's perspective, not N:1, because many communes share a NUTS3 region).
     if (!isTRUE(edge$no_reverse)) {
       reverse_relation <- switch(edge$relation,
@@ -369,9 +371,9 @@ bfs_find_path <- function(from, to, graph, only_simple = FALSE) {
 #' @param to Target classification
 #' @return Invisible path check result (prints to console)
 #' @examples
-#' print_conversion_check("NIS_COMMUNE_2019", "NUTS3_2021")
-#' print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
-#' print_conversion_check("POSTAL", "NUTS3_2027")
+#' print_conversion_check("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
+#' print_conversion_check("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
+#' print_conversion_check("POSTAL", "NUTS_DISTRICT_2027")
 #' @export
 print_conversion_check <- function(from, to) {
 

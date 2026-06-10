@@ -22,7 +22,7 @@ convert_dataset(
 
 \item{code_col}{Name of the column containing source codes}
 
-\item{to}{Target classification (e.g. "NUTS3_2021")}
+\item{to}{Target classification (e.g. "NUTS_DISTRICT_2021")}
 
 \item{master_data}{Output from build_master_table()}
 
@@ -57,10 +57,10 @@ the column values against known code sets in master_data.
     commune = c(21004L, 11002L, 44021L), avg_salary = c(3200, 2900, 2700))
 
   # Explicit source
-  convert_dataset(salaries, "commune", "NUTS3_2021", master_data,
-                  from = "NIS_COMMUNE_2019")
+  convert_dataset(salaries, "commune", "NUTS_DISTRICT_2021", master_data,
+                  from = "NIS_MUNICIPALITY_2019")
 
   # Auto-detect source
-  convert_dataset(salaries, "commune", "NUTS3_2021", master_data)
+  convert_dataset(salaries, "commune", "NUTS_DISTRICT_2021", master_data)
 }
 }

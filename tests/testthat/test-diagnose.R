@@ -2,10 +2,10 @@ library(data.table)
 
 # -- Test D1: check mode -- COMPLETE status -------------------------------------
 test_that("diagnose_classification check mode returns COMPLETE for full coverage", {
-  all_nuts3 <- nbbbenuts:::.list_codes_for(CLS_NUTS3_2021, master_data)
+  all_nuts3 <- nbbbenuts:::.list_codes_for(CLS_NUTS_DISTRICT_2021, master_data)
   dt <- data.table(nuts3 = all_nuts3, val = seq_along(all_nuts3))
   result <- diagnose_classification(dt, "nuts3", master_data,
-                                    classification = CLS_NUTS3_2021,
+                                    classification = CLS_NUTS_DISTRICT_2021,
                                     verbose = FALSE)
   expect_equal(result$mode, "check")
   expect_equal(result$status, "COMPLETE")
@@ -18,7 +18,7 @@ test_that("diagnose_classification check mode returns COMPLETE for full coverage
 test_that("diagnose_classification detects missing codes", {
   dt <- data.table(nuts3 = c("BE100", "BE211"), val = 1:2)
   result <- diagnose_classification(dt, "nuts3", master_data,
-                                    classification = CLS_NUTS3_2021,
+                                    classification = CLS_NUTS_DISTRICT_2021,
                                     verbose = FALSE)
   expect_equal(result$status, "INCOMPLETE")
   expect_gt(result$n_missing, 0L)
@@ -28,10 +28,10 @@ test_that("diagnose_classification detects missing codes", {
 
 # -- Test D3: check mode -- COMPLETE_WITH_UNKNOWNS ------------------------------
 test_that("diagnose_classification detects unknown codes", {
-  all_nuts3 <- nbbbenuts:::.list_codes_for(CLS_NUTS3_2021, master_data)
+  all_nuts3 <- nbbbenuts:::.list_codes_for(CLS_NUTS_DISTRICT_2021, master_data)
   dt <- data.table(nuts3 = c(all_nuts3, "ZZZZ"), val = seq_along(c(all_nuts3, "ZZZZ")))
   result <- diagnose_classification(dt, "nuts3", master_data,
-                                    classification = CLS_NUTS3_2021,
+                                    classification = CLS_NUTS_DISTRICT_2021,
                                     verbose = FALSE)
   expect_equal(result$n_unknown, 1L)
   expect_equal(result$status, "COMPLETE_WITH_UNKNOWNS")
@@ -41,7 +41,7 @@ test_that("diagnose_classification detects unknown codes", {
 test_that("diagnose_classification counts duplicate codes", {
   dt <- data.table(nuts3 = c("BE100", "BE100", "BE211"), val = 1:3)
   result <- diagnose_classification(dt, "nuts3", master_data,
-                                    classification = CLS_NUTS3_2021,
+                                    classification = CLS_NUTS_DISTRICT_2021,
                                     verbose = FALSE)
   expect_equal(result$n_duplicates, 1L)
 })
@@ -61,18 +61,18 @@ test_that("diagnose_classification errors when code column not found", {
   dt <- data.table(x = "BE100", val = 1)
   expect_error(
     diagnose_classification(dt, "INEXISTANT", master_data,
-                            classification = CLS_NUTS3_2021),
+                            classification = CLS_NUTS_DISTRICT_2021),
     class = "rcl_invalid_input"
   )
 })
 
 # -- Test D7: detect mode -- recommends the best matching classification ---------
 test_that("diagnose_classification detect mode recommends correct classification", {
-  all_nuts3 <- nbbbenuts:::.list_codes_for(CLS_NUTS3_2021, master_data)
+  all_nuts3 <- nbbbenuts:::.list_codes_for(CLS_NUTS_DISTRICT_2021, master_data)
   dt <- data.table(nuts3 = head(all_nuts3, 20), val = 1:20)
   result <- diagnose_classification(dt, "nuts3", master_data, verbose = FALSE)
   expect_equal(result$mode, "detect")
-  expect_equal(result$recommendation, CLS_NUTS3_2021)
+  expect_equal(result$recommendation, CLS_NUTS_DISTRICT_2021)
   expect_true(is.data.table(result$candidates))
 })
 
@@ -94,20 +94,20 @@ test_that("diagnose_classification covers every VALID_CLASSIFICATION", {
 })
 
 # -- Test D9: check mode works for NIS classifications previously unsupported ---
-test_that("diagnose_classification works for NUTS2_2021", {
+test_that("diagnose_classification works for NUTS_PROVINCE_2021", {
   dt <- data.table(code = c("BE10", "BE21"), val = 1:2)
   result <- diagnose_classification(dt, "code", master_data,
-                                    classification = CLS_NUTS2_2021,
+                                    classification = CLS_NUTS_PROVINCE_2021,
                                     verbose = FALSE)
   expect_equal(result$mode, "check")
   expect_true(result$n_in_dataset >= 2L)
 })
 
-test_that("diagnose_classification works for NIS_ARRONDISSEMENT_BEFORE_2019", {
-  all_arr <- nbbbenuts:::.list_codes_for(CLS_NIS_ARRONDISSEMENT_BEFORE_2019, master_data)
+test_that("diagnose_classification works for NIS_DISTRICT_BEFORE_2019", {
+  all_arr <- nbbbenuts:::.list_codes_for(CLS_NIS_DISTRICT_BEFORE_2019, master_data)
   dt <- data.table(code = head(all_arr, 5), val = 1:5)
   result <- diagnose_classification(dt, "code", master_data,
-                                    classification = CLS_NIS_ARRONDISSEMENT_BEFORE_2019,
+                                    classification = CLS_NIS_DISTRICT_BEFORE_2019,
                                     verbose = FALSE)
   expect_equal(result$mode, "check")
   expect_equal(result$n_in_dataset, 5L)

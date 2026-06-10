@@ -23,11 +23,11 @@ Retrieve registered split weights
 \donttest{
   library(data.table)
   register_split_weights(
-    "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
     data.table(code_from = c(63000L, 63000L),
                code_to   = c("BE335", "BE336"),
                weight    = c(0.857, 0.143))
   )
-  get_split_weights("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+  get_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 }
 }

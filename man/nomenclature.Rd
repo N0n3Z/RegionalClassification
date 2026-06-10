@@ -34,7 +34,7 @@ components are unambiguous (e.g. \code{nomenclature("POSTAL")},
 This object is the recommended way to work programmatically (loop over
 versions/levels) and to navigate aggregation links
 (\code{\link{nomenclature_children}}, \code{\link{nomenclature_parents}}).
-Plain string identifiers (e.g. \code{"NIS_COMMUNE_2019"}) remain accepted by
+Plain string identifiers (e.g. \code{"NIS_MUNICIPALITY_2019"}) remain accepted by
 all functions.
 }
 \examples{

@@ -82,21 +82,21 @@ test_that(".node_parse() spot-checks match legacy .parse_classification_id()", {
     expect_equal(p$type,    exp_type, info = id)
     expect_equal(p$version, exp_ver,  info = id)
   }
-  check(CLS_NIS_COMMUNE_2019,              "NIS_COMMUNE",             "2019")
-  check(CLS_NIS_COMMUNE_BEFORE_2019,       "NIS_COMMUNE",             "BEFORE_2019")
-  check(CLS_NIS_ARRONDISSEMENT_BEFORE_2019,"NIS_ARRONDISSEMENT",      "BEFORE_2019")
-  check(CLS_NIS_PROVINCE_BEFORE_2019,      "NIS_PROVINCE",            "BEFORE_2019")
-  check(CLS_NIS_REGION_BEFORE_2019,        "NIS_REGION",              "BEFORE_2019")
-  check(CLS_NUTS3_2021,                    "NUTS3",                   "2021")
-  check(CLS_NUTS_LAU_2021,                 "NUTS_LAU",                "2021")
-  check(CLS_NUTS0,                         CLS_NUTS0,                   NA_character_)
-  check(CLS_POSTAL,                        CLS_POSTAL,                  NA_character_)
-  check(CLS_INTERNAL_ARRONDISSEMENT,       CLS_INTERNAL_ARRONDISSEMENT, NA_character_)
+  check(CLS_NIS_MUNICIPALITY_2019,              "NIS_MUNICIPALITY",        "2019")
+  check(CLS_NIS_MUNICIPALITY_BEFORE_2019,       "NIS_MUNICIPALITY",        "BEFORE_2019")
+  check(CLS_NIS_DISTRICT_BEFORE_2019,           "NIS_DISTRICT",            "BEFORE_2019")
+  check(CLS_NIS_PROVINCE_BEFORE_2019,           "NIS_PROVINCE",            "BEFORE_2019")
+  check(CLS_NIS_REGION_BEFORE_2019,             "NIS_REGION",              "BEFORE_2019")
+  check(CLS_NUTS_DISTRICT_2021,                 "NUTS_DISTRICT",           "2021")
+  check(CLS_NUTS_LAU_2021,                      "NUTS_LAU",                "2021")
+  check(CLS_NUTS_COUNTRY,                       CLS_NUTS_COUNTRY,          NA_character_)
+  check(CLS_POSTAL,                             CLS_POSTAL,                NA_character_)
+  check(CLS_NBB_DISTRICT_2021,                  "NBB_DISTRICT",            "2021")
 })
 
 # -- .node_label_meta() matches .LABEL_META structure -------------------------
 test_that(".node_label_meta() returns the five expected fields", {
-  meta <- nbbbenuts:::.node_label_meta(CLS_NUTS3_2021)
+  meta <- nbbbenuts:::.node_label_meta(CLS_NUTS_DISTRICT_2021)
   expect_equal(sort(names(meta)), sort(c("ver","code","fr","nl","src")))
   expect_equal(meta$code, "cd_nuts3")
   expect_equal(meta$src,  "communes")
@@ -113,17 +113,17 @@ test_that(".node_label_meta() returns correct values for all 22 nodes", {
     expect_equal(m$nl,   exp_nl,   info = id)
     expect_equal(m$src,  exp_src,  info = id)
   }
-  check(CLS_NIS_COMMUNE_2019,    "2019",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
-  check(CLS_NIS_COMMUNE_2025,    "2025",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
-  check(CLS_NIS_COMMUNE_BEFORE_2019, "BEFORE_2019", "cd_commune","tx_commune_fr","tx_commune_nl", "communes")
-  check(CLS_NIS_ARRONDISSEMENT_2019, "2019",    "cd_arr",        "tx_arr_fr",    "tx_arr_nl",     "communes")
-  check(CLS_NUTS3_2021,          "2019",        "cd_nuts3",      "tx_nuts3_fr",  "tx_nuts3_nl",   "communes")
-  check(CLS_NUTS2_2021,          "2019",        "cd_nuts2",      NA_character_,  NA_character_,   "communes")
+  check(CLS_NIS_MUNICIPALITY_2019,    "2019",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
+  check(CLS_NIS_MUNICIPALITY_2025,    "2025",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
+  check(CLS_NIS_MUNICIPALITY_BEFORE_2019, "BEFORE_2019", "cd_commune","tx_commune_fr","tx_commune_nl", "communes")
+  check(CLS_NIS_DISTRICT_2019, "2019",    "cd_arr",        "tx_arr_fr",    "tx_arr_nl",     "communes")
+  check(CLS_NUTS_DISTRICT_2021,          "2019",        "cd_nuts3",      "tx_nuts3_fr",  "tx_nuts3_nl",   "communes")
+  check(CLS_NUTS_PROVINCE_2021,          "2019",        "cd_nuts2",      NA_character_,  NA_character_,   "communes")
   check(CLS_NUTS_LAU_2021,       "2019",        "cd_nuts_lau",   "tx_commune_fr","tx_commune_nl", "communes")
-  check(CLS_NUTS0,               "2019",        "cd_nuts0",      NA_character_,  NA_character_,   "communes")
-  check(CLS_NUTS3_2027,          "2025",        "cd_nuts3_2027", NA_character_,  NA_character_,   "communes")
+  check(CLS_NUTS_COUNTRY,               "2019",        "cd_nuts0",      NA_character_,  NA_character_,   "communes")
+  check(CLS_NUTS_DISTRICT_2027,          "2025",        "cd_nuts3_2027", NA_character_,  NA_character_,   "communes")
   check(CLS_POSTAL,              "2019",        "cd_postal",     "tx_postal_name_fr","tx_postal_name_nl","postal")
-  check(CLS_INTERNAL_ARRONDISSEMENT,"2019",     "cd_arr_internal","tx_arr_fr",   "tx_arr_nl",     "communes")
+  check(CLS_NBB_DISTRICT_2021,"2019",     "cd_arr_internal","tx_arr_fr",   "tx_arr_nl",     "communes")
   # All 22 nodes resolvable without error
   for (id in VALID_CLASSIFICATIONS) {
     m <- nbbbenuts:::.node_label_meta(id)
@@ -133,7 +133,7 @@ test_that(".node_label_meta() returns correct values for all 22 nodes", {
 
 # -- .node_reference_codes() returns the right structure ----------------------
 test_that(".node_reference_codes() returns data.table(code, name_fr, name_nl)", {
-  ref <- nbbbenuts:::.node_reference_codes(CLS_NUTS3_2021, master_data)
+  ref <- nbbbenuts:::.node_reference_codes(CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(is.data.table(ref))
   expect_true(all(c("code","name_fr","name_nl") %in% names(ref)))
   expect_gt(nrow(ref), 0L)
@@ -147,7 +147,7 @@ test_that(".node_reference_codes() returns NULL for absent BEFORE_2019 data", {
   empty_md$entities <- master_data$entities[
     !classification_id %in% grep("BEFORE_2019", names(CLASSIFICATION_NODES), value = TRUE)
   ]
-  result <- nbbbenuts:::.node_reference_codes(CLS_NIS_COMMUNE_BEFORE_2019, empty_md)
+  result <- nbbbenuts:::.node_reference_codes(CLS_NIS_MUNICIPALITY_BEFORE_2019, empty_md)
   expect_null(result)
 })
 
@@ -159,23 +159,23 @@ test_that(".node_reference_codes() agrees with .list_codes_for() for key nodes",
     expect_true(setequal(as.character(ref$code), as.character(legacy)),
                 info = id)
   }
-  check_parity(CLS_NIS_COMMUNE_2019)
-  check_parity(CLS_NIS_ARRONDISSEMENT_2019)
-  check_parity(CLS_NUTS3_2021)
-  check_parity(CLS_NUTS3_2027)
+  check_parity(CLS_NIS_MUNICIPALITY_2019)
+  check_parity(CLS_NIS_DISTRICT_2019)
+  check_parity(CLS_NUTS_DISTRICT_2021)
+  check_parity(CLS_NUTS_DISTRICT_2027)
   check_parity(CLS_POSTAL)
-  check_parity(CLS_INTERNAL_ARRONDISSEMENT)
+  check_parity(CLS_NBB_DISTRICT_2021)
 })
 
 # -- .node_coerce() type coercion ---------------------------------------------
 test_that(".node_coerce() coerces to integer for NIS nodes", {
-  result <- nbbbenuts:::.node_coerce("21004", CLS_NIS_COMMUNE_2019)
+  result <- nbbbenuts:::.node_coerce("21004", CLS_NIS_MUNICIPALITY_2019)
   expect_type(result, "integer")
   expect_equal(result, 21004L)
 })
 
 test_that(".node_coerce() coerces to character for NUTS nodes", {
-  result <- nbbbenuts:::.node_coerce(21004L, CLS_NUTS3_2021)
+  result <- nbbbenuts:::.node_coerce(21004L, CLS_NUTS_DISTRICT_2021)
   expect_type(result, "character")
   expect_equal(result, "21004")
 })

@@ -46,10 +46,10 @@ gen_golden <- function() {
 
   # --- Multi-hop golden (representative composed paths) ---
   multihop_pairs <- list(
-    c(CLS_POSTAL,                    CLS_NUTS3_2027),
-    c(CLS_NUTS3_2021,                CLS_NUTS0),
-    c(CLS_NIS_COMMUNE_2019,          CLS_NUTS3_2027),
-    c(CLS_INTERNAL_ARRONDISSEMENT,   CLS_NUTS2_2021),
+    c(CLS_POSTAL,                    CLS_NUTS_DISTRICT_2027),
+    c(CLS_NUTS_DISTRICT_2021,                CLS_NUTS_COUNTRY),
+    c(CLS_NIS_MUNICIPALITY_2019,          CLS_NUTS_DISTRICT_2027),
+    c(CLS_NBB_DISTRICT_2021,   CLS_NUTS_PROVINCE_2021),
     c(CLS_NUTS_LAU_2021,             CLS_NIS_REGION_2019)
   )
 

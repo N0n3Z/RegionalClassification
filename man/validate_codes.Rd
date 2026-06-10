@@ -29,6 +29,6 @@ issues before a conversion.
 \examples{
 \donttest{
   master_data <- load_master_data()
-  validate_codes(c(21004L, 99999L, 11002L), "NIS_COMMUNE_2019", master_data)
+  validate_codes(c(21004L, 99999L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
 }
 }

@@ -2,7 +2,7 @@
 # 00c_nomenclature.R  -  Structured `nomenclature` object (programmatic API)
 # ==============================================================================
 # A `nomenclature` bundles (system, level, version) and resolves to the single
-# canonical node id used internally by the engine (e.g. "NIS_COMMUNE_2019").
+# canonical node id used internally by the engine (e.g. "NIS_MUNICIPALITY_2019").
 # It is an ADDITIVE layer: string identifiers keep working everywhere. The object
 # enables dynamic/programmatic construction (loop over versions/levels) and
 # explicit intra-system aggregation links (commune -> arrondissement -> ...).
@@ -107,7 +107,7 @@
 #' This object is the recommended way to work programmatically (loop over
 #' versions/levels) and to navigate aggregation links
 #' (\code{\link{nomenclature_children}}, \code{\link{nomenclature_parents}}).
-#' Plain string identifiers (e.g. \code{"NIS_COMMUNE_2019"}) remain accepted by
+#' Plain string identifiers (e.g. \code{"NIS_MUNICIPALITY_2019"}) remain accepted by
 #' all functions.
 #'
 #' @param system Classification system: "NIS", "NUTS", "POSTAL", "INTERNAL"
@@ -309,7 +309,7 @@ nomenclature_versions <- function(system) {
 #' aggregated by BOTH a province and a region).
 #'
 #' The aggregation structure is a DAG, not a tree: an arrondissement has two
-#' parents (province and region), and \code{NUTS0} aggregates both the 2021 and
+#' parents (province and region), and \code{NUTS_COUNTRY} aggregates both the 2021 and
 #' 2027 NUTS1 levels. Province -> region is deliberately not an aggregation
 #' (province 20000 "Brabant" spans three regions).
 #'

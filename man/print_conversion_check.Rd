@@ -18,7 +18,7 @@ Invisible path check result (prints to console)
 Print a human-readable conversion path check
 }
 \examples{
-print_conversion_check("NIS_COMMUNE_2019", "NUTS3_2021")
-print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
-print_conversion_check("POSTAL", "NUTS3_2027")
+print_conversion_check("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
+print_conversion_check("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
+print_conversion_check("POSTAL", "NUTS_DISTRICT_2027")
 }

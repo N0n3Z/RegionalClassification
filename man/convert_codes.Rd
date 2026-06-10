@@ -9,9 +9,9 @@ convert_codes(codes, from, to, master_data, allow_ambiguous = FALSE)
 \arguments{
 \item{codes}{Vector of codes to convert}
 
-\item{from}{Source classification (e.g., "NIS_COMMUNE_2019", "POSTAL", "NUTS3_2021")}
+\item{from}{Source classification (e.g., "NIS_MUNICIPALITY_2019", "POSTAL", "NUTS_DISTRICT_2021")}
 
-\item{to}{Target classification (e.g., "NUTS3_2021", "NIS_COMMUNE_2025")}
+\item{to}{Target classification (e.g., "NUTS_DISTRICT_2021", "NIS_MUNICIPALITY_2025")}
 
 \item{master_data}{Output from build_master_table()}
 
@@ -35,16 +35,16 @@ conversion path and applies the necessary transformations.
 
   # NIS communes -> NUTS3 2021
   convert_codes(c(21004L, 11002L, 62063L),
-                "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+                "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 
   # Postal codes -> NIS communes
-  convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
+  convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 
   # NIS communes -> NUTS3 2027
-  convert_codes(c(21004L, 11002L), "NIS_COMMUNE_2019", "NUTS3_2027", master_data)
+  convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027", master_data)
 
   # Ambiguous conversion (Verviers arrondissement spans two NUTS3 regions)
-  convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+  convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
                 master_data, allow_ambiguous = TRUE)
 }
 }

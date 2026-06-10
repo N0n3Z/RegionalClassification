@@ -27,7 +27,7 @@ head(rc_postal)
 \donttest{
   master_data <- load_master_data()
   convert_dataset(rc_postal, "cd_postal",
-                  from = "POSTAL", to = "NIS_COMMUNE_2019", master_data)
+                  from = "POSTAL", to = "NIS_MUNICIPALITY_2019", master_data)
 }
 }
 \keyword{datasets}

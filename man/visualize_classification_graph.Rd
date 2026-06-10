@@ -28,7 +28,7 @@ Green edges = simple (1:1 or N:1), red edges = ambiguous (M:N or 1:N).
 \examples{
 \donttest{
   visualize_classification_graph()
-  visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
+  visualize_classification_graph(highlight_from = "NIS_MUNICIPALITY_2019")
   visualize_classification_graph(output_file = "classification_graph.html")
 }
 }

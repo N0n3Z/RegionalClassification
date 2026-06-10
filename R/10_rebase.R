@@ -29,8 +29,8 @@
 #'   Example:
 #'   ```r
 #'   list(
-#'     "NIS_COMMUNE_2019" = 2010:2024,
-#'     "NIS_COMMUNE_2025" = 2025:2030
+#'     "NIS_MUNICIPALITY_2019" = 2010:2024,
+#'     "NIS_MUNICIPALITY_2025" = 2025:2030
 #'   )
 #'   ```
 #' @param to Target classification identifier (see [classification_reference]).
@@ -88,9 +88,9 @@
 #'     period_col  = "year",
 #'     code_col    = "commune",
 #'     value_cols  = "population",
-#'     version_map = list("NIS_COMMUNE_2019" = 2022L,
-#'                        "NIS_COMMUNE_2025" = 2025L),
-#'     to          = "NIS_COMMUNE_2025",
+#'     version_map = list("NIS_MUNICIPALITY_2019" = 2022L,
+#'                        "NIS_MUNICIPALITY_2025" = 2025L),
+#'     to          = "NIS_MUNICIPALITY_2025",
 #'     master_data = master_data
 #'   )
 #'
@@ -107,7 +107,7 @@
 #'
 #'   # Step 1: get the template (equal weights, correct structure)
 #'   tpl <- split_weights_template(
-#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data
 #'   )
 #'
 #'   # Step 2: replace with population-based weights
@@ -120,23 +120,23 @@
 #'     period_col  = "year",
 #'     code_col    = "arr",
 #'     value_cols  = "emploi",
-#'     version_map = list("NIS_ARRONDISSEMENT_2019" = 2020:2021),
-#'     to          = "NUTS3_2021",
+#'     version_map = list("NIS_DISTRICT_2019" = 2020:2021),
+#'     to          = "NUTS_DISTRICT_2021",
 #'     master_data = master_data,
 #'     split       = tpl
 #'   )
 #'
 #'   # Step 3b: register for repeated use across the session
 #'   register_split_weights(
-#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", tpl, variable = "population"
 #'   )
 #'   rebase_series(
 #'     arr_data,
 #'     period_col  = "year",
 #'     code_col    = "arr",
 #'     value_cols  = "emploi",
-#'     version_map = list("NIS_ARRONDISSEMENT_2019" = 2020:2021),
-#'     to          = "NUTS3_2021",
+#'     version_map = list("NIS_DISTRICT_2019" = 2020:2021),
+#'     to          = "NUTS_DISTRICT_2021",
 #'     master_data = master_data
 #'     # split = "population" is the default
 #'   )

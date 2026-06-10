@@ -17,8 +17,8 @@ fuzzy_match_names(
 \item{names}{Character vector of names to match}
 
 \item{target_classification}{Target classification to match against.
-One of: "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", "POSTAL",
-"NIS_ARRONDISSEMENT_2019", "NIS_ARRONDISSEMENT_2025", "NUTS3_2021"}
+One of: "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "POSTAL",
+"NIS_DISTRICT_2019", "NIS_DISTRICT_2025", "NUTS_DISTRICT_2021"}
 
 \item{master_data}{Output from build_master_table()}
 
@@ -41,10 +41,10 @@ Supports matching commune names, postal code names, and arrondissement names.
 
   # Match misspelled commune names
   fuzzy_match_names(c("Bruxeles", "Antwerpn", "Liege"),
-                    "NIS_COMMUNE_2019", master_data)
+                    "NIS_MUNICIPALITY_2019", master_data)
 
   # Match with looser threshold, prefer French names
-  fuzzy_match_names(c("Bxl", "Anv"), "NIS_COMMUNE_2019", master_data,
+  fuzzy_match_names(c("Bxl", "Anv"), "NIS_MUNICIPALITY_2019", master_data,
                     max_dist = 0.5, language = "fr")
 }
 }

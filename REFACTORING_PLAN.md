@@ -115,7 +115,7 @@ Per-classification knowledge (version, code column, source table, code type, lab
 3. `.list_codes_for()` switch (`R/09_query.R`).
 4. `refs <- list(...)` in `detect_classification()` (`R/07_detect.R`).
 5. `.get_reference_codes()` switch + `.parse_classification_id()` (`R/07_diagnose.R`) — the latter
-   is already missing `NUTS0`, `NUTS2_2027`, `NUTS1_2027` and silently falls through to a default.
+   is already missing `NUTS_COUNTRY`, `NUTS_PROVINCE_2027`, `NUTS_REGION_2027` and silently falls through to a default.
 
 Code type (int/char) is likewise decided handler-by-handler via scattered `as.integer()` in
 `R/03_convert.R`. Adding a future version means editing 5+ places. **Goal: one registry as the
@@ -123,7 +123,7 @@ single source of truth, from which everything else derives.**
 
 Decisions already made with the maintainer:
 - **Scope = the registry refactor** (this is the big lever for future flexibility).
-- **Add `NIS_COMMUNE_2025 → NUTS3_2021 / NUTS_LAU_2021 / INTERNAL_ARRONDISSEMENT`** paths.
+- **Add `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2021 / NUTS_LAU_2021 / NBB_DISTRICT_2021`** paths.
 - **Uniform return schema:** `convert_codes()` always returns `(code_from, code_to, nature)`.
 
 Items explicitly **out of scope** (audited, judged fine as-is): merging `convert_via_master` /
@@ -219,8 +219,8 @@ master_2019, nis_changes)` (next to `add_nuts2027_columns`), backfilling `cd_nut
 **Schema:** these columns are already in `MASTER_COMMUNE_KNOWN_COLS`, so `.validate_commune_schema`
 accepts them with no change — they just stop being NA-via-`fill`.
 
-**Graph** (`CONVERSION_GRAPH_EDGES`): add `NIS_COMMUNE_2025 → NUTS3_2021` (N:1),
-`→ INTERNAL_ARRONDISSEMENT` (N:1), `→ NUTS_LAU_2021` (1:1), all `via="derived"`, notes documenting
+**Graph** (`CONVERSION_GRAPH_EDGES`): add `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2021` (N:1),
+`→ NBB_DISTRICT_2021` (N:1), `→ NUTS_LAU_2021` (1:1), all `via="derived"`, notes documenting
 NA-for-ambiguous-fusions.
 
 **Handlers** (`.ROUTE_TABLE`): one-liners via factory —

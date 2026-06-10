@@ -31,8 +31,8 @@ run_all_tests <- function(master_data) {
       commune_name = c("Anderlecht", "Antwerpen", "Ans", "Namur-Floreffe", "Verviers"),
       value = c(100, 200, 150, 80, 120)
     )
-    result <- convert_codes(sample_data$commune_code, "NIS_COMMUNE_2019",
-                            "NUTS3_2021", master_data)
+    result <- convert_codes(sample_data$commune_code, "NIS_MUNICIPALITY_2019",
+                            "NUTS_DISTRICT_2021", master_data)
     cat("  Input codes:", paste(sample_data$commune_code, collapse = ", "), "\n")
     cat("  Output NUTS3:", paste(result$code_to, collapse = ", "), "\n")
     stopifnot(nrow(result) == 5)
@@ -54,8 +54,8 @@ run_all_tests <- function(master_data) {
       commune_code = c(21001L, 11002L, 44086L, 71071L),
       value = c(50, 75, 120, 90)
     )
-    result <- convert_codes(sample_data$commune_code, "NIS_COMMUNE_2025",
-                            "NIS_ARRONDISSEMENT_2025", master_data)
+    result <- convert_codes(sample_data$commune_code, "NIS_MUNICIPALITY_2025",
+                            "NIS_DISTRICT_2025", master_data)
     cat("  Input codes:", paste(sample_data$commune_code, collapse = ", "), "\n")
     cat("  Output arr:", paste(result$code_to, collapse = ", "), "\n")
     stopifnot(nrow(result) == 4)
@@ -76,7 +76,7 @@ run_all_tests <- function(master_data) {
       value = c(300, 250, 180, 90, 210)
     )
     result <- convert_codes(sample_data$postal_code, "POSTAL",
-                            "NIS_COMMUNE_2019", master_data)
+                            "NIS_MUNICIPALITY_2019", master_data)
     cat("  Input postal:", paste(sample_data$postal_code, collapse = ", "), "\n")
     cat("  Output NIS:", paste(result$code_to, collapse = ", "), "\n")
     stopifnot(nrow(result) == 5)
@@ -96,7 +96,7 @@ run_all_tests <- function(master_data) {
       arr_code = c(11000L, 21000L, 51000L, 62000L, 91000L),
       value = c(400, 350, 200, 175, 125)
     )
-    result <- convert_codes(sample_data$arr_code, "NIS_ARRONDISSEMENT_2025",
+    result <- convert_codes(sample_data$arr_code, "NIS_DISTRICT_2025",
                             "NIS_PROVINCE_2025", master_data)
     cat("  Input arr:", paste(sample_data$arr_code, collapse = ", "), "\n")
     cat("  Output province:", paste(result$code_to, collapse = ", "), "\n")
@@ -120,8 +120,8 @@ run_all_tests <- function(master_data) {
     # Should FAIL without allow_ambiguous
     error_caught <- FALSE
     tryCatch({
-      convert_codes(sample_data$arr_code, "NIS_ARRONDISSEMENT_2019",
-                    "NUTS3_2021", master_data, allow_ambiguous = FALSE)
+      convert_codes(sample_data$arr_code, "NIS_DISTRICT_2019",
+                    "NUTS_DISTRICT_2021", master_data, allow_ambiguous = FALSE)
     }, error = function(e) {
       cat("  Correctly blocked simple conversion (Verviers ambiguity)\n")
       cat(sprintf("  Error message: %s\n", substr(e$message, 1, 120)))
@@ -130,8 +130,8 @@ run_all_tests <- function(master_data) {
     stopifnot(error_caught)
 
     # Should SUCCEED with allow_ambiguous
-    result <- convert_codes(sample_data$arr_code, "NIS_ARRONDISSEMENT_2019",
-                            "NUTS3_2021", master_data, allow_ambiguous = TRUE)
+    result <- convert_codes(sample_data$arr_code, "NIS_DISTRICT_2019",
+                            "NUTS_DISTRICT_2021", master_data, allow_ambiguous = TRUE)
     cat("  With allow_ambiguous=TRUE:\n")
     cat("  Input arr:", paste(result$code_from, collapse = ", "), "\n")
     cat("  Output NUTS3:", paste(result$code_to, collapse = ", "), "\n")
@@ -155,8 +155,8 @@ run_all_tests <- function(master_data) {
       nuts3_code = c("BE100", "BE211", "BE335", "BE336", "BE351"),
       value = c(1000, 800, 200, 50, 400)
     )
-    result <- convert_codes(sample_data$nuts3_code, "NUTS3_2021",
-                            "INTERNAL_ARRONDISSEMENT", master_data)
+    result <- convert_codes(sample_data$nuts3_code, "NUTS_DISTRICT_2021",
+                            "NBB_DISTRICT_2021", master_data)
     cat("  Input NUTS3:", paste(sample_data$nuts3_code, collapse = ", "), "\n")
     cat("  Output internal:", paste(result$code_to, collapse = ", "), "\n")
     # BE335 -> 65, BE336 -> 66
@@ -194,7 +194,7 @@ run_all_tests <- function(master_data) {
   tryCatch({
     # Deliberately misspelled or informal names
     sample_names <- c("Anderlecht", "Bruxeles", "Antwerpn", "Liege", "Vervirs")
-    result <- fuzzy_match_names(sample_names, "NIS_COMMUNE_2019", master_data,
+    result <- fuzzy_match_names(sample_names, "NIS_MUNICIPALITY_2019", master_data,
                                 max_dist = 0.3, language = "both")
     cat("  Input names:", paste(sample_names, collapse = ", "), "\n")
     for (i in seq_len(nrow(result))) {
@@ -217,7 +217,7 @@ run_all_tests <- function(master_data) {
   cat("--- Test 9: Fuzzy match - NIS Commune 2025 names ---\n")
   tryCatch({
     sample_names <- c("Anderlecht", "Gent", "Hasselt", "Charleroi")
-    result <- fuzzy_match_names(sample_names, "NIS_COMMUNE_2025", master_data,
+    result <- fuzzy_match_names(sample_names, "NIS_MUNICIPALITY_2025", master_data,
                                 max_dist = 0.3, language = "both")
     cat("  Input names:", paste(sample_names, collapse = ", "), "\n")
     for (i in seq_len(nrow(result))) {
@@ -243,8 +243,8 @@ run_all_tests <- function(master_data) {
       commune_code = c(21004L, 11002L, 44021L, 62063L, 63079L),
       commune_name = c("Bruxelles", "Antwerpen", "Gent", "Liege", "Verviers")
     )
-    result <- convert_codes(sample_data$commune_code, "NIS_COMMUNE_2019",
-                            "NUTS3_2027", master_data)
+    result <- convert_codes(sample_data$commune_code, "NIS_MUNICIPALITY_2019",
+                            "NUTS_DISTRICT_2027", master_data)
     cat("  Input codes:", paste(sample_data$commune_code, collapse = ", "), "\n")
     cat("  Output NUTS3 2027:", paste(result$code_to, collapse = ", "), "\n")
     # Bruxelles -> BE100, Antwerpen -> BE261, Gent -> BE274, Liege -> BE332, Verviers -> BE335
@@ -264,7 +264,7 @@ run_all_tests <- function(master_data) {
   cat("--- Test 11: NUTS3 2021 -> NUTS3 2027 -> NUTS3 2021 roundtrip ---\n")
   tryCatch({
     nuts3_2021 <- c("BE100", "BE211", "BE223", "BE224", "BE225", "BE231", "BE335")
-    result_2027 <- convert_codes(nuts3_2021, "NUTS3_2021", "NUTS3_2027", master_data)
+    result_2027 <- convert_codes(nuts3_2021, "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027", master_data)
     cat("  NUTS3 2021:", paste(nuts3_2021, collapse = ", "), "\n")
     cat("  NUTS3 2027:", paste(result_2027$code_to, collapse = ", "), "\n")
     # Expected: BE100, BE261, BE226, BE227, BE225, BE271, BE335
@@ -275,7 +275,7 @@ run_all_tests <- function(master_data) {
     stopifnot(result_2027[code_from == "BE335"]$code_to == "BE335")  # unchanged
 
     # Reverse
-    result_back <- convert_codes(result_2027$code_to, "NUTS3_2027", "NUTS3_2021", master_data)
+    result_back <- convert_codes(result_2027$code_to, "NUTS_DISTRICT_2027", "NUTS_DISTRICT_2021", master_data)
     cat("  Back to 2021:", paste(result_back$code_to, collapse = ", "), "\n")
     # Compare in original order (merge may reorder rows)
     roundtrip <- result_back$code_to[match(result_2027$code_to, result_back$code_from)]
@@ -292,24 +292,24 @@ run_all_tests <- function(master_data) {
   test_count <- test_count + 1
   cat("--- Test 12: diagnose_classification() - check mode ---\n")
   tryCatch({
-    # Full NUTS3_2021 dataset -> COMPLETE
+    # Full NUTS_DISTRICT_2021 dataset -> COMPLETE
     nuts3_codes <- unique(master_data$communes[nis_version == "2019" & !is.na(cd_nuts3), cd_nuts3])
     nuts3_full <- data.table(
       nuts3 = nuts3_codes,
       val   = seq_along(nuts3_codes)
     )
     r_full <- diagnose_classification(nuts3_full, "nuts3", master_data,
-                                       classification = "NUTS3_2021", verbose = FALSE)
+                                       classification = "NUTS_DISTRICT_2021", verbose = FALSE)
     stopifnot(r_full$status == "COMPLETE")
     stopifnot(r_full$classification_type == "NUTS3")
     stopifnot(r_full$version == "2021")
     stopifnot(r_full$n_missing == 0L)
-    cat("  Full NUTS3_2021: COMPLETE, type=NUTS3, version=2021\n")
+    cat("  Full NUTS_DISTRICT_2021: COMPLETE, type=NUTS3, version=2021\n")
 
     # Partial dataset -> INCOMPLETE, missing codes detected
     nuts3_partial <- data.table(nuts3 = c("BE100", "BE211", "BE332"), val = 1:3)
     r_part <- diagnose_classification(nuts3_partial, "nuts3", master_data,
-                                       classification = "NUTS3_2021", verbose = FALSE)
+                                       classification = "NUTS_DISTRICT_2021", verbose = FALSE)
     stopifnot(r_part$status == "INCOMPLETE")
     stopifnot(r_part$n_missing == 44L - 3L)
     stopifnot("BE211" %in% r_part$missing_codes$code == FALSE)  # BE211 IS in dataset
@@ -319,7 +319,7 @@ run_all_tests <- function(master_data) {
     # Dataset with unknown code
     nuts3_unk <- data.table(nuts3 = c("BE100", "BE999"), val = 1:2)
     r_unk <- diagnose_classification(nuts3_unk, "nuts3", master_data,
-                                      classification = "NUTS3_2021", verbose = FALSE)
+                                      classification = "NUTS_DISTRICT_2021", verbose = FALSE)
     stopifnot(r_unk$n_unknown == 1L)
     stopifnot("BE999" %in% r_unk$unknown_codes$code)
     cat("  Unknown code BE999 correctly detected\n")
@@ -336,17 +336,17 @@ run_all_tests <- function(master_data) {
   test_count <- test_count + 1
   cat("--- Test 13: detect mode + split_ambiguous() ---\n")
   tryCatch({
-    # Detect mode on NIS_COMMUNE_2019 data
+    # Detect mode on NIS_MUNICIPALITY_2019 data
     comm_dt <- data.table(code = master_data$communes[nis_version == "2019", cd_commune])
     r_det <- diagnose_classification(comm_dt, "code", master_data, verbose = FALSE)
     stopifnot(r_det$mode == "detect")
-    stopifnot(r_det$recommendation == "NIS_COMMUNE_2019")
+    stopifnot(r_det$recommendation == "NIS_MUNICIPALITY_2019")
     stopifnot(r_det$classification_type == "NIS_COMMUNE")
     stopifnot(r_det$version == "2019")
     cat(sprintf("  Auto-detected: %s (v%s)\n",
                 r_det$classification_type, r_det$version))
 
-    # split_ambiguous: Verviers 63000 -> NUTS3_2021 with additive weights
+    # split_ambiguous: Verviers 63000 -> NUTS_DISTRICT_2021 with additive weights
     arr_data <- data.table(
       arr_code   = c(11000L, 62000L, 63000L),
       total_wage = c(5e9, 3e9, 1e9),
@@ -359,8 +359,8 @@ run_all_tests <- function(master_data) {
     )
     r_split <- split_ambiguous(arr_data, "arr_code",
                                value_cols  = "total_wage",
-                               from        = "NIS_ARRONDISSEMENT_2019",
-                               to          = "NUTS3_2021",
+                               from        = "NIS_DISTRICT_2019",
+                               to          = "NUTS_DISTRICT_2021",
                                master_data = master_data,
                                weights     = wts,
                                value_type  = "additive",
@@ -400,11 +400,11 @@ test_conversion_paths <- function() {
 
   # Simple conversions (should be TRUE)
   simple_tests <- list(
-    c("POSTAL", "NIS_COMMUNE_2019"),
-    c("NIS_COMMUNE_2019", "NUTS3_2021"),
-    c("NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019"),
-    c("NUTS3_2021", "INTERNAL_ARRONDISSEMENT"),
-    c("POSTAL", "NUTS3_2021")
+    c("POSTAL", "NIS_MUNICIPALITY_2019"),
+    c("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021"),
+    c("NIS_MUNICIPALITY_2019", "NIS_DISTRICT_2019"),
+    c("NUTS_DISTRICT_2021", "NBB_DISTRICT_2021"),
+    c("POSTAL", "NUTS_DISTRICT_2021")
   )
 
   for (test in simple_tests) {
@@ -421,9 +421,9 @@ test_conversion_paths <- function() {
 
   # Ambiguous conversions (should be FALSE)
   ambig_tests <- list(
-    c("NIS_ARRONDISSEMENT_2019", "NUTS3_2021"),
-    c("NIS_ARRONDISSEMENT_2019", "INTERNAL_ARRONDISSEMENT"),
-    c("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")
+    c("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021"),
+    c("NIS_DISTRICT_2019", "NBB_DISTRICT_2021"),
+    c("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")
   )
 
   for (test in ambig_tests) {

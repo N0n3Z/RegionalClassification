@@ -347,7 +347,7 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #' cd_arr_internal for NIS 2025 communes from the NIS 2019 master:
 #' - Unchanged communes (same code in 2019 and 2025): copy directly.
 #' - Changed communes (in nis_changes[from_version=="2019"]):
-#'   collect the NUTS3_2021 of all constituent 2019 communes and assign it
+#'   collect the NUTS_DISTRICT_2021 of all constituent 2019 communes and assign it
 #'   only if all constituents share the same NUTS3; else NA +
 #'   rcl_ambiguous_backfill warning. cd_nuts_lau stays NA for fusions (LAU
 #'   is a 1:1 commune identifier and is undefined after a merge).
@@ -411,7 +411,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
   if (nrow(ambig) > 0L) {
     warn(
       sprintf(
-        paste0("%d NIS 2025 commune(s) fuse localities from multiple NUTS3_2021 regions; ",
+        paste0("%d NIS 2025 commune(s) fuse localities from multiple NUTS_DISTRICT_2021 regions; ",
                "cd_nuts3 set to NA for: %s"),
         nrow(ambig), paste(sort(ambig$cd_commune_2025), collapse = ", ")
       ),
@@ -511,7 +511,7 @@ build_entities_table <- function(communes, postal) {
 #'     nis_changes), NOT by calling the runtime engine -- so
 #'     \code{rebuild_master_data()} remains functional after the handlers are
 #'     removed in Phase 2.
-#'   \item \code{NIS_COMMUNE_2025 -> NUTS3_2021} replicates the
+#'   \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021} replicates the
 #'     \code{.convert_comm2025_to_nuts3_2021()} expansion logic directly.
 #'   \item Temporal edges carry \code{nature} (UNCHANGED/FUSION/CHANGE_*);
 #'     all others carry \code{NA_character_}.
@@ -576,11 +576,11 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   xw <- list()
 
   # ---- POSTAL -> NIS -------------------------------------------------------
-  # POSTAL -> NIS_COMMUNE_2019: all p19 postal codes (universe of POSTAL codes)
-  xw[["POSTAL__NIS_COMMUNE_2019"]] <- .xw("POSTAL", "NIS_COMMUNE_2019",
+  # POSTAL -> NIS_MUNICIPALITY_2019: all p19 postal codes (universe of POSTAL codes)
+  xw[["POSTAL__NIS_MUNICIPALITY_2019"]] <- .xw("POSTAL", "NIS_MUNICIPALITY_2019",
                                             p19$cd_postal, p19$cd_commune_nis)
 
-  # POSTAL -> NIS_COMMUNE_2025: universe = p19 postal codes, which is the
+  # POSTAL -> NIS_MUNICIPALITY_2025: universe = p19 postal codes, which is the
   # same set that .list_codes_for("POSTAL", md) and the entities table use.
   # Assumption: p25 codes <= p19 codes (i.e. no new postal codes were
   # introduced in the 2025 mapping).  Left-join so codes in p19 but absent
@@ -588,31 +588,31 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   p25_map  <- unique(p25[, .(cd_postal, cd_commune_nis)])
   p25_full <- merge(data.table(cd_postal = unique(p19$cd_postal)),
                     p25_map, by = "cd_postal", all.x = TRUE)
-  xw[["POSTAL__NIS_COMMUNE_2025"]] <- .xw("POSTAL", "NIS_COMMUNE_2025",
+  xw[["POSTAL__NIS_MUNICIPALITY_2025"]] <- .xw("POSTAL", "NIS_MUNICIPALITY_2025",
                                             p25_full$cd_postal, p25_full$cd_commune_nis)
 
-  # ---- NIS_COMMUNE_2019 -> * -----------------------------------------------
-  xw[["NIS_COMMUNE_2019__NIS_ARRONDISSEMENT_2019"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", m19, "cd_commune", "cd_arr")
-  xw[["NIS_COMMUNE_2019__NIS_PROVINCE_2019"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NIS_PROVINCE_2019",       m19, "cd_commune", "cd_province")
-  xw[["NIS_COMMUNE_2019__NIS_REGION_2019"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NIS_REGION_2019",         m19, "cd_commune", "cd_region")
-  xw[["NIS_COMMUNE_2019__NUTS_LAU_2021"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NUTS_LAU_2021",           m19, "cd_commune", "cd_nuts_lau")
-  xw[["NIS_COMMUNE_2019__NUTS3_2021"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NUTS3_2021",              m19, "cd_commune", "cd_nuts3")
-  xw[["NIS_COMMUNE_2019__NUTS2_2021"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NUTS2_2021",              m19, "cd_commune", "cd_nuts2")
-  xw[["NIS_COMMUNE_2019__NUTS1_2021"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "NUTS1_2021",              m19, "cd_commune", "cd_nuts1")
-  xw[["NIS_COMMUNE_2019__NUTS0"]] <- .xw(
-    "NIS_COMMUNE_2019", "NUTS0",
+  # ---- NIS_MUNICIPALITY_2019 -> * -----------------------------------------------
+  xw[["NIS_MUNICIPALITY_2019__NIS_DISTRICT_2019"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NIS_DISTRICT_2019", m19, "cd_commune", "cd_arr")
+  xw[["NIS_MUNICIPALITY_2019__NIS_PROVINCE_2019"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NIS_PROVINCE_2019",       m19, "cd_commune", "cd_province")
+  xw[["NIS_MUNICIPALITY_2019__NIS_REGION_2019"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NIS_REGION_2019",         m19, "cd_commune", "cd_region")
+  xw[["NIS_MUNICIPALITY_2019__NUTS_LAU_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021",           m19, "cd_commune", "cd_nuts_lau")
+  xw[["NIS_MUNICIPALITY_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021",              m19, "cd_commune", "cd_nuts3")
+  xw[["NIS_MUNICIPALITY_2019__NUTS_PROVINCE_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_PROVINCE_2021",              m19, "cd_commune", "cd_nuts2")
+  xw[["NIS_MUNICIPALITY_2019__NUTS_REGION_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_REGION_2021",              m19, "cd_commune", "cd_nuts1")
+  xw[["NIS_MUNICIPALITY_2019__NUTS_COUNTRY"]] <- .xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_COUNTRY",
     unique(m19$cd_commune), rep("BE", uniqueN(m19$cd_commune)))
-  xw[["NIS_COMMUNE_2019__INTERNAL_ARRONDISSEMENT"]] <- .pairs_xw(
-    "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", m19, "cd_commune", "cd_arr_internal")
+  xw[["NIS_MUNICIPALITY_2019__NBB_DISTRICT_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", m19, "cd_commune", "cd_arr_internal")
 
-  # NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 (temporal, with nature)
+  # NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025 (temporal, with nature)
   ch19 <- nis_changes[from_version == VER_2019,
                        .(cd_refnis_old, cd_refnis_new, nature)]
   unchanged_19 <- setdiff(unique(m19$cd_commune), ch19$cd_refnis_old)
@@ -622,21 +622,21 @@ build_crosswalks <- function(communes, postal, nis_changes) {
                cd_refnis_new = unchanged_19,
                nature        = "UNCHANGED")
   ), use.names = TRUE)
-  xw[["NIS_COMMUNE_2019__NIS_COMMUNE_2025"]] <- .xw(
-    "NIS_COMMUNE_2019", "NIS_COMMUNE_2025",
+  xw[["NIS_MUNICIPALITY_2019__NIS_MUNICIPALITY_2025"]] <- .xw(
+    "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025",
     full_19_25$cd_refnis_old, full_19_25$cd_refnis_new, full_19_25$nature)
 
-  # ---- NIS_COMMUNE_2025 -> * -----------------------------------------------
-  xw[["NIS_COMMUNE_2025__NIS_ARRONDISSEMENT_2025"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "NIS_ARRONDISSEMENT_2025", m25, "cd_commune", "cd_arr")
-  xw[["NIS_COMMUNE_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "NIS_PROVINCE_2025",       m25, "cd_commune", "cd_province")
-  xw[["NIS_COMMUNE_2025__NIS_REGION_2025"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "NIS_REGION_2025",         m25, "cd_commune", "cd_region")
-  xw[["NIS_COMMUNE_2025__INTERNAL_ARRONDISSEMENT"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "INTERNAL_ARRONDISSEMENT", m25, "cd_commune", "cd_arr_internal")
+  # ---- NIS_MUNICIPALITY_2025 -> * -----------------------------------------------
+  xw[["NIS_MUNICIPALITY_2025__NIS_DISTRICT_2025"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NIS_DISTRICT_2025", m25, "cd_commune", "cd_arr")
+  xw[["NIS_MUNICIPALITY_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NIS_PROVINCE_2025",       m25, "cd_commune", "cd_province")
+  xw[["NIS_MUNICIPALITY_2025__NIS_REGION_2025"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NIS_REGION_2025",         m25, "cd_commune", "cd_region")
+  xw[["NIS_MUNICIPALITY_2025__NBB_DISTRICT_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NBB_DISTRICT_2021", m25, "cd_commune", "cd_arr_internal")
 
-  # NIS_COMMUNE_2025 -> NUTS3_2021 (1:N): 564 direct + 3 fusions via nis_changes
+  # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (1:N): 564 direct + 3 fusions via nis_changes
   direct_25_n3  <- unique(m25[!is.na(cd_nuts3), .(cd_commune, cd_nuts3)])
   na25_communes <- m25[is.na(cd_nuts3), unique(cd_commune)]
   if (length(na25_communes) > 0L) {
@@ -651,35 +651,35 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   } else {
     full_25_n3 <- direct_25_n3
   }
-  xw[["NIS_COMMUNE_2025__NUTS3_2021"]] <- .xw(
-    "NIS_COMMUNE_2025", "NUTS3_2021",
+  xw[["NIS_MUNICIPALITY_2025__NUTS_DISTRICT_2021"]] <- .xw(
+    "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021",
     full_25_n3$cd_commune, full_25_n3$cd_nuts3)
 
-  # NIS_COMMUNE_2025 -> NIS_COMMUNE_2019 (reverse temporal, 1:N for fused communes)
-  xw[["NIS_COMMUNE_2025__NIS_COMMUNE_2019"]] <- .xw(
-    "NIS_COMMUNE_2025", "NIS_COMMUNE_2019",
+  # NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019 (reverse temporal, 1:N for fused communes)
+  xw[["NIS_MUNICIPALITY_2025__NIS_MUNICIPALITY_2019"]] <- .xw(
+    "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019",
     full_19_25$cd_refnis_new, full_19_25$cd_refnis_old, full_19_25$nature)
 
-  # NIS_COMMUNE_2025 -> NUTS 2027
-  xw[["NIS_COMMUNE_2025__NUTS3_2027"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "NUTS3_2027", m25, "cd_commune", "cd_nuts3_2027")
-  xw[["NIS_COMMUNE_2025__NUTS2_2027"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "NUTS2_2027", m25, "cd_commune", "cd_nuts2_2027")
-  xw[["NIS_COMMUNE_2025__NUTS1_2027"]] <- .pairs_xw(
-    "NIS_COMMUNE_2025", "NUTS1_2027", m25, "cd_commune", "cd_nuts1_2027")
+  # NIS_MUNICIPALITY_2025 -> NUTS 2027
+  xw[["NIS_MUNICIPALITY_2025__NUTS_DISTRICT_2027"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2027", m25, "cd_commune", "cd_nuts3_2027")
+  xw[["NIS_MUNICIPALITY_2025__NUTS_PROVINCE_2027"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NUTS_PROVINCE_2027", m25, "cd_commune", "cd_nuts2_2027")
+  xw[["NIS_MUNICIPALITY_2025__NUTS_REGION_2027"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2025", "NUTS_REGION_2027", m25, "cd_commune", "cd_nuts1_2027")
 
-  # ---- NIS_ARRONDISSEMENT_2019 -> * ----------------------------------------
+  # ---- NIS_DISTRICT_2019 -> * ----------------------------------------
   # Verviers (63000): 1:N for NUTS3 and INTERNAL (2 rows each)
-  xw[["NIS_ARRONDISSEMENT_2019__NUTS3_2021"]] <- .pairs_xw(
-    "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",              m19, "cd_arr", "cd_nuts3")
-  xw[["NIS_ARRONDISSEMENT_2019__INTERNAL_ARRONDISSEMENT"]] <- .pairs_xw(
-    "NIS_ARRONDISSEMENT_2019", "INTERNAL_ARRONDISSEMENT", m19, "cd_arr", "cd_arr_internal")
-  xw[["NIS_ARRONDISSEMENT_2019__NIS_PROVINCE_2019"]] <- .pairs_xw(
-    "NIS_ARRONDISSEMENT_2019", "NIS_PROVINCE_2019",       m19, "cd_arr", "cd_province")
+  xw[["NIS_DISTRICT_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",              m19, "cd_arr", "cd_nuts3")
+  xw[["NIS_DISTRICT_2019__NBB_DISTRICT_2021"]] <- .pairs_xw(
+    "NIS_DISTRICT_2019", "NBB_DISTRICT_2021", m19, "cd_arr", "cd_arr_internal")
+  xw[["NIS_DISTRICT_2019__NIS_PROVINCE_2019"]] <- .pairs_xw(
+    "NIS_DISTRICT_2019", "NIS_PROVINCE_2019",       m19, "cd_arr", "cd_province")
 
-  # ---- NIS_ARRONDISSEMENT_2025 -> * ----------------------------------------
-  xw[["NIS_ARRONDISSEMENT_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
-    "NIS_ARRONDISSEMENT_2025", "NIS_PROVINCE_2025",       m25, "cd_arr", "cd_province")
+  # ---- NIS_DISTRICT_2025 -> * ----------------------------------------
+  xw[["NIS_DISTRICT_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
+    "NIS_DISTRICT_2025", "NIS_PROVINCE_2025",       m25, "cd_arr", "cd_province")
 
   # ---- NIS_PROVINCE -> NIS_REGION (M:N: Brabant 20000 spans 3 regions) -----
   xw[["NIS_PROVINCE_2019__NIS_REGION_2019"]] <- .pairs_xw(
@@ -688,33 +688,33 @@ build_crosswalks <- function(communes, postal, nis_changes) {
     "NIS_PROVINCE_2025", "NIS_REGION_2025",       m25, "cd_province", "cd_region")
 
   # ---- NUTS 2021 hierarchy -------------------------------------------------
-  xw[["NUTS3_2021__NUTS2_2021"]] <- .pairs_xw(
-    "NUTS3_2021", "NUTS2_2021",              m19, "cd_nuts3", "cd_nuts2")
-  xw[["NUTS3_2021__INTERNAL_ARRONDISSEMENT"]] <- .pairs_xw(
-    "NUTS3_2021", "INTERNAL_ARRONDISSEMENT", m19, "cd_nuts3", "cd_arr_internal")
-  xw[["NUTS3_2021__NIS_ARRONDISSEMENT_2019"]] <- .pairs_xw(
-    "NUTS3_2021", "NIS_ARRONDISSEMENT_2019", m19, "cd_nuts3", "cd_arr")
-  xw[["NUTS2_2021__NUTS1_2021"]] <- .pairs_xw(
-    "NUTS2_2021", "NUTS1_2021", m19, "cd_nuts2", "cd_nuts1")
-  xw[["NUTS1_2021__NUTS0"]] <- .pairs_xw(
-    "NUTS1_2021", "NUTS0",      m19, "cd_nuts1", "cd_nuts0")
+  xw[["NUTS_DISTRICT_2021__NUTS_PROVINCE_2021"]] <- .pairs_xw(
+    "NUTS_DISTRICT_2021", "NUTS_PROVINCE_2021",              m19, "cd_nuts3", "cd_nuts2")
+  xw[["NUTS_DISTRICT_2021__NBB_DISTRICT_2021"]] <- .pairs_xw(
+    "NUTS_DISTRICT_2021", "NBB_DISTRICT_2021", m19, "cd_nuts3", "cd_arr_internal")
+  xw[["NUTS_DISTRICT_2021__NIS_DISTRICT_2019"]] <- .pairs_xw(
+    "NUTS_DISTRICT_2021", "NIS_DISTRICT_2019", m19, "cd_nuts3", "cd_arr")
+  xw[["NUTS_PROVINCE_2021__NUTS_REGION_2021"]] <- .pairs_xw(
+    "NUTS_PROVINCE_2021", "NUTS_REGION_2021", m19, "cd_nuts2", "cd_nuts1")
+  xw[["NUTS_REGION_2021__NUTS_COUNTRY"]] <- .pairs_xw(
+    "NUTS_REGION_2021", "NUTS_COUNTRY",      m19, "cd_nuts1", "cd_nuts0")
 
   # NUTS_LAU_2021 bidirectional
-  xw[["NUTS_LAU_2021__NIS_COMMUNE_2019"]] <- .pairs_xw(
-    "NUTS_LAU_2021", "NIS_COMMUNE_2019", m19, "cd_nuts_lau", "cd_commune")
-  xw[["NUTS_LAU_2021__NUTS3_2021"]] <- .pairs_xw(
-    "NUTS_LAU_2021", "NUTS3_2021",       m19, "cd_nuts_lau", "cd_nuts3")
+  xw[["NUTS_LAU_2021__NIS_MUNICIPALITY_2019"]] <- .pairs_xw(
+    "NUTS_LAU_2021", "NIS_MUNICIPALITY_2019", m19, "cd_nuts_lau", "cd_commune")
+  xw[["NUTS_LAU_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
+    "NUTS_LAU_2021", "NUTS_DISTRICT_2021",       m19, "cd_nuts_lau", "cd_nuts3")
 
-  xw[["INTERNAL_ARRONDISSEMENT__NUTS3_2021"]] <- .pairs_xw(
-    "INTERNAL_ARRONDISSEMENT", "NUTS3_2021", m19, "cd_arr_internal", "cd_nuts3")
+  xw[["NBB_DISTRICT_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
+    "NBB_DISTRICT_2021", "NUTS_DISTRICT_2021", m19, "cd_arr_internal", "cd_nuts3")
 
   # ---- NUTS 2027 hierarchy -------------------------------------------------
-  xw[["NUTS3_2027__NUTS2_2027"]] <- .pairs_xw(
-    "NUTS3_2027", "NUTS2_2027", m25, "cd_nuts3_2027", "cd_nuts2_2027")
-  xw[["NUTS2_2027__NUTS1_2027"]] <- .pairs_xw(
-    "NUTS2_2027", "NUTS1_2027", m25, "cd_nuts2_2027", "cd_nuts1_2027")
-  xw[["NUTS1_2027__NUTS0"]] <- .pairs_xw(
-    "NUTS1_2027", "NUTS0",      m25, "cd_nuts1_2027", "cd_nuts0_2027")
+  xw[["NUTS_DISTRICT_2027__NUTS_PROVINCE_2027"]] <- .pairs_xw(
+    "NUTS_DISTRICT_2027", "NUTS_PROVINCE_2027", m25, "cd_nuts3_2027", "cd_nuts2_2027")
+  xw[["NUTS_PROVINCE_2027__NUTS_REGION_2027"]] <- .pairs_xw(
+    "NUTS_PROVINCE_2027", "NUTS_REGION_2027", m25, "cd_nuts2_2027", "cd_nuts1_2027")
+  xw[["NUTS_REGION_2027__NUTS_COUNTRY"]] <- .pairs_xw(
+    "NUTS_REGION_2027", "NUTS_COUNTRY",      m25, "cd_nuts1_2027", "cd_nuts0_2027")
 
   # ---- NIS BEFORE_2019 (optional -- only when BEFORE_2019 slice is loaded) --
   if (has_b19) {
@@ -740,31 +740,31 @@ build_crosswalks <- function(communes, postal, nis_changes) {
     }
     full_b19_19 <- rbindlist(parts, use.names = TRUE)
 
-    xw[["NIS_COMMUNE_BEFORE_2019__NIS_COMMUNE_2019"]] <- .xw(
-      "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_MUNICIPALITY_2019"]] <- .xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019",
       full_b19_19$cd_refnis_old, full_b19_19$cd_refnis_new, full_b19_19$nature)
 
-    xw[["NIS_COMMUNE_BEFORE_2019__NIS_ARRONDISSEMENT_BEFORE_2019"]] <- .pairs_xw(
-      "NIS_COMMUNE_BEFORE_2019", "NIS_ARRONDISSEMENT_BEFORE_2019",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_DISTRICT_BEFORE_2019"]] <- .pairs_xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NIS_DISTRICT_BEFORE_2019",
       mb19, "cd_commune", "cd_arr")
-    xw[["NIS_COMMUNE_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"]] <- .pairs_xw(
-      "NIS_COMMUNE_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"]] <- .pairs_xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019",
       mb19, "cd_commune", "cd_province")
-    xw[["NIS_COMMUNE_BEFORE_2019__NIS_REGION_BEFORE_2019"]] <- .pairs_xw(
-      "NIS_COMMUNE_BEFORE_2019", "NIS_REGION_BEFORE_2019",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_REGION_BEFORE_2019"]] <- .pairs_xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NIS_REGION_BEFORE_2019",
       mb19, "cd_commune", "cd_region")
-    xw[["NIS_COMMUNE_BEFORE_2019__NUTS3_2021"]] <- .pairs_xw(
-      "NIS_COMMUNE_BEFORE_2019", "NUTS3_2021",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NUTS_DISTRICT_2021",
       mb19, "cd_commune", "cd_nuts3")
-    xw[["NIS_COMMUNE_BEFORE_2019__NUTS2_2021"]] <- .pairs_xw(
-      "NIS_COMMUNE_BEFORE_2019", "NUTS2_2021",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NUTS_PROVINCE_2021"]] <- .pairs_xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NUTS_PROVINCE_2021",
       mb19, "cd_commune", "cd_nuts2")
-    xw[["NIS_COMMUNE_BEFORE_2019__INTERNAL_ARRONDISSEMENT"]] <- .pairs_xw(
-      "NIS_COMMUNE_BEFORE_2019", "INTERNAL_ARRONDISSEMENT",
+    xw[["NIS_MUNICIPALITY_BEFORE_2019__NBB_DISTRICT_2021"]] <- .pairs_xw(
+      "NIS_MUNICIPALITY_BEFORE_2019", "NBB_DISTRICT_2021",
       mb19, "cd_commune", "cd_arr_internal")
 
-    xw[["NIS_ARRONDISSEMENT_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"]] <- .pairs_xw(
-      "NIS_ARRONDISSEMENT_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019",
+    xw[["NIS_DISTRICT_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"]] <- .pairs_xw(
+      "NIS_DISTRICT_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019",
       mb19, "cd_arr", "cd_province")
     xw[["NIS_PROVINCE_BEFORE_2019__NIS_REGION_BEFORE_2019"]] <- .pairs_xw(
       "NIS_PROVINCE_BEFORE_2019", "NIS_REGION_BEFORE_2019",

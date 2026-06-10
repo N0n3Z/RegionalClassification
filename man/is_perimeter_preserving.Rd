@@ -19,19 +19,21 @@ is_perimeter_preserving(from, to)
 \description{
 A conversion is perimeter-preserving when no edge along the (shortest) path
 has a `1:N` or `M:N` cardinality in the forward direction -- i.e. no source
-unit straddles two or more target units. Temporal edges (same system,
-different edition) are always considered perimeter-preserving.
+unit straddles two or more target units. Cardinality takes precedence over
+temporal classification: a backward temporal edge (e.g. 2025 -> 2019) has
+`1:N` cardinality and is therefore NOT perimeter-preserving.
 }
 \details{
 Typical results:
 \itemize{
-  \item \code{NIS_COMMUNE_2019 -> NUTS3_2021}: `TRUE`  (N:1, nesting)
-  \item \code{NIS_COMMUNE_2025 -> NUTS3_2021}: `FALSE` (1:N, fused communes
+  \item \code{NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021}: `TRUE`  (N:1, nesting)
+  \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021}: `FALSE` (1:N, fused communes
     straddle NUTS3 boundaries)
-  \item \code{NIS_COMMUNE_2019 -> NIS_COMMUNE_2025}: `TRUE`  (temporal)
+  \item \code{NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025}: `TRUE`  (forward temporal, N:1)
+  \item \code{NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019}: `FALSE` (backward temporal, 1:N)
 }
 }
 \examples{
-is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
-is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE
+is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")   # TRUE
+is_perimeter_preserving("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # FALSE
 }

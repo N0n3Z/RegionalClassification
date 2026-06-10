@@ -16,7 +16,7 @@
 #'
 #' @param dt         data.table (or data.frame, coerced automatically)
 #' @param code_col   Name of the column containing source codes
-#' @param to         Target classification (e.g. "NUTS3_2021")
+#' @param to         Target classification (e.g. "NUTS_DISTRICT_2021")
 #' @param master_data Output from build_master_table()
 #' @param from       Source classification. NULL = auto-detect from values.
 #' @param target_col Name of the new column to create. NULL = auto-generated.
@@ -37,11 +37,11 @@
 #'     commune = c(21004L, 11002L, 44021L), avg_salary = c(3200, 2900, 2700))
 #'
 #'   # Explicit source
-#'   convert_dataset(salaries, "commune", "NUTS3_2021", master_data,
-#'                   from = "NIS_COMMUNE_2019")
+#'   convert_dataset(salaries, "commune", "NUTS_DISTRICT_2021", master_data,
+#'                   from = "NIS_MUNICIPALITY_2019")
 #'
 #'   # Auto-detect source
-#'   convert_dataset(salaries, "commune", "NUTS3_2021", master_data)
+#'   convert_dataset(salaries, "commune", "NUTS_DISTRICT_2021", master_data)
 #' }
 #' @export
 convert_dataset <- function(
@@ -175,24 +175,24 @@ convert_dataset <- function(
 #' @keywords internal
 default_col_name <- function(classification) {
   mapping <- c(
-    NIS_COMMUNE_BEFORE_2019  = "cd_nis_before2019",
-    NIS_COMMUNE_2019         = "cd_nis2019",
-    NIS_COMMUNE_2025         = "cd_nis2025",
-    NIS_ARRONDISSEMENT_2019  = "cd_arr2019",
-    NIS_ARRONDISSEMENT_2025  = "cd_arr2025",
+    NIS_MUNICIPALITY_BEFORE_2019  = "cd_nis_before2019",
+    NIS_MUNICIPALITY_2019         = "cd_nis2019",
+    NIS_MUNICIPALITY_2025         = "cd_nis2025",
+    NIS_DISTRICT_2019  = "cd_arr2019",
+    NIS_DISTRICT_2025  = "cd_arr2025",
     NIS_PROVINCE_2019        = "cd_prov2019",
     NIS_PROVINCE_2025        = "cd_prov2025",
     NIS_REGION_2019          = "cd_reg2019",
     NIS_REGION_2025          = "cd_reg2025",
-    NUTS3_2021               = "cd_nuts3_2021",
-    NUTS3_2027               = "cd_nuts3_2027",
-    NUTS2_2021               = "cd_nuts2_2021",
-    NUTS2_2027               = "cd_nuts2_2027",
-    NUTS1_2021               = "cd_nuts1_2021",
-    NUTS1_2027               = "cd_nuts1_2027",
+    NUTS_DISTRICT_2021               = "cd_nuts3_2021",
+    NUTS_DISTRICT_2027               = "cd_nuts3_2027",
+    NUTS_PROVINCE_2021               = "cd_nuts2_2021",
+    NUTS_PROVINCE_2027               = "cd_nuts2_2027",
+    NUTS_REGION_2021               = "cd_nuts1_2021",
+    NUTS_REGION_2027               = "cd_nuts1_2027",
     NUTS_LAU_2021            = "cd_lau2021",
     POSTAL                   = "cd_postal",
-    INTERNAL_ARRONDISSEMENT  = "cd_arr_internal"
+    NBB_DISTRICT_2021  = "cd_arr_internal"
   )
   if (classification %in% names(mapping)) return(mapping[[classification]])
   paste0("cd_", tolower(classification))

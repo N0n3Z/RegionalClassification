@@ -9,8 +9,8 @@
 #'
 #' @param names Character vector of names to match
 #' @param target_classification Target classification to match against.
-#'   One of: "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", "POSTAL",
-#'   "NIS_ARRONDISSEMENT_2019", "NIS_ARRONDISSEMENT_2025", "NUTS3_2021"
+#'   One of: "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "POSTAL",
+#'   "NIS_DISTRICT_2019", "NIS_DISTRICT_2025", "NUTS_DISTRICT_2021"
 #' @param master_data Output from build_master_table()
 #' @param max_dist Maximum string distance for fuzzy matching (default 0.1 = 10\%)
 #' @param method Matching method: "osa" (default), "lv", "dl", "hamming",
@@ -23,10 +23,10 @@
 #'
 #'   # Match misspelled commune names
 #'   fuzzy_match_names(c("Bruxeles", "Antwerpn", "Liege"),
-#'                     "NIS_COMMUNE_2019", master_data)
+#'                     "NIS_MUNICIPALITY_2019", master_data)
 #'
 #'   # Match with looser threshold, prefer French names
-#'   fuzzy_match_names(c("Bxl", "Anv"), "NIS_COMMUNE_2019", master_data,
+#'   fuzzy_match_names(c("Bxl", "Anv"), "NIS_MUNICIPALITY_2019", master_data,
 #'                     max_dist = 0.5, language = "fr")
 #' }
 #' @export
@@ -67,7 +67,7 @@ fuzzy_match_names <- function(names, target_classification, master_data,
 #' a hardcoded switch over source-table columns.  Any classification that has
 #' at least one non-NA label (name_fr or name_nl) in the entities table is
 #' now supported automatically.  An abort is raised only when no labels are
-#' available (e.g. NUTS2, NUTS1, NUTS0 which carry no names).
+#' available (e.g. NUTS2, NUTS1, NUTS_COUNTRY which carry no names).
 #'
 #' @param target Normalized classification identifier
 #' @param md Master data
@@ -232,8 +232,8 @@ normalize_name <- function(name) {
 #' @export
 identify_from_names <- function(names, master_data,
                                 possible_classifications = c(
-                                  "POSTAL", "NIS_COMMUNE_2019", "NIS_COMMUNE_2025",
-                                  "NIS_ARRONDISSEMENT_2019", "NUTS3_2021"
+                                  "POSTAL", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025",
+                                  "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021"
                                 ),
                                 max_dist = 0.1,
                                 language = "both") {

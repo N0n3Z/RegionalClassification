@@ -36,7 +36,7 @@ res <- diagnose_classification(
   dt             = nuts3_data,
   code_col       = "nuts3",
   master_data    = master_data,
-  classification = "NUTS3_2021"
+  classification = "NUTS_DISTRICT_2021"
 )
 ```
 
@@ -47,7 +47,7 @@ Sortie console :
   CLASSIFICATION DIAGNOSTIC
 ================================================================
   Dataset    : 3 rows  |  column 'nuts3'
-  Reference  : NUTS3_2021  (44 codes)
+  Reference  : NUTS_DISTRICT_2021  (44 codes)
 ================================================================
   Coverage   : 2 / 44  [#-------------------]  4.5%
   Unknown    : 1 code(s) in dataset not in reference
@@ -78,7 +78,7 @@ dt_full <- data.table(
 )
 
 res_full <- diagnose_classification(dt_full, "nuts3", master_data,
-                                    classification = "NUTS3_2021")
+                                    classification = "NUTS_DISTRICT_2021")
 res_full$status  # "COMPLETE"
 res_full$n_missing  # 0
 ```
@@ -92,7 +92,7 @@ dt_dup <- data.table(
 )
 
 res_dup <- diagnose_classification(dt_dup, "nuts3", master_data,
-                                   classification = "NUTS3_2021",
+                                   classification = "NUTS_DISTRICT_2021",
                                    verbose = FALSE)
 res_dup$n_duplicates  # 1
 res_dup$status        # "INCOMPLETE_WITH_UNKNOWNS" ou "INCOMPLETE" selon les cas
@@ -121,17 +121,17 @@ Sortie console :
 ================================================================
   Classification              Match%   Cover%   Unknown%
   ----------------------------------------------------------
-  NIS_COMMUNE_2019            100.0%    0.9%       0.0%  <-- best
-  NIS_COMMUNE_BEFORE_2019      80.0%    0.7%      20.0%
-  NIS_COMMUNE_2025            100.0%    0.9%       0.0%
+  NIS_MUNICIPALITY_2019            100.0%    0.9%       0.0%  <-- best
+  NIS_MUNICIPALITY_BEFORE_2019      80.0%    0.7%      20.0%
+  NIS_MUNICIPALITY_2025            100.0%    0.9%       0.0%
   ...
-  Recommendation: NIS_COMMUNE_2019
+  Recommendation: NIS_MUNICIPALITY_2019
 ```
 
 Résultat retourné :
 
 ```{r detect-result}
-res_detect$recommendation      # "NIS_COMMUNE_2019"
+res_detect$recommendation      # "NIS_MUNICIPALITY_2019"
 res_detect$classification_type # "NIS_COMMUNE"
 res_detect$version             # "2019"
 res_detect$candidates          # data.table avec tous les scores
@@ -143,7 +143,7 @@ res_detect$candidates          # data.table avec tous les scores
 nuts27_data <- data.table(nuts = c("BE100", "BE261", "BE274"))
 
 res <- diagnose_classification(nuts27_data, "nuts", master_data)
-res$recommendation  # "NUTS3_2027"
+res$recommendation  # "NUTS_DISTRICT_2027"
 res$version         # "2027"
 ```
 
@@ -155,10 +155,10 @@ Variante légère qui retourne directement la classification la plus probable po
 
 ```{r detect-class}
 detect_classification(c(21004L, 11002L, 62063L), master_data)
-# [1] "NIS_COMMUNE_2019"
+# [1] "NIS_MUNICIPALITY_2019"
 
 detect_classification(c("BE100", "BE211", "BE332"), master_data)
-# [1] "NUTS3_2021"
+# [1] "NUTS_DISTRICT_2021"
 
 detect_classification(c(1000L, 2000L, 4000L), master_data)
 # [1] "POSTAL"
@@ -173,7 +173,7 @@ Associe des noms approchés (fautes de frappe, accents, abréviations) à des co
 ```{r fuzzy-basic}
 fuzzy_match_names(
   names    = c("Bruxeles", "Antwerpn", "Liege", "Vervirs"),
-  target   = "NIS_COMMUNE_2019",
+  target   = "NIS_MUNICIPALITY_2019",
   master_data,
   max_dist = 0.3,
   language = "both"   # "fr", "nl", ou "both"
@@ -205,7 +205,7 @@ fuzzy_match_names(
 # Codes NUTS3
 fuzzy_match_names(
   names   = c("Arr. Anvers", "Arr. Liège", "Arr. Namur"),
-  target  = "NUTS3_2021",
+  target  = "NUTS_DISTRICT_2021",
   master_data,
   max_dist = 0.4
 )
@@ -217,10 +217,10 @@ fuzzy_match_names(
 
 ```{r fuzzy-distance}
 # Correspondance stricte (fautes mineures seulement)
-fuzzy_match_names(c("Bruxells"), "NIS_COMMUNE_2019", master_data, max_dist = 0.1)
+fuzzy_match_names(c("Bruxells"), "NIS_MUNICIPALITY_2019", master_data, max_dist = 0.1)
 
 # Correspondance permissive (abréviations, noms partiels)
-fuzzy_match_names(c("Bxl", "Anv", "Lge"), "NIS_COMMUNE_2019", master_data,
+fuzzy_match_names(c("Bxl", "Anv", "Lge"), "NIS_MUNICIPALITY_2019", master_data,
                   max_dist = 0.5)
 ```
 
@@ -235,5 +235,5 @@ identify_from_names(
   names       = c("Bruxelles", "Antwerpen", "Gent", "Liège"),
   master_data
 )
-# Best match: NIS_COMMUNE_2019 (4/4 matched, avg distance 0.02)
+# Best match: NIS_MUNICIPALITY_2019 (4/4 matched, avg distance 0.02)
 ```

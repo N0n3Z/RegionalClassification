@@ -30,11 +30,11 @@ ambiguous (M:N) conversions a source code may appear in multiple rows.
 \examples{
 \donttest{
   master_data <- load_master_data()
-  get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
-  get_crosswalk("POSTAL", "NIS_COMMUNE_2019", master_data)
+  get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
+  get_crosswalk("POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 
   # With weights for the ambiguous Verviers split
-  get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data,
+  get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
                 weights = TRUE)
 }
 }

@@ -2,7 +2,7 @@ library(data.table)
 
 # -- Test E1: convert_codes avec vecteur vide ----------------------------------
 test_that("convert_codes returns empty data.table for empty input", {
-  result <- convert_codes(integer(0), CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, master_data)
+  result <- convert_codes(integer(0), CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(is.data.table(result))
   expect_equal(nrow(result), 0L)
 })
@@ -13,12 +13,12 @@ test_that("convert_codes handles all-NA input gracefully", {
   # Note: expect_warning(class=) in testthat <3.3 returns the condition, not the value.
   # Separate the warning assertion from the result capture to stay compatible.
   expect_warning(
-    convert_codes(c(NA_integer_, NA_integer_), CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021,
+    convert_codes(c(NA_integer_, NA_integer_), CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021,
                   master_data),
     class = "rcl_unmatched_codes"
   )
   result <- suppressWarnings(
-    convert_codes(c(NA_integer_, NA_integer_), CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021,
+    convert_codes(c(NA_integer_, NA_integer_), CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021,
                   master_data)
   )
   expect_true(is.data.table(result))
@@ -30,11 +30,11 @@ test_that("convert_codes handles all-NA input gracefully", {
 test_that("convert_codes returns NA in code_to for unknown codes", {
   # Unknown codes have no match by design: the rcl_unmatched_codes warning is expected.
   expect_warning(
-    convert_codes(c(99999L, 88888L), CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, master_data),
+    convert_codes(c(99999L, 88888L), CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data),
     class = "rcl_unmatched_codes"
   )
   result <- suppressWarnings(
-    convert_codes(c(99999L, 88888L), CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, master_data)
+    convert_codes(c(99999L, 88888L), CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
   )
   expect_true(is.data.table(result))
   expect_true(all(is.na(result$code_to)))
@@ -42,8 +42,8 @@ test_that("convert_codes returns NA in code_to for unknown codes", {
 
 # -- Test E4: coercition integer/character transparente ------------------------
 test_that("convert_codes accepts both integer and character codes", {
-  r_int  <- convert_codes(21004L,       CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, master_data)
-  r_chr  <- convert_codes("21004",      CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, master_data)
+  r_int  <- convert_codes(21004L,       CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
+  r_chr  <- convert_codes("21004",      CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
   # Both must resolve to the same NUTS3
   expect_equal(as.character(r_int$code_to), as.character(r_chr$code_to))
 })
@@ -59,21 +59,21 @@ test_that("detect_classification returns NULL for all-NA input", {
 })
 
 # -- Test E7: detect_classification codes NUTS3 -------------------------------
-test_that("detect_classification identifies NUTS3_2021 for 5-char BE codes", {
+test_that("detect_classification identifies NUTS_DISTRICT_2021 for 5-char BE codes", {
   result <- detect_classification(c("BE100", "BE211", "BE335"), master_data)
-  expect_equal(result, CLS_NUTS3_2021)
+  expect_equal(result, CLS_NUTS_DISTRICT_2021)
 })
 
-# -- Test E8: detect_classification codes NIS_COMMUNE_2019 --------------------
-test_that("detect_classification identifies NIS_COMMUNE_2019 for known commune codes", {
+# -- Test E8: detect_classification codes NIS_MUNICIPALITY_2019 --------------------
+test_that("detect_classification identifies NIS_MUNICIPALITY_2019 for known commune codes", {
   result <- detect_classification(c(21004L, 11002L, 62063L), master_data)
-  expect_equal(result, CLS_NIS_COMMUNE_2019)
+  expect_equal(result, CLS_NIS_MUNICIPALITY_2019)
 })
 
 # -- Test E9: convert_codes identite (from == to) -----------------------------
 test_that("convert_codes identity conversion returns input unchanged", {
   codes  <- c("BE100", "BE211")
-  result <- convert_codes(codes, CLS_NUTS3_2021, CLS_NUTS3_2021, master_data)
+  result <- convert_codes(codes, CLS_NUTS_DISTRICT_2021, CLS_NUTS_DISTRICT_2021, master_data)
   expect_equal(as.character(result$code_from), codes)
   expect_equal(as.character(result$code_to),   codes)
 })
@@ -92,12 +92,12 @@ test_that("normalize_classification_id errors for unrecognised identifiers", {
 
 # -- Test E11: identifiants canoniques valides -> retournes tels quels ---------
 test_that("normalize_classification_id accepts canonical identifiers", {
-  expect_equal(nbbbenuts:::normalize_classification_id(CLS_NIS_COMMUNE_2019),
-               CLS_NIS_COMMUNE_2019)
-  expect_equal(nbbbenuts:::normalize_classification_id("nis_commune_2019"),
-               CLS_NIS_COMMUNE_2019)
-  expect_equal(nbbbenuts:::normalize_classification_id(CLS_NUTS3_2021),
-               CLS_NUTS3_2021)
+  expect_equal(nbbbenuts:::normalize_classification_id(CLS_NIS_MUNICIPALITY_2019),
+               CLS_NIS_MUNICIPALITY_2019)
+  expect_equal(nbbbenuts:::normalize_classification_id("nis_municipality_2019"),
+               CLS_NIS_MUNICIPALITY_2019)
+  expect_equal(nbbbenuts:::normalize_classification_id(CLS_NUTS_DISTRICT_2021),
+               CLS_NUTS_DISTRICT_2021)
   expect_equal(nbbbenuts:::normalize_classification_id(CLS_POSTAL),
                CLS_POSTAL)
 })

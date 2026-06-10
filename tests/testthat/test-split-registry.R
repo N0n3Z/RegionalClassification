@@ -10,8 +10,8 @@ VERVIERS_WEIGHTS <- data.table(
 # -- Test SR1: register puis get retourne la meme table ------------------------
 test_that("register_split_weights / get_split_weights round-trip", {
   clear_split_weights()
-  register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, VERVIERS_WEIGHTS)
-  retrieved <- get_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021)
+  register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, VERVIERS_WEIGHTS)
+  retrieved <- get_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021)
   expect_true(is.data.table(retrieved))
   expect_equal(nrow(retrieved), 2L)
   expect_equal(sort(retrieved$code_to), c("BE335", "BE336"))
@@ -21,13 +21,13 @@ test_that("register_split_weights / get_split_weights round-trip", {
 # -- Test SR2: get retourne NULL si pas enregistre -----------------------------
 test_that("get_split_weights returns NULL when not registered", {
   clear_split_weights()
-  expect_null(get_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021))
+  expect_null(get_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021))
 })
 
 # -- Test SR3: list_split_weights retourne une data.table apres enregistrement -
 test_that("list_split_weights returns data.table with from/to/variable", {
   clear_split_weights()
-  register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, VERVIERS_WEIGHTS,
+  register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, VERVIERS_WEIGHTS,
                          variable = "population")
   lst <- list_split_weights()
   expect_true(is.data.table(lst))
@@ -45,17 +45,17 @@ test_that("list_split_weights returns invisible NULL when empty", {
 
 # -- Test SR5: clear_split_weights vide le registre ---------------------------
 test_that("clear_split_weights removes all registered weights", {
-  register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, VERVIERS_WEIGHTS)
+  register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, VERVIERS_WEIGHTS)
   clear_split_weights()
-  expect_null(get_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021))
+  expect_null(get_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021))
 })
 
 # -- Test SR6: plusieurs variables pour la meme paire -------------------------
 test_that("register_split_weights supports multiple variables per pair", {
   clear_split_weights()
-  register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021,
+  register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
                          VERVIERS_WEIGHTS, variable = "population")
-  register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021,
+  register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
                          VERVIERS_WEIGHTS, variable = "employment")
   lst <- list_split_weights()
   expect_equal(nrow(lst), 2L)
@@ -66,14 +66,14 @@ test_that("register_split_weights supports multiple variables per pair", {
 # -- Test SR7: split_ambiguous avec poids enregistres -------------------------
 test_that("split_ambiguous uses registered weights when weights=NULL", {
   clear_split_weights()
-  register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, VERVIERS_WEIGHTS)
+  register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, VERVIERS_WEIGHTS)
 
   dt <- data.table(arr_code = c(11000L, 63000L), total_wage = c(5e9, 1e9))
   result <- suppressMessages(
     split_ambiguous(dt, "arr_code",
                     value_cols  = "total_wage",
-                    from        = CLS_NIS_ARRONDISSEMENT_2019,
-                    to          = CLS_NUTS3_2021,
+                    from        = CLS_NIS_DISTRICT_2019,
+                    to          = CLS_NUTS_DISTRICT_2021,
                     master_data,
                     value_type  = "additive",
                     verbose     = FALSE)
@@ -88,7 +88,7 @@ test_that("split_ambiguous uses registered weights when weights=NULL", {
 # -- Test SR8: erreur rcl_invalid_input si weights_dt manque des colonnes ------
 test_that("register_split_weights raises rcl_invalid_input for bad weights_dt", {
   expect_error(
-    register_split_weights(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021,
+    register_split_weights(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
                            data.table(a = 1, b = 2)),
     class = "rcl_invalid_input"
   )
@@ -110,9 +110,9 @@ test_that("list_available_conversions returns a data.table with expected columns
 test_that("split_ambiguous finds weights anchored to primitive overlap edge", {
   clear_split_weights()
 
-  # Register weights for the primitive overlap edge (NIS_ARR_2019 -> NUTS3_2021)
+  # Register weights for the primitive overlap edge (NIS_ARR_2019 -> NUTS_DISTRICT_2021)
   register_split_weights(
-    CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021,
+    CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
     VERVIERS_WEIGHTS,
     variable = "population"
   )
@@ -120,12 +120,12 @@ test_that("split_ambiguous finds weights anchored to primitive overlap edge", {
   # Build a tiny dataset using NIS_ARR_2019 codes
   dt <- data.table(arr_code = c(63000L), total_wage = c(1e9))
 
-  # split_ambiguous on NIS_ARR_2019 -> NUTS3_2021 directly -- should use registry
+  # split_ambiguous on NIS_ARR_2019 -> NUTS_DISTRICT_2021 directly -- should use registry
   result_direct <- suppressMessages(
     split_ambiguous(dt, "arr_code",
                     value_cols  = "total_wage",
-                    from        = CLS_NIS_ARRONDISSEMENT_2019,
-                    to          = CLS_NUTS3_2021,
+                    from        = CLS_NIS_DISTRICT_2019,
+                    to          = CLS_NUTS_DISTRICT_2021,
                     master_data,
                     weights     = "population",
                     value_type  = "additive",
@@ -148,8 +148,8 @@ test_that("split_ambiguous falls back to equal weights when no registry entry ex
   result <- suppressWarnings(suppressMessages(
     split_ambiguous(dt, "arr_code",
                     value_cols  = "total_wage",
-                    from        = CLS_NIS_ARRONDISSEMENT_2019,
-                    to          = CLS_NUTS3_2021,
+                    from        = CLS_NIS_DISTRICT_2019,
+                    to          = CLS_NUTS_DISTRICT_2021,
                     master_data,
                     weights     = "population",  # requested but not registered
                     value_type  = "additive",

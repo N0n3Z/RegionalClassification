@@ -19,7 +19,7 @@ test_that("normalize_name strips accents and arrondissement prefix", {
 # -- Test F3: correspondance exacte retourne distance = 0 ---------------------
 test_that("fuzzy_match_names exact match returns distance 0", {
   skip_if_not_installed("stringdist")
-  result <- fuzzy_match_names("Anderlecht", CLS_NIS_COMMUNE_2019, master_data,
+  result <- fuzzy_match_names("Anderlecht", CLS_NIS_MUNICIPALITY_2019, master_data,
                                max_dist = 0.1, language = "fr")
   expect_equal(nrow(result), 1L)
   expect_equal(result$distance, 0)
@@ -29,7 +29,7 @@ test_that("fuzzy_match_names exact match returns distance 0", {
 # -- Test F4: resultat meme pour faute d'orthographe --------------------------
 test_that("fuzzy_match_names matches misspelled names below threshold", {
   skip_if_not_installed("stringdist")
-  result <- fuzzy_match_names(c("Bruxeles", "Antwerpn"), CLS_NIS_COMMUNE_2019, master_data,
+  result <- fuzzy_match_names(c("Bruxeles", "Antwerpn"), CLS_NIS_MUNICIPALITY_2019, master_data,
                                max_dist = 0.3, language = "both")
   expect_equal(nrow(result), 2L)
 })
@@ -42,10 +42,10 @@ test_that("identify_from_names returns one best match per input name", {
   expect_true("classification" %in% names(result))
 })
 
-# -- Test F6: resultat NIS_COMMUNE_2025 ---------------------------------------
-test_that("fuzzy_match_names works for NIS_COMMUNE_2025", {
+# -- Test F6: resultat NIS_MUNICIPALITY_2025 ---------------------------------------
+test_that("fuzzy_match_names works for NIS_MUNICIPALITY_2025", {
   skip_if_not_installed("stringdist")
-  result <- fuzzy_match_names(c("Gent", "Hasselt"), CLS_NIS_COMMUNE_2025, master_data,
+  result <- fuzzy_match_names(c("Gent", "Hasselt"), CLS_NIS_MUNICIPALITY_2025, master_data,
                                max_dist = 0.1, language = "nl")
   expect_equal(nrow(result), 2L)
   expect_true(all(result$is_confident))
@@ -57,7 +57,7 @@ test_that("identify_from_names warns rcl_unmatched_codes when no match in any cl
   # Use a completely nonsensical name with tight threshold
   expect_warning(
     identify_from_names("xzqy999", master_data,
-                        possible_classifications = CLS_NIS_COMMUNE_2019,
+                        possible_classifications = CLS_NIS_MUNICIPALITY_2019,
                         max_dist = 0.01),
     class = "rcl_unmatched_codes"
   )

@@ -7,8 +7,8 @@
 identify_from_names(
   names,
   master_data,
-  possible_classifications = c("POSTAL", "NIS_COMMUNE_2019", "NIS_COMMUNE_2025",
-    "NIS_ARRONDISSEMENT_2019", "NUTS3_2021"),
+  possible_classifications = c("POSTAL", "NIS_MUNICIPALITY_2019",
+    "NIS_MUNICIPALITY_2025", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021"),
   max_dist = 0.1,
   language = "both"
 )
