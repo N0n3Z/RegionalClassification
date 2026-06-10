@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # 02_build_master_table.R - Build the combined master classification table
 # ==============================================================================
 
@@ -91,10 +91,10 @@ build_master_table <- function(raw_data) {
   nis_changes <- parse_nis_changes(raw_data$REFNIS_CHANGE)
 
   # --- 2. Build NIS 2019 commune table with full hierarchy ---
-  comm_2019 <- build_nis_commune_table(nis_2019, version = "2019")
+  comm_2019 <- build_nis_commune_table(nis_2019, version = VER_2019)
 
   # --- 3. Build NIS 2025 commune table with full hierarchy ---
-  comm_2025 <- build_nis_commune_table(nis_2025, version = "2025")
+  comm_2025 <- build_nis_commune_table(nis_2025, version = VER_2025)
 
   # --- 4. Add NUTS 2021 to NIS 2019 communes ---
   nuts_comm  <- nuts_nis$communes[, .(cd_refnis, cd_nuts_lau, cd_nuts3)]
@@ -132,7 +132,7 @@ build_master_table <- function(raw_data) {
   if (!is.null(raw_data$REFNIS_BEFORE_2019)) {
     nis_before2019  <- parse_refnis_hierarchy(raw_data$REFNIS_BEFORE_2019,
                                               lang_col = "Langue")
-    comm_before2019 <- build_nis_commune_table(nis_before2019, version = "BEFORE_2019")
+    comm_before2019 <- build_nis_commune_table(nis_before2019, version = VER_BEFORE_2019)
 
     nuts_nis_pre2019 <- parse_nuts_nis_conversion(
       raw_data$CONVERSION_NIS2019_NUTS2021,
@@ -164,11 +164,11 @@ build_master_table <- function(raw_data) {
   # --- 6. Postal codes ---
   postal_map_2019 <- .extract_postal_map(raw_data$CONVERSION_POSTAL_NIS2019,
                                          label = "CONVERSION_POSTAL_NIS2019")
-  postal_map_2019[, nis_version := "2019"]
+  postal_map_2019[, nis_version := VER_2019]
 
   postal_map_2025 <- .extract_postal_map(raw_data$CONVERSION_POSTAL_NIS2025,
                                          label = "CONVERSION_POSTAL_NIS2025")
-  postal_map_2025[, nis_version := "2025"]
+  postal_map_2025[, nis_version := VER_2025]
 
   # --- 7. Build NIS 2025 -> NUTS 2027 mapping and enrich comm_2025 ---
   nuts2027_nis_parsed <- NULL
@@ -197,7 +197,7 @@ build_master_table <- function(raw_data) {
 
   # --- 8. NIS change mapping (2019 -> 2025) ---
   nis_change_map <- nis_changes[, .(cd_refnis_old, cd_refnis_new, nature)]
-  nis_change_map[, from_version := "2019"]
+  nis_change_map[, from_version := VER_2019]
 
   # --- 9. Unify into three flat tables ---
 
@@ -526,13 +526,13 @@ build_entities_table <- function(communes, postal) {
 build_crosswalks <- function(communes, postal, nis_changes) {
 
   # --- Version slices ---
-  m19  <- communes[nis_version == "2019"]
-  m25  <- communes[nis_version == "2025"]
-  mb19 <- communes[nis_version == "BEFORE_2019"]
+  m19  <- communes[nis_version == VER_2019]
+  m25  <- communes[nis_version == VER_2025]
+  mb19 <- communes[nis_version == VER_BEFORE_2019]
   has_b19 <- nrow(mb19) > 0L
 
-  p19 <- postal[nis_version == "2019"]
-  p25 <- postal[nis_version == "2025"]
+  p19 <- postal[nis_version == VER_2019]
+  p25 <- postal[nis_version == VER_2025]
 
   # --- Relation lookup (forward + auto-reversed from CONVERSION_GRAPH_EDGES) ---
   .rel <- local({
@@ -613,7 +613,7 @@ build_crosswalks <- function(communes, postal, nis_changes) {
     "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", m19, "cd_commune", "cd_arr_internal")
 
   # NIS_COMMUNE_2019 -> NIS_COMMUNE_2025 (temporal, with nature)
-  ch19 <- nis_changes[from_version == "2019",
+  ch19 <- nis_changes[from_version == VER_2019,
                        .(cd_refnis_old, cd_refnis_new, nature)]
   unchanged_19 <- setdiff(unique(m19$cd_commune), ch19$cd_refnis_old)
   full_19_25 <- rbindlist(list(
@@ -640,7 +640,7 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   direct_25_n3  <- unique(m25[!is.na(cd_nuts3), .(cd_commune, cd_nuts3)])
   na25_communes <- m25[is.na(cd_nuts3), unique(cd_commune)]
   if (length(na25_communes) > 0L) {
-    ch_for_na  <- nis_changes[from_version == "2019" & cd_refnis_new %in% na25_communes,
+    ch_for_na  <- nis_changes[from_version == VER_2019 & cd_refnis_new %in% na25_communes,
                                .(cd_refnis_old, cd_refnis_new)]
     lkp19_n3   <- unique(m19[, .(cd_commune, cd_nuts3)])
     expanded25 <- merge(ch_for_na, lkp19_n3,
@@ -718,7 +718,7 @@ build_crosswalks <- function(communes, postal, nis_changes) {
 
   # ---- NIS BEFORE_2019 (optional -- only when BEFORE_2019 slice is loaded) --
   if (has_b19) {
-    ch_b19 <- nis_changes[from_version == "BEFORE_2019",
+    ch_b19 <- nis_changes[from_version == VER_BEFORE_2019,
                            .(cd_refnis_old, cd_refnis_new, nature)]
     unchanged_b19 <- intersect(unique(mb19$cd_commune), unique(m19$cd_commune))
 
