@@ -35,7 +35,7 @@ test_that("visualize_hierarchy runs without error for NIS_2019", {
 # -- Test M6: master_data invalide -> rcl_invalid_input -------------------------
 test_that("convert_codes raises rcl_invalid_input for non-list master_data", {
   expect_error(
-    convert_codes(21004L, "NIS_COMMUNE_2019", "NUTS3_2021", "not_a_list"),
+    convert_codes(21004L, CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, "not_a_list"),
     class = "rcl_invalid_input"
   )
 })
@@ -44,7 +44,7 @@ test_that("convert_codes raises rcl_invalid_input for non-list master_data", {
 test_that("convert_codes raises rcl_data_missing when communes table missing", {
   bad_md <- list(postal = data.table(), nis_changes = data.table())
   expect_error(
-    convert_codes(21004L, "NIS_COMMUNE_2019", "NUTS3_2021", bad_md),
+    convert_codes(21004L, CLS_NIS_COMMUNE_2019, CLS_NUTS3_2021, bad_md),
     class = "rcl_data_missing"
   )
 })

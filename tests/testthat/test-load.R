@@ -18,7 +18,7 @@ test_that("load_master_data communes has 2019, 2025, and BEFORE_2019 versions", 
 test_that("communes 2019 has all required columns", {
   cols_required <- c("cd_commune", "cd_arr", "cd_province", "cd_region",
                      "cd_nuts3", "nis_version")
-  comm19 <- master_data$communes[nis_version == "2019"]
+  comm19 <- master_data$communes[nis_version == VER_2019]
   expect_true(nrow(comm19) > 0L)
   expect_true(all(cols_required %in% names(comm19)))
 })
@@ -46,13 +46,13 @@ test_that("load_master_data raises rcl_data_missing for non-existent dir", {
 
 # -- Test L7: NIS 2019 a >= 500 communes (Belgique) ----------------------------
 test_that("communes 2019 has at least 500 records (Belgian communes)", {
-  comm19 <- master_data$communes[nis_version == "2019"]
+  comm19 <- master_data$communes[nis_version == VER_2019]
   expect_gte(nrow(comm19), 500L)
 })
 
 # -- Test L8: toutes les regions belges sont presentes -------------------------
 test_that("communes 2019 contains all three Belgian regions", {
-  regions <- unique(master_data$communes[nis_version == "2019", cd_region])
+  regions <- unique(master_data$communes[nis_version == VER_2019, cd_region])
   expect_true(2000L %in% regions || "2000" %in% as.character(regions))  # Wallonie
   expect_true(3000L %in% regions || "3000" %in% as.character(regions))  # Flandre
   expect_true(4000L %in% regions || "4000" %in% as.character(regions))  # Bruxelles

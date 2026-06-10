@@ -26,9 +26,8 @@ test_that("rebase_series sums values for fused communes", {
     period_col  = "year",
     code_col    = "commune",
     value_cols  = "population",
-    version_map = list("NIS_COMMUNE_2019" = 2022L,
-                       "NIS_COMMUNE_2025" = 2025L),
-    to          = "NIS_COMMUNE_2025",
+    version_map = setNames(list(2022L, 2025L), c(CLS_NIS_COMMUNE_2019, CLS_NIS_COMMUNE_2025)),
+    to          = CLS_NIS_COMMUNE_2025,
     master_data = master_data
   )
   expect_true(is.data.table(result))
@@ -45,8 +44,8 @@ test_that("rebase_series returns data unchanged when source == target", {
     period_col  = "year",
     code_col    = "commune",
     value_cols  = "pop",
-    version_map = list("NIS_COMMUNE_2025" = 2025L),
-    to          = "NIS_COMMUNE_2025",
+    version_map = setNames(list(2025L), CLS_NIS_COMMUNE_2025),
+    to          = CLS_NIS_COMMUNE_2025,
     master_data = master_data
   )
   expect_equal(nrow(result), 1L)
@@ -60,9 +59,8 @@ test_that("rebase_series preserves 2025 values and only converts 2022 chunk", {
     period_col  = "year",
     code_col    = "commune",
     value_cols  = "population",
-    version_map = list("NIS_COMMUNE_2019" = 2022L,
-                       "NIS_COMMUNE_2025" = 2025L),
-    to          = "NIS_COMMUNE_2025",
+    version_map = setNames(list(2022L, 2025L), c(CLS_NIS_COMMUNE_2019, CLS_NIS_COMMUNE_2025)),
+    to          = CLS_NIS_COMMUNE_2025,
     master_data = master_data
   )
   expect_equal(result[year == 2025L & commune == "11002", population], 28000)
@@ -82,8 +80,8 @@ test_that("rebase_series aggregates multiple value columns", {
     period_col  = "year",
     code_col    = "commune",
     value_cols  = c("pop", "empl"),
-    version_map = list("NIS_COMMUNE_2019" = 2022L),
-    to          = "NIS_COMMUNE_2025",
+    version_map = setNames(list(2022L), CLS_NIS_COMMUNE_2019),
+    to          = CLS_NIS_COMMUNE_2025,
     master_data = master_data
   )
   expect_equal(result[commune == "11002", pop],  26500)
@@ -102,8 +100,8 @@ test_that("rebase_series respects custom fun argument", {
     period_col  = "year",
     code_col    = "commune",
     value_cols  = "rate",
-    version_map = list("NIS_COMMUNE_2019" = 2022L),
-    to          = "NIS_COMMUNE_2025",
+    version_map = setNames(list(2022L), CLS_NIS_COMMUNE_2019),
+    to          = CLS_NIS_COMMUNE_2025,
     master_data = master_data,
     fun         = mean
   )
@@ -119,8 +117,8 @@ test_that("rebase_series warns and drops uncovered periods", {
       period_col  = "year",
       code_col    = "commune",
       value_cols  = "pop",
-      version_map = list("NIS_COMMUNE_2019" = 2022L),
-      to          = "NIS_COMMUNE_2025",
+      version_map = setNames(list(2022L), CLS_NIS_COMMUNE_2019),
+      to          = CLS_NIS_COMMUNE_2025,
       master_data = master_data
     ),
     class = "rcl_missing_periods"
@@ -135,7 +133,7 @@ test_that("rebase_series errors for invalid classification in version_map", {
   expect_error(
     rebase_series(data, "year", "commune", "pop",
                   version_map = list("MAUVAISE_CLASSIF" = 2022L),
-                  to = "NIS_COMMUNE_2025",
+                  to = CLS_NIS_COMMUNE_2025,
                   master_data = master_data),
     class = "rcl_invalid_classification"
   )
@@ -146,8 +144,8 @@ test_that("rebase_series errors when column not found in data", {
   data <- data.table(year = 2022L, commune = 21004L, pop = 1)
   expect_error(
     rebase_series(data, "year", "commune", "INEXISTANT",
-                  version_map = list("NIS_COMMUNE_2019" = 2022L),
-                  to = "NIS_COMMUNE_2025",
+                  version_map = setNames(list(2022L), CLS_NIS_COMMUNE_2019),
+                  to = CLS_NIS_COMMUNE_2025,
                   master_data = master_data),
     class = "rcl_invalid_input"
   )
@@ -161,8 +159,8 @@ test_that("rebase_series with split=NULL replicates split values and warns", {
       period_col  = "year",
       code_col    = "arr",
       value_cols  = "pop",
-      version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-      to          = "NUTS3_2021",
+      version_map = setNames(list(2022L), CLS_NIS_ARRONDISSEMENT_2019),
+      to          = CLS_NUTS3_2021,
       master_data = master_data,
       split       = NULL
     ),
@@ -182,8 +180,8 @@ test_that("rebase_series split='population' falls back to equal weights with war
       period_col  = "year",
       code_col    = "arr",
       value_cols  = "pop",
-      version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-      to          = "NUTS3_2021",
+      version_map = setNames(list(2022L), CLS_NIS_ARRONDISSEMENT_2019),
+      to          = CLS_NUTS3_2021,
       master_data = master_data,
       split       = "population"
     ),
@@ -198,8 +196,8 @@ test_that("rebase_series split='population' falls back to equal weights with war
 test_that("rebase_series uses registered population weights for splits", {
   clear_split_weights()
   register_split_weights(
-    from       = "NIS_ARRONDISSEMENT_2019",
-    to         = "NUTS3_2021",
+    from       = CLS_NIS_ARRONDISSEMENT_2019,
+    to         = CLS_NUTS3_2021,
     weights_dt = data.table(
       code_from = c(63000L, 63000L),
       code_to   = c("BE335", "BE336"),
@@ -212,8 +210,8 @@ test_that("rebase_series uses registered population weights for splits", {
     period_col  = "year",
     code_col    = "arr",
     value_cols  = "pop",
-    version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-    to          = "NUTS3_2021",
+    version_map = setNames(list(2022L), CLS_NIS_ARRONDISSEMENT_2019),
+    to          = CLS_NUTS3_2021,
     master_data = master_data,
     split       = "population"
   )
@@ -234,8 +232,8 @@ test_that("rebase_series accepts explicit weight data.table for splits", {
     period_col  = "year",
     code_col    = "arr",
     value_cols  = "pop",
-    version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-    to          = "NUTS3_2021",
+    version_map = setNames(list(2022L), CLS_NIS_ARRONDISSEMENT_2019),
+    to          = CLS_NUTS3_2021,
     master_data = master_data,
     split       = w
   )
@@ -250,9 +248,8 @@ test_that("rebase_series output contains exactly period, code, value columns", {
     period_col  = "year",
     code_col    = "commune",
     value_cols  = "population",
-    version_map = list("NIS_COMMUNE_2019" = 2022L,
-                       "NIS_COMMUNE_2025" = 2025L),
-    to          = "NIS_COMMUNE_2025",
+    version_map = setNames(list(2022L, 2025L), c(CLS_NIS_COMMUNE_2019, CLS_NIS_COMMUNE_2025)),
+    to          = CLS_NIS_COMMUNE_2025,
     master_data = master_data
   )
   expect_equal(sort(names(result)), sort(c("year", "commune", "population")))
@@ -262,7 +259,7 @@ test_that("rebase_series output contains exactly period, code, value columns", {
 
 # -- Test T1: template has correct structure for ambiguous pair ----------------
 test_that("split_weights_template returns correct structure for ambiguous pair", {
-  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  tpl <- split_weights_template(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, master_data)
   expect_true(is.data.table(tpl))
   expect_equal(sort(names(tpl)), sort(c("code_from", "code_to", "weight")))
   expect_true(is.character(tpl$code_from))
@@ -272,7 +269,7 @@ test_that("split_weights_template returns correct structure for ambiguous pair",
 
 # -- Test T2: template only contains ambiguous (1:N) codes --------------------
 test_that("split_weights_template only includes codes that split into multiple targets", {
-  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  tpl <- split_weights_template(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, master_data)
   # All codes in the template must appear more than once (each maps to >=2 targets)
   counts <- tpl[, .N, by = code_from]
   expect_true(all(counts$N >= 2L))
@@ -280,14 +277,14 @@ test_that("split_weights_template only includes codes that split into multiple t
 
 # -- Test T3: equal weights initialised and sum to 1 per source code -----------
 test_that("split_weights_template initialises equal weights summing to 1", {
-  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  tpl <- split_weights_template(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, master_data)
   weight_sums <- tpl[, .(total = sum(weight)), by = code_from]
   expect_true(all(abs(weight_sums$total - 1) < 1e-9))
 })
 
 # -- Test T4: Verviers (63000) is present with 2 targets ----------------------
 test_that("split_weights_template includes Verviers arrondissement with two NUTS3 codes", {
-  tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+  tpl <- split_weights_template(CLS_NIS_ARRONDISSEMENT_2019, CLS_NUTS3_2021, master_data)
   verviers <- tpl[code_from == "63000"]
   expect_equal(nrow(verviers), 2L)
   expect_true("BE335" %in% verviers$code_to)
@@ -298,7 +295,7 @@ test_that("split_weights_template includes Verviers arrondissement with two NUTS
 # -- Test T5: non-ambiguous pair returns empty table with message --------------
 test_that("split_weights_template returns empty table when no ambiguous codes exist", {
   expect_message(
-    tpl <- split_weights_template("NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data),
+    tpl <- split_weights_template(CLS_NIS_COMMUNE_2019, CLS_NIS_ARRONDISSEMENT_2019, master_data),
     regexp = "no template needed"
   )
   expect_true(is.data.table(tpl))
@@ -309,7 +306,7 @@ test_that("split_weights_template returns empty table when no ambiguous codes ex
 # -- Test T6: errors for invalid classification --------------------------------
 test_that("split_weights_template errors for invalid classification", {
   expect_error(
-    split_weights_template("MAUVAISE_CLASSIF", "NUTS3_2021", master_data),
+    split_weights_template("MAUVAISE_CLASSIF", CLS_NUTS3_2021, master_data),
     class = "rcl_invalid_classification"
   )
 })
@@ -326,8 +323,8 @@ test_that("rebase_series replicates ratio values unchanged for 1:N splits", {
     period_col  = "year",
     code_col    = "arr",
     value_cols  = "rate",
-    version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-    to          = "NUTS3_2021",
+    version_map = setNames(list(2022L), CLS_NIS_ARRONDISSEMENT_2019),
+    to          = CLS_NUTS3_2021,
     master_data = master_data,
     value_type  = "ratio"
   ))
@@ -349,8 +346,8 @@ test_that("rebase_series averages ratio values for N:1 merges with fun=mean", {
       period_col  = "year",
       code_col    = "commune",
       value_cols  = "rate",
-      version_map = list("NIS_COMMUNE_2019" = 2022L),
-      to          = "NIS_COMMUNE_2025",
+      version_map = setNames(list(2022L), CLS_NIS_COMMUNE_2019),
+      to          = CLS_NIS_COMMUNE_2025,
       master_data = master_data,
       fun         = mean,
       value_type  = "ratio"
@@ -368,8 +365,8 @@ test_that("rebase_series warns when value_type='ratio' combined with fun=sum", {
       period_col  = "year",
       code_col    = "commune",
       value_cols  = "rate",
-      version_map = list("NIS_COMMUNE_2019" = 2022L),
-      to          = "NIS_COMMUNE_2025",
+      version_map = setNames(list(2022L), CLS_NIS_COMMUNE_2019),
+      to          = CLS_NIS_COMMUNE_2025,
       master_data = master_data,
       value_type  = "ratio"
     ),

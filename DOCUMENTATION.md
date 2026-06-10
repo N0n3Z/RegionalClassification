@@ -81,7 +81,7 @@ get_all_classification_nodes()
 | `NIS_ARRONDISSEMENT_2025`         | NIS      | arrondissement | 2025        | int   |
 | `NIS_PROVINCE_2025`               | NIS      | province       | 2025        | int   |
 | `NIS_REGION_2025`                 | NIS      | region         | 2025        | int   |
-| `NUTS_LAU_2021`                   | NUTS     | lau            | 2021        | chr   |
+| `NUTS_LAU_2021`                   | NUTS     | lau            | 2021        | chr   | Bijection 1:1 avec `NIS_COMMUNE_2019` en Belgique (meme territoire, codage Eurostat). Niveau LAU de la hierarchie NUTS (LAU < NUTS3 < ... < NUTS0). |
 | `NUTS3_2021`                      | NUTS     | nuts3          | 2021        | chr   |
 | `NUTS2_2021`                      | NUTS     | nuts2          | 2021        | chr   |
 | `NUTS1_2021`                      | NUTS     | nuts1          | 2021        | chr   |

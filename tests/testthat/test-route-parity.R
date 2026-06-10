@@ -33,18 +33,18 @@ test_that("every simple conversion in the matrix is executable (graph <-> execut
 
 # -- Multi-hop NUTS aggregation: previously raised rcl_no_route ----------------
 test_that("NUTS3_2021 -> NUTS1_2021 is executable and matches manual chaining", {
-  r_multi <- convert_codes("BE211", "NUTS3_2021", "NUTS1_2021", master_data)
+  r_multi <- convert_codes("BE211", CLS_NUTS3_2021, CLS_NUTS1_2021, master_data)
   expect_equal(nrow(r_multi), 1L)
   expect_false(is.na(r_multi$code_to))
 
   # Composing through the executor must equal chaining the single hops by hand.
-  r_n2    <- convert_codes("BE211", "NUTS3_2021", "NUTS2_2021", master_data)
-  r_chain <- convert_codes(r_n2$code_to, "NUTS2_2021", "NUTS1_2021", master_data)
+  r_n2    <- convert_codes("BE211", CLS_NUTS3_2021, CLS_NUTS2_2021, master_data)
+  r_chain <- convert_codes(r_n2$code_to, CLS_NUTS2_2021, CLS_NUTS1_2021, master_data)
   expect_equal(r_multi$code_to, r_chain$code_to)
 })
 
 test_that("NUTS3_2021 -> NUTS0 aggregates all the way to country level", {
-  r <- convert_codes(c("BE211", "BE100", "BE335"), "NUTS3_2021", "NUTS0", master_data)
+  r <- convert_codes(c("BE211", "BE100", "BE335"), CLS_NUTS3_2021, CLS_NUTS0, master_data)
   expect_equal(nrow(r), 3L)
   expect_true(all(r$code_to == "BE"))
 })
@@ -53,27 +53,27 @@ test_that("NUTS3_2021 -> NUTS0 aggregates all the way to country level", {
 test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is M:N (Brabant ambiguity)", {
   # Non-Brabant province: 1 row, correct region, but requires allow_ambiguous
   # because the graph declares province->region as M:N.
-  r <- convert_codes(10000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data,
+  r <- convert_codes(10000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data,
                      allow_ambiguous = TRUE)
   expect_equal(nrow(r), 1L)
   expect_equal(r$code_to, 2000L)
 
   # Brabant (20000) correctly returns 3 rows: Brussels, Flemish, Walloon
-  r2 <- convert_codes(20000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data,
+  r2 <- convert_codes(20000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data,
                       allow_ambiguous = TRUE)
   expect_equal(nrow(r2), 3L)
   expect_true(all(c(2000L, 3000L, 4000L) %in% r2$code_to))
 
   # Without allow_ambiguous: rcl_ambiguous_conversion
   expect_error(
-    convert_codes(10000L, "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data),
+    convert_codes(10000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data),
     class = "rcl_ambiguous_conversion"
   )
 })
 
 # -- POSTAL multi-hop now flows through the generic composer -------------------
 test_that("POSTAL -> NUTS3_2027 still works after removing the POSTAL special case", {
-  r <- convert_codes(c(1000L, 2000L), "POSTAL", "NUTS3_2027", master_data)
+  r <- convert_codes(c(1000L, 2000L), CLS_POSTAL, CLS_NUTS3_2027, master_data)
   expect_equal(nrow(r), 2L)
   expect_true(all(!is.na(r$code_to)))
 })
