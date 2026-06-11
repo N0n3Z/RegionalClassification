@@ -1,5 +1,42 @@
 # nbbbenuts (development version)
 
+## Breaking changes
+
+* **Classification IDs renamed** to the `SYSTEM_LEVEL_VERSION` convention.
+  All 14 identifiers have changed; update any hard-coded strings in your code:
+
+  | Old identifier | New identifier |
+  |----------------|----------------|
+  | `NIS_COMMUNE_2019` | `NIS_MUNICIPALITY_2019` |
+  | `NIS_COMMUNE_2025` | `NIS_MUNICIPALITY_2025` |
+  | `NIS_COMMUNE_BEFORE_2019` | `NIS_MUNICIPALITY_BEFORE_2019` |
+  | `NIS_ARRONDISSEMENT_2019` | `NIS_DISTRICT_2019` |
+  | `NIS_ARRONDISSEMENT_2025` | `NIS_DISTRICT_2025` |
+  | `NIS_ARRONDISSEMENT_BEFORE_2019` | `NIS_DISTRICT_BEFORE_2019` |
+  | `NIS_PROVINCE_2019` | *(unchanged)* |
+  | `NIS_REGION_2019` | *(unchanged)* |
+  | `NUTS_LAU_2021` | `NUTS_MUNICIPALITY_2021` |
+  | `NUTS3_2021` | `NUTS_DISTRICT_2021` |
+  | `NUTS2_2021` | `NUTS_PROVINCE_2021` |
+  | `NUTS1_2021` | `NUTS_REGION_2021` |
+  | `NUTS3_2027` | `NUTS_DISTRICT_2027` |
+  | `NUTS2_2027` | `NUTS_PROVINCE_2027` |
+  | `NUTS1_2027` | `NUTS_REGION_2027` |
+  | `NUTS0` | `NUTS_COUNTRY` |
+  | `INTERNAL_ARRONDISSEMENT` | `NBB_DISTRICT_2021` |
+
+  `CLS_*` constants are provided as the recommended replacement for all
+  hard-coded strings (e.g. `CLS_NIS_MUNICIPALITY_2019` instead of
+  `"NIS_MUNICIPALITY_2019"`).
+
+* **`level` field values** in `CLASSIFICATION_NODES` now follow the same
+  vocabulary (e.g. `"municipality"` instead of `"commune"`, `"district"`
+  instead of `"arrondissement"`). Code that inspects `nom_level()` or
+  `CLASSIFICATION_NODES[[id]]$level` directly must be updated.
+
+* **`NBB_DISTRICT_2021`** system field changed from `"INTERNAL"` to `"NBB"`.
+  `nomenclature("INTERNAL", ...)` no longer works; use `nomenclature("NBB", "district", "2021")`.
+
 ## New features
 
 * **Crosswalks engine** (`get_crosswalk()`, `list_crosswalks()`): generates
@@ -22,8 +59,12 @@
   now include a `nature` column (`UNCHANGED`, `FUSION`, `CHANGE_DSTR`,
   `CHANGE_PROV`) that explains how each commune changed between editions.
 * **Classification registry** (`CLASSIFICATION_NODES`, `R/00b_registry.R`):
-  a 22-node structured registry that is now the single source of truth for
+  a 23-node structured registry that is now the single source of truth for
   system/level/version/code_type metadata, replacing ad-hoc string parsing.
+* **`NIS_COUNTRY`** (`CLS_NIS_COUNTRY`): new country-level node for the NIS
+  system (code `1000L`, source: Statbel REFNIS "REALM" / 01000 / ROYAUME / HET RIJK).
+  Unversioned; aggregates `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, and
+  `NIS_REGION_2025`. Symmetric with `NUTS_COUNTRY`.
 * **Golden-fixture test** (`tests/testthat/test-crosswalks-golden.R`):
   crosswalk content is pinned against a pre-built fixture
   (`fixtures/golden_crosswalks.rds`) to detect regressions in code mapping

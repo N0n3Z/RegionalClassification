@@ -346,7 +346,7 @@ The return value is an invisible list with `coverage_rate`, `n_missing`,
 
 ```{r}
 diagnose_classification(nuts3_data, "nuts3", master_data)
-# Ranks all 22 classifications by match rate and recommends the best one.
+# Ranks all 23 classifications by match rate and recommends the best one.
 ```
 
 ---

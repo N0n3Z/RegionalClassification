@@ -6,7 +6,7 @@ library(data.table)
 # CLASSIFICATION_REGISTRY (R/00_config.R) is a human-readable catalogue of
 # classification *systems* (NIS, NUTS, POSTAL, NBB) with their declared
 # versions and levels.  CLASSIFICATION_NODES (R/00b_registry.R) is the runtime
-# registry of individual classification *nodes* (22 identifiers).
+# registry of individual classification *nodes* (23 identifiers).
 #
 # These tests assert that the two sources of truth are mutually consistent:
 #   RC1  Every system used by a node is declared in CLASSIFICATION_REGISTRY.
