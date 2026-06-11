@@ -45,7 +45,7 @@
 #'
 #' | Canonical identifier | Description                            |
 #' |----------------------|----------------------------------------|
-#' | `NUTS_LAU_2021`      | Local Administrative Units (2021) -- in Belgium, bijection 1:1 with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
+#' | `NUTS_MUNICIPALITY_2021`      | Local Administrative Units (2021) -- in Belgium, bijection 1:1 with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
 #' | `NUTS_DISTRICT_2021`         | NUTS level 3 (2021)                    |
 #' | `NUTS_PROVINCE_2021`         | NUTS level 2 (2021)                    |
 #' | `NUTS_REGION_2021`         | NUTS level 1 (2021)                    |
@@ -81,7 +81,7 @@
 #' | `NIS_DISTRICT_2019`     | `NIS_PROVINCE_2019`              | (y) N:1  |
 #' | `NIS_PROVINCE_2019`           | `NIS_REGION_2019`                | (!) M:N  |
 #' | `NIS_MUNICIPALITY_2019`            | `NIS_MUNICIPALITY_2025`               | (y) N:1  |
-#' | `NIS_MUNICIPALITY_2019`            | `NUTS_LAU_2021`                  | (y) 1:1  |
+#' | `NIS_MUNICIPALITY_2019`            | `NUTS_MUNICIPALITY_2021`                  | (y) 1:1  |
 #' | `NIS_MUNICIPALITY_2019`            | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 #' | `NIS_DISTRICT_2019`     | `NUTS_DISTRICT_2021`                     | (!) 1:N  |
 #' | `NIS_DISTRICT_2019`     | `NBB_DISTRICT_2021`        | (!) 1:N  |
@@ -92,7 +92,7 @@
 #' | `NIS_MUNICIPALITY_2025`            | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 #' | `NIS_MUNICIPALITY_2025`            | `NUTS_PROVINCE_2027`                     | (y) N:1  |
 #' | `NIS_MUNICIPALITY_2025`            | `NUTS_REGION_2027`                     | (y) N:1  |
-#' | `NUTS_LAU_2021`               | `NUTS_DISTRICT_2021`                     | (y) N:1  |
+#' | `NUTS_MUNICIPALITY_2021`               | `NUTS_DISTRICT_2021`                     | (y) N:1  |
 #' | `NUTS_DISTRICT_2021`                  | `NUTS_PROVINCE_2021`                     | (y) N:1  |
 #' | `NUTS_PROVINCE_2021`                  | `NUTS_REGION_2021`                     | (y) N:1  |
 #' | `NUTS_REGION_2021`                  | `NUTS_COUNTRY`                          | (y) N:1  |

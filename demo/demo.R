@@ -34,7 +34,7 @@ print_conversion_check("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
 # Simple conversion: YES
 # Perimeter-preserving: YES
 # Perimeter relations: identity -> nesting
-# Path: NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021 -> NUTS_DISTRICT_2021
+# Path: NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021 -> NUTS_DISTRICT_2021
 
 print_conversion_check("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 # Simple conversion: NO
@@ -501,7 +501,7 @@ visualize_hierarchy("NIS_2019", master_data)
 # Chemin de conversion detaille avec semantique de perimetre
 check_conversion_path("POSTAL", "NUTS_DISTRICT_2021")
 # $is_simple          TRUE
-# $path               "POSTAL -> NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021 -> NUTS_DISTRICT_2021"
+# $path               "POSTAL -> NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021 -> NUTS_DISTRICT_2021"
 # $perimeter_status   "preserving"
 # $straddle_free      TRUE
 

@@ -159,18 +159,15 @@ CLASSIFICATION_NODES <- list(
   # ---- NUTS 2021 -------------------------------------------------------------
   # version_filter = VER_2019: NIS 2019 communes carry the 2021 NUTS columns.
   #
-  # NUTS_LAU_2021 (Local Administrative Units): in Belgium, LAU 2021 codes are
-  # in bijection with NIS 2019 commune codes -- same geographic entities, same
-  # perimeter, with cd_nuts_lau == as.character(cd_commune) for all mapped
-  # communes; 2 communes are absent from the Eurostat LAU file (cd_nuts_lau NA).
+  # NUTS_MUNICIPALITY_2021 (Eurostat LAU — Local Administrative Units): in Belgium,
+  # LAU 2021 codes are in bijection with NIS 2019 commune codes -- same geographic
+  # entities, same perimeter, with cd_nuts_lau == as.character(cd_commune) for all
+  # mapped communes; 2 communes are absent from the Eurostat LAU file (cd_nuts_lau NA).
   # Labels are borrowed from the commune (tx_commune_fr / tx_commune_nl).
   # Kept as a distinct node because LAU is the formal lowest level of the
   # Eurostat NUTS hierarchy (LAU < NUTS3 < NUTS2 < NUTS1 < NUTS_COUNTRY); removing it
   # would break the hierarchy and the NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021 path.
-  # Note: level = "municipality" (harmonised with NIS), but the ID retains the
-  # Eurostat term "LAU". Use nomenclature("NUTS", "municipality", "2021") to
-  # resolve this node (not "NUTS_MUNICIPALITY_2021", which does not exist).
-  NUTS_LAU_2021 = list(
+  NUTS_MUNICIPALITY_2021 = list(
     system = "NUTS", level = "municipality", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nuts_lau",
@@ -184,7 +181,7 @@ CLASSIFICATION_NODES <- list(
     version_filter = VER_2019, code_col = "cd_nuts3",
     label_fr_col = "tx_nuts3_fr",    label_nl_col = "tx_nuts3_nl",
     distinct = TRUE,  detectable = FALSE,
-    aggregates = "NUTS_LAU_2021"
+    aggregates = "NUTS_MUNICIPALITY_2021"
   ),
   NUTS_PROVINCE_2021 = list(
     system = "NUTS", level = "province", version = VER_NUTS_2021,

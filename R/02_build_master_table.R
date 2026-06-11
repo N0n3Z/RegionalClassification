@@ -598,8 +598,8 @@ build_crosswalks <- function(communes, postal, nis_changes) {
     "NIS_MUNICIPALITY_2019", "NIS_PROVINCE_2019",       m19, "cd_commune", "cd_province")
   xw[["NIS_MUNICIPALITY_2019__NIS_REGION_2019"]] <- .pairs_xw(
     "NIS_MUNICIPALITY_2019", "NIS_REGION_2019",         m19, "cd_commune", "cd_region")
-  xw[["NIS_MUNICIPALITY_2019__NUTS_LAU_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021",           m19, "cd_commune", "cd_nuts_lau")
+  xw[["NIS_MUNICIPALITY_2019__NUTS_MUNICIPALITY_2021"]] <- .pairs_xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021",           m19, "cd_commune", "cd_nuts_lau")
   xw[["NIS_MUNICIPALITY_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
     "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021",              m19, "cd_commune", "cd_nuts3")
   xw[["NIS_MUNICIPALITY_2019__NUTS_PROVINCE_2021"]] <- .pairs_xw(
@@ -699,11 +699,11 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   xw[["NUTS_REGION_2021__NUTS_COUNTRY"]] <- .pairs_xw(
     "NUTS_REGION_2021", "NUTS_COUNTRY",      m19, "cd_nuts1", "cd_nuts0")
 
-  # NUTS_LAU_2021 bidirectional
-  xw[["NUTS_LAU_2021__NIS_MUNICIPALITY_2019"]] <- .pairs_xw(
-    "NUTS_LAU_2021", "NIS_MUNICIPALITY_2019", m19, "cd_nuts_lau", "cd_commune")
-  xw[["NUTS_LAU_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
-    "NUTS_LAU_2021", "NUTS_DISTRICT_2021",       m19, "cd_nuts_lau", "cd_nuts3")
+  # NUTS_MUNICIPALITY_2021 bidirectional
+  xw[["NUTS_MUNICIPALITY_2021__NIS_MUNICIPALITY_2019"]] <- .pairs_xw(
+    "NUTS_MUNICIPALITY_2021", "NIS_MUNICIPALITY_2019", m19, "cd_nuts_lau", "cd_commune")
+  xw[["NUTS_MUNICIPALITY_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
+    "NUTS_MUNICIPALITY_2021", "NUTS_DISTRICT_2021",       m19, "cd_nuts_lau", "cd_nuts3")
 
   xw[["NBB_DISTRICT_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
     "NBB_DISTRICT_2021", "NUTS_DISTRICT_2021", m19, "cd_arr_internal", "cd_nuts3")

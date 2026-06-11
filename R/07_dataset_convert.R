@@ -190,7 +190,7 @@ default_col_name <- function(classification) {
     NUTS_PROVINCE_2027               = "cd_nuts2_2027",
     NUTS_REGION_2021               = "cd_nuts1_2021",
     NUTS_REGION_2027               = "cd_nuts1_2027",
-    NUTS_LAU_2021            = "cd_lau2021",
+    NUTS_MUNICIPALITY_2021            = "cd_lau2021",
     POSTAL                   = "cd_postal",
     NBB_DISTRICT_2021  = "cd_arr_internal"
   )

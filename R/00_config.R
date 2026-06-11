@@ -51,7 +51,7 @@ CLS_NIS_DISTRICT_2025        <- "NIS_DISTRICT_2025"
 CLS_NIS_PROVINCE_2025              <- "NIS_PROVINCE_2025"
 CLS_NIS_REGION_2025                <- "NIS_REGION_2025"
 # --- NUTS 2021 ---
-CLS_NUTS_LAU_2021                  <- "NUTS_LAU_2021"
+CLS_NUTS_MUNICIPALITY_2021         <- "NUTS_MUNICIPALITY_2021"
 CLS_NUTS_DISTRICT_2021                     <- "NUTS_DISTRICT_2021"
 CLS_NUTS_PROVINCE_2021                     <- "NUTS_PROVINCE_2021"
 CLS_NUTS_REGION_2021                     <- "NUTS_REGION_2021"
@@ -72,7 +72,7 @@ CLS_ALL <- c(
   CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019,
   CLS_NIS_MUNICIPALITY_2025, CLS_NIS_DISTRICT_2025,
   CLS_NIS_PROVINCE_2025, CLS_NIS_REGION_2025,
-  CLS_NUTS_LAU_2021, CLS_NUTS_DISTRICT_2021, CLS_NUTS_PROVINCE_2021,
+  CLS_NUTS_MUNICIPALITY_2021, CLS_NUTS_DISTRICT_2021, CLS_NUTS_PROVINCE_2021,
   CLS_NUTS_REGION_2021, CLS_NUTS_COUNTRY,
   CLS_NUTS_DISTRICT_2027, CLS_NUTS_PROVINCE_2027, CLS_NUTS_REGION_2027,
   CLS_POSTAL, CLS_NBB_DISTRICT_2021
@@ -280,10 +280,10 @@ CONVERSION_GRAPH_EDGES <- list(
                       "All other provinces are N:1.  Prefer commune-level paths.")),
 
   # --- NIS 2019 to NUTS 2021 ---
-  list(from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_LAU_2021,
+  list(from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_MUNICIPALITY_2021,
        relation = "1:1", via = "CONVERSION_NIS2019_NUTS2021",
        notes = "Direct 1:1 mapping from CONVERSION file"),
-  list(from = CLS_NUTS_LAU_2021, to = CLS_NUTS_DISTRICT_2021,
+  list(from = CLS_NUTS_MUNICIPALITY_2021, to = CLS_NUTS_DISTRICT_2021,
        relation = "N:1", via = "CONVERSION_NIS2019_NUTS2021",
        notes = "LAU to NUTS3 from CD_LVL_SUP hierarchy"),
   list(from = CLS_NUTS_DISTRICT_2021, to = CLS_NUTS_PROVINCE_2021,
@@ -415,11 +415,11 @@ CONVERSION_GRAPH_EDGES <- list(
          "(many communes per NUTS3) and would create a spurious simple path ",
          "NUTS_DISTRICT_2021 -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027."
        )),
-  # NIS_MUNICIPALITY_2025 -> NUTS_LAU_2021: deliberately absent.
+  # NIS_MUNICIPALITY_2025 -> NUTS_MUNICIPALITY_2021: deliberately absent.
   # LAU (Local Administrative Unit) is a 1:1 identifier for NIS 2019 communes.
   # Fused communes in NIS 2025 do not have a single LAU code (LAU is undefined
   # after a merge of two or more communes). Adding this edge would create a
-  # spurious simple path NIS_MUNICIPALITY_2025 -> NUTS_LAU_2021 -> NIS_MUNICIPALITY_2019
+  # spurious simple path NIS_MUNICIPALITY_2025 -> NUTS_MUNICIPALITY_2021 -> NIS_MUNICIPALITY_2019
   # that silently gives NA for fused communes instead of their 2019 constituents.
   # Users who need LAU codes for 2025 communes should convert via NIS 2019 and
   # filter for unchanged communes.

@@ -50,7 +50,7 @@ gen_golden <- function() {
     c(CLS_NUTS_DISTRICT_2021,                CLS_NUTS_COUNTRY),
     c(CLS_NIS_MUNICIPALITY_2019,          CLS_NUTS_DISTRICT_2027),
     c(CLS_NBB_DISTRICT_2021,   CLS_NUTS_PROVINCE_2021),
-    c(CLS_NUTS_LAU_2021,             CLS_NIS_REGION_2019)
+    c(CLS_NUTS_MUNICIPALITY_2021,             CLS_NIS_REGION_2019)
   )
 
   multihop <- rbindlist(lapply(multihop_pairs, function(pair) {
