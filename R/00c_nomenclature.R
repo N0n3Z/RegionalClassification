@@ -96,7 +96,7 @@
 #'
 #' Builds a structured handle for a classification, identified by its
 #' \code{system} (NIS, NUTS, POSTAL, NBB), \code{level} (municipality,
-#' district, province, region, country, lau, postal) and \code{version}
+#' district, province, region, country, postal) and \code{version}
 #' (e.g. "2019", "2025", "BEFORE_2019", "2021", "2027"). The triplet must
 #' resolve to exactly one known classification.
 #'

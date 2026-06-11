@@ -90,7 +90,7 @@ CLASSIFICATION_REGISTRY <- list(
   NUTS = list(
     description = "Nomenclature des unites territoriales statistiques (Eurostat)",
     versions = c("2021", "2027"),
-    levels = c("country", "region", "province", "district", "lau"),
+    levels = c("country", "region", "province", "district", "municipality"),
     source = "Eurostat / EU regulation"
   ),
   POSTAL = list(

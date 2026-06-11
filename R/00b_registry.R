@@ -23,7 +23,7 @@
 #'
 #' \describe{
 #'   \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"NBB"`.}
-#'   \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"country"`, `"lau"`).}
+#'   \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"province"`, `"country"`).}
 #'   \item{version}{Classification version string, or `NA_character_` when not
 #'     versioned (POSTAL, NUTS_COUNTRY).}
 #'   \item{code_type}{Physical storage type: `"integer"` or `"character"`.}
@@ -168,7 +168,7 @@ CLASSIFICATION_NODES <- list(
   # Eurostat NUTS hierarchy (LAU < NUTS3 < NUTS2 < NUTS1 < NUTS_COUNTRY); removing it
   # would break the hierarchy and the NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021 path.
   NUTS_LAU_2021 = list(
-    system = "NUTS", level = "lau",   version = VER_NUTS_2021,
+    system = "NUTS", level = "municipality", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nuts_lau",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
