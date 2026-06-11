@@ -156,6 +156,20 @@ CLASSIFICATION_NODES <- list(
     aggregates = "NIS_DISTRICT_2025"
   ),
 
+  # ---- NIS country ------------------------------------------------------------
+  # NIS code for Belgium as a whole: 01000 in Statbel source (REFNIS type "REALM").
+  # Stored as integer 1000L (leading zero is an artefact of the 5-digit display).
+  # Unversioned: Belgium's identity code does not change across NIS versions.
+  # Synthetic column cd_nis_country = 1000L added to communes master table.
+  NIS_COUNTRY = list(
+    system = "NIS",  level = "country",          version = NA_character_,
+    code_type = "integer",   source_table = "communes",
+    version_filter = VER_2019, code_col = "cd_nis_country",
+    label_fr_col = NA_character_,    label_nl_col = NA_character_,
+    distinct = TRUE,  detectable = FALSE,
+    aggregates = c("NIS_REGION_BEFORE_2019", "NIS_REGION_2019", "NIS_REGION_2025")
+  ),
+
   # ---- NUTS 2021 -------------------------------------------------------------
   # version_filter = VER_2019: NIS 2019 communes carry the 2021 NUTS columns.
   #

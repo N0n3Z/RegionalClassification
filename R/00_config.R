@@ -61,10 +61,11 @@ CLS_NUTS_DISTRICT_2027                     <- "NUTS_DISTRICT_2027"
 CLS_NUTS_PROVINCE_2027                     <- "NUTS_PROVINCE_2027"
 CLS_NUTS_REGION_2027                     <- "NUTS_REGION_2027"
 # --- Other ---
+CLS_NIS_COUNTRY                    <- "NIS_COUNTRY"
 CLS_POSTAL                         <- "POSTAL"
 CLS_NBB_DISTRICT_2021        <- "NBB_DISTRICT_2021"
 
-# All 22 classification ids -- used by test-name-constants.R
+# All 23 classification ids -- used by test-name-constants.R
 CLS_ALL <- c(
   CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_DISTRICT_BEFORE_2019,
   CLS_NIS_PROVINCE_BEFORE_2019, CLS_NIS_REGION_BEFORE_2019,
@@ -72,6 +73,7 @@ CLS_ALL <- c(
   CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019,
   CLS_NIS_MUNICIPALITY_2025, CLS_NIS_DISTRICT_2025,
   CLS_NIS_PROVINCE_2025, CLS_NIS_REGION_2025,
+  CLS_NIS_COUNTRY,
   CLS_NUTS_MUNICIPALITY_2021, CLS_NUTS_DISTRICT_2021, CLS_NUTS_PROVINCE_2021,
   CLS_NUTS_REGION_2021, CLS_NUTS_COUNTRY,
   CLS_NUTS_DISTRICT_2027, CLS_NUTS_PROVINCE_2027, CLS_NUTS_REGION_2027,
@@ -84,7 +86,7 @@ CLASSIFICATION_REGISTRY <- list(
   NIS = list(
     description = "Nomenclature INS/NIS (Institut National de Statistique)",
     versions = c("BEFORE_2019", "2019", "2025"),
-    levels = c("municipality", "district", "province", "region"),
+    levels = c("municipality", "district", "province", "region", "country"),
     source = "Statbel"
   ),
   NUTS = list(
@@ -278,6 +280,17 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "M:N", via = "hierarchy",
        notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
                       "All other provinces are N:1.  Prefer commune-level paths.")),
+
+  # --- NIS regions to NIS_COUNTRY ---
+  list(from = CLS_NIS_REGION_BEFORE_2019, to = CLS_NIS_COUNTRY,
+       relation = "N:1", via = "hierarchy",
+       notes = "All regions aggregate to Belgium (NIS code 1000)"),
+  list(from = CLS_NIS_REGION_2019, to = CLS_NIS_COUNTRY,
+       relation = "N:1", via = "hierarchy",
+       notes = "All regions aggregate to Belgium (NIS code 1000)"),
+  list(from = CLS_NIS_REGION_2025, to = CLS_NIS_COUNTRY,
+       relation = "N:1", via = "hierarchy",
+       notes = "All regions aggregate to Belgium (NIS code 1000)"),
 
   # --- NIS 2019 to NUTS 2021 ---
   list(from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_MUNICIPALITY_2021,
@@ -502,6 +515,7 @@ MASTER_COMMUNE_KNOWN_COLS <- c(
   MASTER_COMMUNE_CORE_COLS,
   "tx_arr_fr", "tx_arr_nl", "cd_arr_2digit",
   "tx_prov_fr", "tx_prov_nl", "tx_region_fr", "tx_region_nl",
+  "cd_nis_country",
   "cd_nuts_lau", "cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
   "tx_nuts3_fr", "tx_nuts3_nl",
   "cd_nuts3_2027", "cd_nuts2_2027", "cd_nuts1_2027", "cd_nuts0_2027",

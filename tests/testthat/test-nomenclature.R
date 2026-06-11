@@ -88,12 +88,12 @@ test_that("list_nomenclatures() returns objects, filterable by system", {
   nis <- list_nomenclatures("NIS")
   expect_true(all(vapply(nis, nom_system, "") == "NIS"))
   expect_setequal(vapply(nis, nom_level, ""),
-                  c("municipality", "district", "province", "region"))
+                  c("municipality", "district", "province", "region", "country"))
 })
 
 test_that("nomenclature_levels()/versions() expose the discovery surface", {
   expect_setequal(nomenclature_levels("NIS"),
-                  c("municipality", "district", "province", "region"))
+                  c("municipality", "district", "province", "region", "country"))
   expect_true("2021" %in% nomenclature_versions("NUTS"))
   expect_true("2027" %in% nomenclature_versions("NUTS"))
 })
@@ -135,6 +135,7 @@ test_that("every `aggregates` target exists and shares the system", {
 test_that("non-NUTS_COUNTRY aggregation stays within a single version", {
   for (id in names(CLASSIFICATION_NODES)) {
     if (id == CLS_NUTS_COUNTRY) next  # NUTS_COUNTRY deliberately spans 2021 + 2027
+    if (id == CLS_NIS_COUNTRY)  next  # NIS_COUNTRY deliberately spans all NIS versions
     n <- CLASSIFICATION_NODES[[id]]
     for (child in n$aggregates) {
       expect_equal(CLASSIFICATION_NODES[[child]]$version, n$version,

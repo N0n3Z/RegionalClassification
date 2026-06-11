@@ -19,8 +19,8 @@ test_that("CLS_ALL has no duplicates", {
   expect_equal(length(CLS_ALL), length(unique(CLS_ALL)))
 })
 
-test_that("CLS_ALL has 22 entries (one per supported classification node)", {
-  expect_equal(length(CLS_ALL), 22L)
+test_that("CLS_ALL has 23 entries (one per supported classification node)", {
+  expect_equal(length(CLS_ALL), 23L)
 })
 
 test_that("VER_BEFORE_2019 appears in communes data", {

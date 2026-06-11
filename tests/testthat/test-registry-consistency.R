@@ -92,5 +92,5 @@ test_that("every registry version is referenced by at least one CLASSIFICATION_N
 test_that("CLASSIFICATION_NODES keys equal VALID_CLASSIFICATIONS (22 nodes)", {
   # Cross-file anchor (also checked in test-registry.R).
   expect_setequal(names(CLASSIFICATION_NODES), VALID_CLASSIFICATIONS)
-  expect_equal(length(CLASSIFICATION_NODES), 22L)
+  expect_equal(length(CLASSIFICATION_NODES), 23L)
 })
