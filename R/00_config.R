@@ -176,7 +176,7 @@ FILE_MAPPING <- list(
     filename = "NUTS_ARRONDISSEMENT.csv",
     description = "NUTS3 to internal arrondissement code mapping",
     sheet = NULL,
-    provides = c("NUTS", "INTERNAL"),
+    provides = c("NUTS", "NBB"),
     filter = NULL
   ),
 

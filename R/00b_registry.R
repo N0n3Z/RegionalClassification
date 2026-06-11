@@ -167,6 +167,9 @@ CLASSIFICATION_NODES <- list(
   # Kept as a distinct node because LAU is the formal lowest level of the
   # Eurostat NUTS hierarchy (LAU < NUTS3 < NUTS2 < NUTS1 < NUTS_COUNTRY); removing it
   # would break the hierarchy and the NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021 path.
+  # Note: level = "municipality" (harmonised with NIS), but the ID retains the
+  # Eurostat term "LAU". Use nomenclature("NUTS", "municipality", "2021") to
+  # resolve this node (not "NUTS_MUNICIPALITY_2021", which does not exist).
   NUTS_LAU_2021 = list(
     system = "NUTS", level = "municipality", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
