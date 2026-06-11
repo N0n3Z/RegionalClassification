@@ -1,0 +1,12 @@
+pandoc: 3.8.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  ambiguous-splits: ambiguous-splits.html
+  conversions: conversions.html
+  diagnostics: diagnostics.html
+  introduction: introduction.html
+last_built: 2026-06-11T11:41Z
+urls:
+  reference: https://n0n3z.github.io/regionalclassification/reference
+  article: https://n0n3z.github.io/regionalclassification/articles

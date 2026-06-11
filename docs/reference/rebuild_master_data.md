@@ -1,0 +1,38 @@
+# Rebuild the master table from raw source files and save as RDS
+
+Call this only when the source files change. Requires all raw
+XLSX/XLS/CSV files in data/raw/ to be present, as well as the readxl
+package.
+
+## Usage
+
+``` r
+rebuild_master_data(
+  raw_dir = get_raw_data_path(),
+  out_dir = get_processed_data_path()
+)
+```
+
+## Arguments
+
+- raw_dir:
+
+  Path to the raw data directory. Defaults to data/raw/.
+
+- out_dir:
+
+  Path where RDS files will be written. Defaults to inst/extdata/
+  (accessible after package install).
+
+## Value
+
+master_data list (same as load_master_data() output), invisibly
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+  # Only needed when raw source files in data/raw/ change
+  master_data <- rebuild_master_data()
+} # }
+```
