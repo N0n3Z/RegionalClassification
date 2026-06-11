@@ -37,7 +37,7 @@ visualize_classification_graph <- function(highlight_from = NULL,
     if (grepl("^NIS_", n)) return("#4A90D9")       # Blue for NIS
     if (grepl("^NUTS", n)) return("#E67E22")        # Orange for NUTS
     if (grepl("^POSTAL", n)) return("#27AE60")      # Green for Postal
-    if (grepl("^INTERNAL", n)) return("#8E44AD")    # Purple for Internal
+    if (grepl("^NBB", n)) return("#8E44AD")          # Purple for NBB internal
     return("#95A5A6")                                # Gray for others
   })
 
@@ -46,7 +46,7 @@ visualize_classification_graph <- function(highlight_from = NULL,
     if (grepl("^NIS_", n)) return("NIS")
     if (grepl("^NUTS", n)) return("NUTS")
     if (grepl("^POSTAL", n)) return("POSTAL")
-    if (grepl("^INTERNAL", n)) return("INTERNAL")
+    if (grepl("^NBB", n)) return("NBB")
     return("OTHER")
   })
 

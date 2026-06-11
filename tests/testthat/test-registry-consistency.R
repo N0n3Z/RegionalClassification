@@ -4,7 +4,7 @@ library(data.table)
 # test-registry-consistency.R  --  Phase 5b: CLASSIFICATION_REGISTRY coherence
 # ==============================================================================
 # CLASSIFICATION_REGISTRY (R/00_config.R) is a human-readable catalogue of
-# classification *systems* (NIS, NUTS, POSTAL, INTERNAL) with their declared
+# classification *systems* (NIS, NUTS, POSTAL, NBB) with their declared
 # versions and levels.  CLASSIFICATION_NODES (R/00b_registry.R) is the runtime
 # registry of individual classification *nodes* (22 identifiers).
 #
@@ -12,9 +12,9 @@ library(data.table)
 #   RC1  Every system used by a node is declared in CLASSIFICATION_REGISTRY.
 #   RC2  Every non-NA version used by a node is listed in the registry system.
 #   RC3  Every level used by a node is listed in the registry system
-#        (case-insensitive: nodes use "nuts3", registry has "NUTS3").
+#        (case-insensitive: nodes use "district", registry has "district").
 #   RC4  Every version declared in the registry is referenced by at least one
-#        node (no orphan versions; "current" is exempted -- POSTAL/INTERNAL).
+#        node (no orphan versions; "current" is exempted -- POSTAL only).
 #   RC5  CLASSIFICATION_NODES keys equal VALID_CLASSIFICATIONS (parity with the
 #        conversion graph -- already in test-registry.R; kept here as a cross-
 #        file anchor so both files catch regressions independently).
@@ -66,7 +66,7 @@ test_that("every node level is declared in CLASSIFICATION_REGISTRY (case-insensi
 # -- RC4: Every registry version is referenced by at least one node ------------
 
 test_that("every registry version is referenced by at least one CLASSIFICATION_NODE", {
-  # "current" is used by POSTAL and INTERNAL which have version = NA_character_
+  # "current" is used by POSTAL which has version = NA_character_
   # in CLASSIFICATION_NODES -- exempt from the reverse check.
   EXEMPT_VERSIONS <- "current"
 

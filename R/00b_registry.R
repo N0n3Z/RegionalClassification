@@ -22,10 +22,10 @@
 #' that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
 #'
 #' \describe{
-#'   \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"INTERNAL"`.}
-#'   \item{level}{Granularity within the system (e.g. `"commune"`, `"nuts3"`).}
+#'   \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"NBB"`.}
+#'   \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"country"`, `"lau"`).}
 #'   \item{version}{Classification version string, or `NA_character_` when not
-#'     versioned (POSTAL, INTERNAL, NUTS_COUNTRY).}
+#'     versioned (POSTAL, NUTS_COUNTRY).}
 #'   \item{code_type}{Physical storage type: `"integer"` or `"character"`.}
 #'   \item{source_table}{Which master table holds the codes: `"communes"` or
 #'     `"postal"`.}
@@ -56,7 +56,7 @@ CLASSIFICATION_NODES <- list(
 
   # ---- NIS BEFORE_2019 -------------------------------------------------------
   NIS_MUNICIPALITY_BEFORE_2019 = list(
-    system = "NIS",  level = "commune",         version = VER_BEFORE_2019,
+    system = "NIS",  level = "municipality",         version = VER_BEFORE_2019,
     code_type = "integer",   source_table = "communes",
     version_filter = VER_BEFORE_2019, code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
@@ -64,7 +64,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = character(0)
   ),
   NIS_DISTRICT_BEFORE_2019 = list(
-    system = "NIS",  level = "arrondissement",  version = VER_BEFORE_2019,
+    system = "NIS",  level = "district",  version = VER_BEFORE_2019,
     code_type = "integer",   source_table = "communes",
     version_filter = VER_BEFORE_2019, code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
@@ -90,7 +90,7 @@ CLASSIFICATION_NODES <- list(
 
   # ---- NIS 2019 --------------------------------------------------------------
   NIS_MUNICIPALITY_2019 = list(
-    system = "NIS",  level = "commune",         version = VER_2019,
+    system = "NIS",  level = "municipality",         version = VER_2019,
     code_type = "integer",   source_table = "communes",
     version_filter = VER_2019, code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
@@ -98,7 +98,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = character(0)
   ),
   NIS_DISTRICT_2019 = list(
-    system = "NIS",  level = "arrondissement",  version = VER_2019,
+    system = "NIS",  level = "district",  version = VER_2019,
     code_type = "integer",   source_table = "communes",
     version_filter = VER_2019, code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
@@ -124,7 +124,7 @@ CLASSIFICATION_NODES <- list(
 
   # ---- NIS 2025 --------------------------------------------------------------
   NIS_MUNICIPALITY_2025 = list(
-    system = "NIS",  level = "commune",         version = VER_2025,
+    system = "NIS",  level = "municipality",         version = VER_2025,
     code_type = "integer",   source_table = "communes",
     version_filter = VER_2025, code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
@@ -132,7 +132,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = character(0)
   ),
   NIS_DISTRICT_2025 = list(
-    system = "NIS",  level = "arrondissement",  version = VER_2025,
+    system = "NIS",  level = "district",  version = VER_2025,
     code_type = "integer",   source_table = "communes",
     version_filter = VER_2025, code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
@@ -176,7 +176,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = character(0)
   ),
   NUTS_DISTRICT_2021 = list(
-    system = "NUTS", level = "nuts3", version = VER_NUTS_2021,
+    system = "NUTS", level = "district", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nuts3",
     label_fr_col = "tx_nuts3_fr",    label_nl_col = "tx_nuts3_nl",
@@ -184,7 +184,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = "NUTS_LAU_2021"
   ),
   NUTS_PROVINCE_2021 = list(
-    system = "NUTS", level = "nuts2", version = VER_NUTS_2021,
+    system = "NUTS", level = "province", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nuts2",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
@@ -192,7 +192,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = "NUTS_DISTRICT_2021"
   ),
   NUTS_REGION_2021 = list(
-    system = "NUTS", level = "nuts1", version = VER_NUTS_2021,
+    system = "NUTS", level = "region", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nuts1",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
@@ -200,7 +200,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = "NUTS_PROVINCE_2021"
   ),
   NUTS_COUNTRY = list(
-    system = "NUTS", level = "nuts0", version = NA_character_,
+    system = "NUTS", level = "country", version = NA_character_,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nuts0",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
@@ -211,7 +211,7 @@ CLASSIFICATION_NODES <- list(
   # ---- NUTS 2027 -------------------------------------------------------------
   # version_filter = VER_2025: NIS 2025 communes carry the 2027 NUTS columns.
   NUTS_DISTRICT_2027 = list(
-    system = "NUTS", level = "nuts3", version = VER_NUTS_2027,
+    system = "NUTS", level = "district", version = VER_NUTS_2027,
     code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_nuts3_2027",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
@@ -219,7 +219,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = character(0)
   ),
   NUTS_PROVINCE_2027 = list(
-    system = "NUTS", level = "nuts2", version = VER_NUTS_2027,
+    system = "NUTS", level = "province", version = VER_NUTS_2027,
     code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_nuts2_2027",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
@@ -227,7 +227,7 @@ CLASSIFICATION_NODES <- list(
     aggregates = "NUTS_DISTRICT_2027"
   ),
   NUTS_REGION_2027 = list(
-    system = "NUTS", level = "nuts1", version = VER_NUTS_2027,
+    system = "NUTS", level = "region", version = VER_NUTS_2027,
     code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_nuts1_2027",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
@@ -245,10 +245,10 @@ CLASSIFICATION_NODES <- list(
     aggregates = character(0)
   ),
 
-  # ---- INTERNAL --------------------------------------------------------------
+  # ---- NBB internal -----------------------------------------------------------
   # cd_arr_internal is stored as character ("21", "22", ..., "65", "66") in RDS.
   NBB_DISTRICT_2021 = list(
-    system = "INTERNAL", level = "arrondissement", version = VER_NUTS_2021,
+    system = "NBB", level = "district", version = VER_NUTS_2021,
     code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_arr_internal",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",

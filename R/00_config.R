@@ -84,13 +84,13 @@ CLASSIFICATION_REGISTRY <- list(
   NIS = list(
     description = "Nomenclature INS/NIS (Institut National de Statistique)",
     versions = c("BEFORE_2019", "2019", "2025"),
-    levels = c("commune", "arrondissement", "province", "region", "pays"),
+    levels = c("municipality", "district", "province", "region"),
     source = "Statbel"
   ),
   NUTS = list(
     description = "Nomenclature des unites territoriales statistiques (Eurostat)",
     versions = c("2021", "2027"),
-    levels = c("nuts0", "NUTS1", "NUTS2", "NUTS3", "LAU"),
+    levels = c("country", "region", "province", "district", "lau"),
     source = "Eurostat / EU regulation"
   ),
   POSTAL = list(
@@ -99,14 +99,14 @@ CLASSIFICATION_REGISTRY <- list(
     levels = c("postal"),
     source = "bpost"
   ),
-  INTERNAL = list(
+  NBB = list(
     description = paste0(
-      "Classification interne basee sur NIS arrondissement (2 chiffres). ",
+      "Classification interne NBB basee sur NIS arrondissement (2 chiffres). ",
       "Verviers est splitte: 65 = francophone, 66 = germanophone."
     ),
-    versions = c("current", "2021"),
-    levels = c("arrondissement"),
-    source = "Interne"
+    versions = c("2021"),
+    levels = c("district"),
+    source = "NBB interne"
   )
 )
 

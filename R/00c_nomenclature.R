@@ -95,14 +95,14 @@
 #' Create a classification nomenclature object
 #'
 #' Builds a structured handle for a classification, identified by its
-#' \code{system} (NIS, NUTS, POSTAL, INTERNAL), \code{level} (commune,
-#' arrondissement, province, region, nuts3, lau, postal, ...) and \code{version}
+#' \code{system} (NIS, NUTS, POSTAL, NBB), \code{level} (municipality,
+#' district, province, region, country, lau, postal) and \code{version}
 #' (e.g. "2019", "2025", "BEFORE_2019", "2021", "2027"). The triplet must
 #' resolve to exactly one known classification.
 #'
 #' \code{level} and/or \code{version} may be omitted when the remaining
 #' components are unambiguous (e.g. \code{nomenclature("POSTAL")},
-#' \code{nomenclature("NUTS", "nuts0")}).
+#' \code{nomenclature("NUTS", "country")}).
 #'
 #' This object is the recommended way to work programmatically (loop over
 #' versions/levels) and to navigate aggregation links
@@ -110,7 +110,7 @@
 #' Plain string identifiers (e.g. \code{"NIS_MUNICIPALITY_2019"}) remain accepted by
 #' all functions.
 #'
-#' @param system Classification system: "NIS", "NUTS", "POSTAL", "INTERNAL"
+#' @param system Classification system: "NIS", "NUTS", "POSTAL", "NBB"
 #'   (case-insensitive). Passing an existing \code{nomenclature} returns it
 #'   unchanged.
 #' @param level Granularity within the system (case-insensitive), or \code{NULL}.
@@ -118,16 +118,16 @@
 #'   systems.
 #' @return An object of class \code{nomenclature}.
 #' @examples
-#' nomenclature("NIS", "commune", "2019")
-#' nomenclature("NUTS", "nuts3", 2021)
+#' nomenclature("NIS", "municipality", "2019")
+#' nomenclature("NUTS", "district", 2021)
 #' nomenclature("POSTAL")
 #' # Dynamic construction:
-#' lapply(c("2019", "2025"), function(v) nomenclature("NIS", "commune", v))
+#' lapply(c("2019", "2025"), function(v) nomenclature("NIS", "municipality", v))
 #' @export
 nomenclature <- function(system, level = NULL, version = NULL) {
   if (is_nomenclature(system)) return(system)
   if (missing(system) || is.null(system) || !nzchar(trimws(as.character(system)[1])))
-    abort("`system` is required (e.g. 'NIS', 'NUTS', 'POSTAL', 'INTERNAL').",
+    abort("`system` is required (e.g. 'NIS', 'NUTS', 'POSTAL', 'NBB').",
           class = "rcl_invalid_classification")
 
   system  <- toupper(trimws(as.character(system)))
@@ -194,7 +194,7 @@ is_nomenclature <- function(x) inherits(x, "nomenclature")
 #'   \code{NA_character_} for unversioned systems).
 #' @name nomenclature-accessors
 #' @examples
-#' n <- nomenclature("NIS", "commune", "2019")
+#' n <- nomenclature("NIS", "municipality", "2019")
 #' nom_system(n)
 #' nom_level(n)
 #' nom_version(n)
@@ -256,7 +256,7 @@ Ops.nomenclature <- function(e1, e2) {
 
 #' List available nomenclatures
 #'
-#' @param system Optional system filter ("NIS", "NUTS", "POSTAL", "INTERNAL").
+#' @param system Optional system filter ("NIS", "NUTS", "POSTAL", "NBB").
 #' @return A list of \code{nomenclature} objects.
 #' @examples
 #' list_nomenclatures("NIS")
@@ -273,7 +273,7 @@ list_nomenclatures <- function(system = NULL) {
 
 #' Levels / versions available for a system
 #'
-#' @param system Classification system ("NIS", "NUTS", "POSTAL", "INTERNAL").
+#' @param system Classification system ("NIS", "NUTS", "POSTAL", "NBB").
 #' @return A character vector (\code{nomenclature_versions} may contain
 #'   \code{NA} for unversioned systems).
 #' @name nomenclature-discovery
@@ -303,22 +303,22 @@ nomenclature_versions <- function(system) {
 #' Aggregation links between nomenclatures
 #'
 #' \code{nomenclature_children()} returns the finer level(s) a nomenclature is
-#' the direct aggregation of (e.g. an arrondissement aggregates communes).
+#' the direct aggregation of (e.g. a district aggregates municipalities).
 #' \code{nomenclature_parents()} returns the coarser level(s) that aggregate it
-#' (e.g. a commune is aggregated by an arrondissement; an arrondissement is
+#' (e.g. a municipality is aggregated by a district; a district is
 #' aggregated by BOTH a province and a region).
 #'
-#' The aggregation structure is a DAG, not a tree: an arrondissement has two
+#' The aggregation structure is a DAG, not a tree: a NIS district has two
 #' parents (province and region), and \code{NUTS_COUNTRY} aggregates both the 2021 and
-#' 2027 NUTS1 levels. Province -> region is deliberately not an aggregation
+#' 2027 NUTS region levels. Province -> region is deliberately not an aggregation
 #' (province 20000 "Brabant" spans three regions).
 #'
 #' @param x A \code{nomenclature} object (or a valid identifier).
 #' @return A list of \code{nomenclature} objects (possibly empty).
 #' @name nomenclature-aggregation
 #' @examples
-#' nomenclature_children(nomenclature("NIS", "arrondissement", "2019"))  # commune
-#' nomenclature_parents(nomenclature("NIS", "arrondissement", "2019"))   # province + region
+#' nomenclature_children(nomenclature("NIS", "district", "2019"))  # municipality
+#' nomenclature_parents(nomenclature("NIS", "district", "2019"))   # province + region
 #' @export
 nomenclature_children <- function(x) {
   id   <- .nom_to_id(x)

@@ -12,10 +12,10 @@ that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
 }
 \details{
 \describe{
-  \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"INTERNAL"`.}
-  \item{level}{Granularity within the system (e.g. `"commune"`, `"nuts3"`).}
+  \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"NBB"`.}
+  \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"country"`, `"lau"`).}
   \item{version}{Classification version string, or `NA_character_` when not
-    versioned (POSTAL, INTERNAL, NUTS_COUNTRY).}
+    versioned (POSTAL, NUTS_COUNTRY).}
   \item{code_type}{Physical storage type: `"integer"` or `"character"`.}
   \item{source_table}{Which master table holds the codes: `"communes"` or
     `"postal"`.}

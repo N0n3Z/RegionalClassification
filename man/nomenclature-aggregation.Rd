@@ -18,18 +18,18 @@ A list of \code{nomenclature} objects (possibly empty).
 }
 \description{
 \code{nomenclature_children()} returns the finer level(s) a nomenclature is
-the direct aggregation of (e.g. an arrondissement aggregates communes).
+the direct aggregation of (e.g. a district aggregates municipalities).
 \code{nomenclature_parents()} returns the coarser level(s) that aggregate it
-(e.g. a commune is aggregated by an arrondissement; an arrondissement is
+(e.g. a municipality is aggregated by a district; a district is
 aggregated by BOTH a province and a region).
 }
 \details{
-The aggregation structure is a DAG, not a tree: an arrondissement has two
+The aggregation structure is a DAG, not a tree: a NIS district has two
 parents (province and region), and \code{NUTS_COUNTRY} aggregates both the 2021 and
-2027 NUTS1 levels. Province -> region is deliberately not an aggregation
+2027 NUTS region levels. Province -> region is deliberately not an aggregation
 (province 20000 "Brabant" spans three regions).
 }
 \examples{
-nomenclature_children(nomenclature("NIS", "arrondissement", "2019"))  # commune
-nomenclature_parents(nomenclature("NIS", "arrondissement", "2019"))   # province + region
+nomenclature_children(nomenclature("NIS", "district", "2019"))  # municipality
+nomenclature_parents(nomenclature("NIS", "district", "2019"))   # province + region
 }

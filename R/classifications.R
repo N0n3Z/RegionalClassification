@@ -15,11 +15,11 @@
 #'
 #' Canonical identifiers follow the pattern `SYSTEM_LEVEL_VERSION`:
 #'
-#' | Part      | Examples                                 |
-#' |-----------|------------------------------------------|
-#' | SYSTEM    | `NIS`, `NUTS`, `POSTAL`, `INTERNAL`      |
-#' | LEVEL     | `COMMUNE`, `ARRONDISSEMENT`, `PROVINCE`, `REGION`, `LAU`, `3`, `2`, `1`, `0` |
-#' | VERSION   | `2019`, `2025`, `2021`, `2027`, `BEFORE_2019` |
+#' | Part      | Examples                                                       |
+#' |-----------|----------------------------------------------------------------|
+#' | SYSTEM    | `NIS`, `NUTS`, `POSTAL`, `NBB`                                 |
+#' | LEVEL     | `MUNICIPALITY`, `DISTRICT`, `PROVINCE`, `REGION`, `COUNTRY`, `LAU` |
+#' | VERSION   | `2019`, `2025`, `2021`, `2027`, `BEFORE_2019`                  |
 #'
 #' When the level is unambiguous (`POSTAL` has only one level, `NUTS_COUNTRY` has no
 #' version variants), the extra parts are omitted.
@@ -107,15 +107,19 @@
 #' **Note on NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027:** there is **no direct conversion** between
 #' these two NUTS3 versions. Three Belgian communes changed province between 2019
 #' and 2025, shifting their NUTS3 region. The correct path is always via NIS
-#' communes: `NUTS_DISTRICT_2021` -> `NIS_COMMUNE` -> `NIS_MUNICIPALITY_2025` -> `NUTS_DISTRICT_2027`
+#' municipalities: `NUTS_DISTRICT_2021` -> `NIS_MUNICIPALITY_2025` -> `NUTS_DISTRICT_2027`
 #' (ambiguous, requires `allow_ambiguous = TRUE`).
 #'
 #' **Note on province -> region:** Province 20000 (Brabant) spans the Brussels,
-#' Flemish and Walloon regions, making province -> region M:N. Use commune-level
-#' paths (`NIS_COMMUNE_* -> NIS_REGION_*`) for unambiguous region lookups.
+#' Flemish and Walloon regions, making province -> region M:N. Use municipality-level
+#' paths (`NIS_MUNICIPALITY_* -> NIS_REGION_*`) for unambiguous region lookups.
 #'
-#' **Note on arrondissement -> NUTS3/INTERNAL:** Only Verviers (63000) maps to
-#' two targets (1:N). The reverse NUTS3 -> arrondissement is N:1 (simple).
+#' **Note on NIS_DISTRICT -> NUTS_DISTRICT/NBB_DISTRICT:** Only Verviers (63000) maps to
+#' two targets (1:N). The reverse NUTS_DISTRICT -> NIS_DISTRICT is N:1 (simple).
+#'
+#' **Note on NUTS level naming (Belgium-specific):** In this package NUTS_PROVINCE
+#' corresponds to NUTS2 and NUTS_REGION to NUTS1 — terminology chosen to match the
+#' Belgian administrative vocabulary. These names are not universal NUTS conventions.
 #'
 #' Multi-step paths (e.g. `POSTAL` -> `NIS_REGION_2019`) are resolved
 #' automatically by chaining the edges above.

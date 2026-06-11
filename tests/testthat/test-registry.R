@@ -181,7 +181,7 @@ test_that(".node_coerce() coerces to character for NUTS nodes", {
 })
 
 # -- Phase 5: CLASSIFICATION_REGISTRY consistency with CLASSIFICATION_NODES ----
-# CLASSIFICATION_REGISTRY is a system-level grouping (NIS, NUTS, POSTAL, INTERNAL).
+# CLASSIFICATION_REGISTRY is a system-level grouping (NIS, NUTS, POSTAL, NBB).
 # CLASSIFICATION_NODES is the granular per-node truth. The registry must cover
 # every system and level that a node declares.
 

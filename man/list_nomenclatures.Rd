@@ -7,7 +7,7 @@
 list_nomenclatures(system = NULL)
 }
 \arguments{
-\item{system}{Optional system filter ("NIS", "NUTS", "POSTAL", "INTERNAL").}
+\item{system}{Optional system filter ("NIS", "NUTS", "POSTAL", "NBB").}
 }
 \value{
 A list of \code{nomenclature} objects.
