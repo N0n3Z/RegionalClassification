@@ -101,7 +101,7 @@ Key data-modelling facts:
 - The `communes` table holds all NIS versions; **NIS 2025 communes currently carry only the
   2027 NUTS columns** (`cd_nuts3_2027`…), not the 2021 ones — this is the asymmetry Phase 4 fixes.
 - Verviers (NIS arr 63000) is the canonical ambiguous case: maps to NUTS3 BE335 (FR) + BE336 (DE).
-- Code types: NIS / POSTAL / INTERNAL codes are **integer**; NUTS codes are **character**.
+- Code types: NIS / POSTAL codes are **integer**; NUTS/NBB codes are **character**.
 
 ---
 
@@ -142,14 +142,13 @@ redesign (now correct); `parse_refnis_hierarchy` extra tests.
 Create `R/00b_registry.R`: a **named list, one entry per node id** (the 21 ids = current keys of
 `.LABEL_META`). Seed from `.LABEL_META`, enriched with `system`, `level`, `code_type`, `distinct`.
 
-Fields per entry: `system` (NIS/NUTS/POSTAL/INTERNAL), `level`, `version` (NA if none),
+Fields per entry: `system` (NIS/NUTS/POSTAL/NBB), `level`, `version` (NA if none),
 `code_type` ("integer"/"character"), `source_table` ("communes"/"postal"), `version_filter`
 (`nis_version` value or NA), `code_col`, `label_fr_col`, `label_nl_col` (NA where none),
-`distinct` (TRUE when reference set is `unique(na.omit(col))` — NUTS3/2/1/0, arr/prov/region,
-INTERNAL; FALSE for commune/postal/LAU).
+`distinct` (TRUE when reference set is `unique(na.omit(col))` — NUTS_DISTRICT/PROVINCE/REGION/COUNTRY, NBB_DISTRICT; FALSE for municipality/postal).
 
-Values: `code_type="integer"` for all NIS_* + POSTAL + INTERNAL; `"character"` for all NUTS*.
-`version_filter="2019"` for NUTS_2021/LAU/POSTAL/INTERNAL, `"2025"` for NUTS_2027, matching NIS
+Values: `code_type="integer"` for all NIS_* + POSTAL + NBB; `"character"` for all NUTS*.
+`version_filter="2019"` for NUTS_2021/LAU/POSTAL/NBB, `"2025"` for NUTS_2027, matching NIS
 version for NIS nodes.
 
 Accessors (the only readers of the registry):

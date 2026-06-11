@@ -52,7 +52,7 @@ Deux dimensions temporelles :
 - **NUTS** : `2021` (en vigueur) et `2027` (Reglement UE 2026/195).
 
 **Proprietes cles de l'API :**
-- Codes NIS et POSTAL sont de type **integer** ; codes NUTS et INTERNAL sont de type
+- Codes NIS et POSTAL sont de type **integer** ; codes NUTS et NBB sont de type
   **character**.
 - `convert_codes()` renvoie toujours un `data.table(code_from, code_to, nature)`.
 - Les conversions ambigues (1:N, M:N) sont bloquees par defaut ; `allow_ambiguous = TRUE`
@@ -69,28 +69,28 @@ get_all_classification_nodes()
 
 | Identifiant                       | Systeme  | Niveau         | Version     | Type  |
 |-----------------------------------|----------|----------------|-------------|-------|
-| `NIS_MUNICIPALITY_BEFORE_2019`         | NIS      | commune        | BEFORE_2019 | int   |
-| `NIS_DISTRICT_BEFORE_2019`  | NIS      | arrondissement | BEFORE_2019 | int   |
+| `NIS_MUNICIPALITY_BEFORE_2019`         | NIS      | municipality   | BEFORE_2019 | int   |
+| `NIS_DISTRICT_BEFORE_2019`  | NIS      | district       | BEFORE_2019 | int   |
 | `NIS_PROVINCE_BEFORE_2019`        | NIS      | province       | BEFORE_2019 | int   |
 | `NIS_REGION_BEFORE_2019`          | NIS      | region         | BEFORE_2019 | int   |
-| `NIS_MUNICIPALITY_2019`                | NIS      | commune        | 2019        | int   |
-| `NIS_DISTRICT_2019`         | NIS      | arrondissement | 2019        | int   |
+| `NIS_MUNICIPALITY_2019`                | NIS      | municipality   | 2019        | int   |
+| `NIS_DISTRICT_2019`         | NIS      | district       | 2019        | int   |
 | `NIS_PROVINCE_2019`               | NIS      | province       | 2019        | int   |
 | `NIS_REGION_2019`                 | NIS      | region         | 2019        | int   |
-| `NIS_MUNICIPALITY_2025`                | NIS      | commune        | 2025        | int   |
-| `NIS_DISTRICT_2025`         | NIS      | arrondissement | 2025        | int   |
+| `NIS_MUNICIPALITY_2025`                | NIS      | municipality   | 2025        | int   |
+| `NIS_DISTRICT_2025`         | NIS      | district       | 2025        | int   |
 | `NIS_PROVINCE_2025`               | NIS      | province       | 2025        | int   |
 | `NIS_REGION_2025`                 | NIS      | region         | 2025        | int   |
-| `NUTS_LAU_2021`                   | NUTS     | lau            | 2021        | chr   | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat). Niveau LAU de la hierarchie NUTS (LAU < NUTS3 < ... < NUTS_COUNTRY). |
-| `NUTS_DISTRICT_2021`                      | NUTS     | nuts3          | 2021        | chr   |
-| `NUTS_PROVINCE_2021`                      | NUTS     | nuts2          | 2021        | chr   |
-| `NUTS_REGION_2021`                      | NUTS     | nuts1          | 2021        | chr   |
-| `NUTS_COUNTRY`                           | NUTS     | nuts0          | NA          | chr   |
-| `NUTS_DISTRICT_2027`                      | NUTS     | nuts3          | 2027        | chr   |
-| `NUTS_PROVINCE_2027`                      | NUTS     | nuts2          | 2027        | chr   |
-| `NUTS_REGION_2027`                      | NUTS     | nuts1          | 2027        | chr   |
+| `NUTS_LAU_2021`                   | NUTS     | municipality   | 2021        | chr   | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat). Niveau LAU de la hierarchie NUTS (LAU < NUTS3 < ... < NUTS_COUNTRY). |
+| `NUTS_DISTRICT_2021`                      | NUTS     | district       | 2021        | chr   |
+| `NUTS_PROVINCE_2021`                      | NUTS     | province       | 2021        | chr   |
+| `NUTS_REGION_2021`                      | NUTS     | region         | 2021        | chr   |
+| `NUTS_COUNTRY`                           | NUTS     | country        | NA          | chr   |
+| `NUTS_DISTRICT_2027`                      | NUTS     | district       | 2027        | chr   |
+| `NUTS_PROVINCE_2027`                      | NUTS     | province       | 2027        | chr   |
+| `NUTS_REGION_2027`                      | NUTS     | region         | 2027        | chr   |
 | `POSTAL`                          | POSTAL   | postal         | NA          | int   |
-| `NBB_DISTRICT_2021`         | INTERNAL | arrondissement | NA          | chr   |
+| `NBB_DISTRICT_2021`         | NBB      | district       | 2021        | chr   |
 
 **Alias acceptes** : les identifiants tolerent plusieurs formes abreges
 (ex. `"CP"`, `"CODE_POSTAL"`, `"POSTAL"` ; `"COMMUNE_2019"`, `"NIS_COM_2019"`).
@@ -532,9 +532,9 @@ Interface programmatique pour manipuler les classifications dynamiquement.
 Construit un objet `nomenclature` valide contre `CLASSIFICATION_NODES`.
 
 ```r
-n <- nomenclature("NIS", "commune", "2019")
+n <- nomenclature("NIS", "municipality", "2019")
 nom_system(n)   # "NIS"
-nom_level(n)    # "commune"
+nom_level(n)    # "municipality"
 nom_version(n)  # "2019"
 ```
 
@@ -621,7 +621,7 @@ Chaque entree est une liste avec :
 ```r
 CLASSIFICATION_NODES[["NIS_MUNICIPALITY_2019"]]
 # $system        "NIS"
-# $level         "commune"
+# $level         "municipality"
 # $version       "2019"
 # $code_type     "integer"
 # $source_table  "communes"

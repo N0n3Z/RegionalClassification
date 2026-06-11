@@ -121,9 +121,9 @@ Patrons (set complet = `names(.ROUTE_TABLE)`) :
 |---|---|
 | `NIS_COMMUNE_v → NIS_ARR/PROV/REGION_v`, `→ NUTS_LAU/NUTS3/2/1/0_2021`, `→ cd_arr_internal` | `unique(master_v[, .(cd_commune, <to_col>)])` |
 | `POSTAL → NIS_MUNICIPALITY_2019/2025` | `postal_map_v[, .(cd_postal, cd_commune_nis)]` |
-| `NUTS_DISTRICT_2021→NUTS2`, `NUTS2→NUTS1`, `NUTS1→NUTS_COUNTRY`, `NUTS3↔INTERNAL`, `LAU→NIS_MUNICIPALITY_2019` (rev), `INTERNAL→NUTS3` (rev), `NUTS_DISTRICT_2021→NIS_ARR_2019` (rev) | `unique(master_2019[!is.na(<col>), .(<from_col>, <to_col>)])` |
+| `NUTS_DISTRICT_2021→NUTS2`, `NUTS2→NUTS1`, `NUTS1→NUTS_COUNTRY`, `NUTS_DISTRICT↔NBB_DISTRICT`, `NUTS_LAU→NIS_MUNICIPALITY_2019` (rev), `NBB_DISTRICT→NUTS_DISTRICT` (rev), `NUTS_DISTRICT_2021→NIS_DISTRICT_2019` (rev) | `unique(master_2019[!is.na(<col>), .(<from_col>, <to_col>)])` |
 | `NIS_DISTRICT_2019 → NUTS_DISTRICT_2021` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_nuts3), .(cd_arr, cd_nuts3)])` → 63000 = 2 lignes |
-| `NIS_DISTRICT_2019 → INTERNAL` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_arr_internal), .(cd_arr, cd_arr_internal)])` |
+| `NIS_DISTRICT_2019 → NBB_DISTRICT_2021` (**Verviers 1:N**) | `unique(master_2019[!is.na(cd_arr_internal), .(cd_arr, cd_arr_internal)])` |
 | `NIS_PROVINCE_v → NIS_REGION_v` (**Brabant M:N**) | `unique(master_v[, .(cd_province, cd_region)])` → 20000 = 3 lignes |
 | `NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025` (**temporel, nature**) | `nis_changes[from_version=="2019", .(cd_refnis_old, cd_refnis_new, nature)]` + lignes `UNCHANGED` pour les codes 2019 absents de la table |
 | `NIS_MUNICIPALITY_2025 → NIS_MUNICIPALITY_2019` (**reverse 1:N, nature**) | idem inversé (un 2025 fusionné → plusieurs 2019) |
