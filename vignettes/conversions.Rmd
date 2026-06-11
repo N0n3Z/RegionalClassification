@@ -269,7 +269,7 @@ Les quatre valeurs de `perimeter_relation` :
 | Valeur      | Signification |
 |-------------|---------------|
 | `temporal`  | Même système, versions différentes (NIS 2019 → 2025, etc.) |
-| `identity`  | Correspondance exacte 1:1 sans perte (ex. NIS_MUNICIPALITY_2019 → NUTS_LAU_2021 : meme territoire, meme code, systeme Eurostat) |
+| `identity`  | Correspondance exacte 1:1 sans perte (ex. NIS_MUNICIPALITY_2019 → NUTS_MUNICIPALITY_2021 : meme territoire, meme code, systeme Eurostat) |
 | `nesting`   | Agrégation N:1 (plusieurs communes → un arrondissement) |
 | `overlap`   | La source enjambe plusieurs cibles (Verviers 1:N, Brabant M:N) |
 
@@ -284,7 +284,7 @@ plus du test de simplicité.
 # Chemin simple et préservant le périmètre
 r <- check_conversion_path("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
 # $is_simple          TRUE
-# $path               c("NIS_MUNICIPALITY_2019", "NUTS_LAU_2021", "NUTS_DISTRICT_2021")
+# $path               c("NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021", "NUTS_DISTRICT_2021")
 # $perimeter_relations c("identity", "nesting")
 # $perimeter_status   "preserving"
 # $straddle_free      TRUE

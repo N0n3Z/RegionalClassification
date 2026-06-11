@@ -31,7 +31,7 @@ if (is.null(md$crosswalks)) {
   # was built correctly).  The primary regression guard for crosswalk correctness
   # is test-crosswalks-golden.R.
   # Note: md$crosswalks includes both forward and reverse single-hop entries
-  # (e.g. NUTS_LAU_2021__NIS_MUNICIPALITY_2019 as well as NIS_MUNICIPALITY_2019__NUTS_LAU_2021)
+  # (e.g. NUTS_MUNICIPALITY_2021__NIS_MUNICIPALITY_2019 as well as NIS_MUNICIPALITY_2019__NUTS_MUNICIPALITY_2021)
   # plus shortcut entries pre-computed by the old handlers.  It does NOT cover
   # all CONVERSION_GRAPH_EDGES (which also declares multi-hop edges composed at
   # runtime).  A simple subset check in either direction is therefore not useful.

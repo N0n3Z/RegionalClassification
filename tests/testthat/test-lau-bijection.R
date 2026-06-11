@@ -1,9 +1,9 @@
 library(data.table)
 
 # ==============================================================================
-# test-lau-bijection.R -- NUTS_LAU_2021 <-> NIS_MUNICIPALITY_2019 bijection guard
+# test-lau-bijection.R -- NUTS_MUNICIPALITY_2021 <-> NIS_MUNICIPALITY_2019 bijection guard
 # ==============================================================================
-# In Belgium, NUTS_LAU_2021 (Eurostat Local Administrative Units) is in
+# In Belgium, NUTS_MUNICIPALITY_2021 (Eurostat Local Administrative Units) is in
 # near-bijection with NIS_MUNICIPALITY_2019: same geographic entities, same codes
 # (cd_nuts_lau == as.character(cd_commune) for all but one commune).
 # These tests lock that guarantee so a future data rebuild that breaks it is
@@ -12,17 +12,17 @@ library(data.table)
 
 md <- load_master_data()
 
-test_that("NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021 is 1:1 (no commune maps to 2 LAU codes)", {
+test_that("NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021 is 1:1 (no commune maps to 2 LAU codes)", {
   communes <- .list_codes_for("NIS_MUNICIPALITY_2019", md)
-  r <- suppressWarnings(convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021", md))
+  r <- suppressWarnings(convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021", md))
   dups <- r[!is.na(code_to), .N, by = code_from][N > 1L]
   expect_equal(nrow(dups), 0L,
     info = paste("Communes with multiple LAU targets:", paste(dups$code_from, collapse = ", ")))
 })
 
-test_that("NUTS_LAU_2021 -> NIS_MUNICIPALITY_2019 is 1:1 (no LAU code maps to 2 communes)", {
-  lau_codes <- .list_codes_for("NUTS_LAU_2021", md)
-  r <- suppressWarnings(convert_codes(lau_codes, "NUTS_LAU_2021", "NIS_MUNICIPALITY_2019", md))
+test_that("NUTS_MUNICIPALITY_2021 -> NIS_MUNICIPALITY_2019 is 1:1 (no LAU code maps to 2 communes)", {
+  lau_codes <- .list_codes_for("NUTS_MUNICIPALITY_2021", md)
+  r <- suppressWarnings(convert_codes(lau_codes, "NUTS_MUNICIPALITY_2021", "NIS_MUNICIPALITY_2019", md))
   dups <- r[!is.na(code_to), .N, by = code_from][N > 1L]
   expect_equal(nrow(dups), 0L,
     info = paste("LAU codes with multiple commune targets:", paste(dups$code_from, collapse = ", ")))
@@ -30,7 +30,7 @@ test_that("NUTS_LAU_2021 -> NIS_MUNICIPALITY_2019 is 1:1 (no LAU code maps to 2 
 
 test_that("LAU codes equal NIS codes cast to character for all mapped communes", {
   communes <- .list_codes_for("NIS_MUNICIPALITY_2019", md)
-  r <- suppressWarnings(convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021", md))
+  r <- suppressWarnings(convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021", md))
   r_mapped <- r[!is.na(code_to)]
   n_equal  <- r_mapped[as.character(code_from) == code_to, .N]
   n_total  <- nrow(r_mapped)
@@ -42,7 +42,7 @@ test_that("LAU codes equal NIS codes cast to character for all mapped communes",
 test_that("coverage: at most 2 NIS 2019 communes have no LAU code", {
   # 2 communes are absent from the Eurostat LAU 2021 file for Belgium
   communes <- .list_codes_for("NIS_MUNICIPALITY_2019", md)
-  r <- suppressWarnings(convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_LAU_2021", md))
+  r <- suppressWarnings(convert_codes(communes, "NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021", md))
   n_na <- r[is.na(code_to), .N]
   expect_lte(n_na, 2L,
     label = sprintf("%d commune(s) without a LAU code", n_na))

@@ -21,6 +21,7 @@ utils::globalVariables(c(
   # internal column names used via data.table NSE
   "cd_arr", "cd_arr_2digit", "cd_arr_internal",
   "cd_commune", "cd_commune_2025", "cd_commune_nis",
+  "cd_nis_country",
   "cd_nuts", "cd_nuts0", "cd_nuts0_2027",
   "cd_nuts1", "cd_nuts1_2027", "cd_nuts2", "cd_nuts2_2027",
   "cd_nuts3", "cd_nuts3_2027", "cd_nuts_lau", "cd_nuts_parent",

@@ -51,7 +51,7 @@ CLS_NIS_DISTRICT_2025        <- "NIS_DISTRICT_2025"
 CLS_NIS_PROVINCE_2025              <- "NIS_PROVINCE_2025"
 CLS_NIS_REGION_2025                <- "NIS_REGION_2025"
 # --- NUTS 2021 ---
-CLS_NUTS_LAU_2021                  <- "NUTS_LAU_2021"
+CLS_NUTS_MUNICIPALITY_2021         <- "NUTS_MUNICIPALITY_2021"
 CLS_NUTS_DISTRICT_2021                     <- "NUTS_DISTRICT_2021"
 CLS_NUTS_PROVINCE_2021                     <- "NUTS_PROVINCE_2021"
 CLS_NUTS_REGION_2021                     <- "NUTS_REGION_2021"
@@ -61,10 +61,11 @@ CLS_NUTS_DISTRICT_2027                     <- "NUTS_DISTRICT_2027"
 CLS_NUTS_PROVINCE_2027                     <- "NUTS_PROVINCE_2027"
 CLS_NUTS_REGION_2027                     <- "NUTS_REGION_2027"
 # --- Other ---
+CLS_NIS_COUNTRY                    <- "NIS_COUNTRY"
 CLS_POSTAL                         <- "POSTAL"
 CLS_NBB_DISTRICT_2021        <- "NBB_DISTRICT_2021"
 
-# All 22 classification ids -- used by test-name-constants.R
+# All 23 classification ids -- used by test-name-constants.R
 CLS_ALL <- c(
   CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_DISTRICT_BEFORE_2019,
   CLS_NIS_PROVINCE_BEFORE_2019, CLS_NIS_REGION_BEFORE_2019,
@@ -72,7 +73,8 @@ CLS_ALL <- c(
   CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019,
   CLS_NIS_MUNICIPALITY_2025, CLS_NIS_DISTRICT_2025,
   CLS_NIS_PROVINCE_2025, CLS_NIS_REGION_2025,
-  CLS_NUTS_LAU_2021, CLS_NUTS_DISTRICT_2021, CLS_NUTS_PROVINCE_2021,
+  CLS_NIS_COUNTRY,
+  CLS_NUTS_MUNICIPALITY_2021, CLS_NUTS_DISTRICT_2021, CLS_NUTS_PROVINCE_2021,
   CLS_NUTS_REGION_2021, CLS_NUTS_COUNTRY,
   CLS_NUTS_DISTRICT_2027, CLS_NUTS_PROVINCE_2027, CLS_NUTS_REGION_2027,
   CLS_POSTAL, CLS_NBB_DISTRICT_2021
@@ -84,7 +86,7 @@ CLASSIFICATION_REGISTRY <- list(
   NIS = list(
     description = "Nomenclature INS/NIS (Institut National de Statistique)",
     versions = c("BEFORE_2019", "2019", "2025"),
-    levels = c("municipality", "district", "province", "region"),
+    levels = c("municipality", "district", "province", "region", "country"),
     source = "Statbel"
   ),
   NUTS = list(
@@ -279,11 +281,22 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
                       "All other provinces are N:1.  Prefer commune-level paths.")),
 
+  # --- NIS regions to NIS_COUNTRY ---
+  list(from = CLS_NIS_REGION_BEFORE_2019, to = CLS_NIS_COUNTRY,
+       relation = "N:1", via = "hierarchy",
+       notes = "All regions aggregate to Belgium (NIS code 1000)"),
+  list(from = CLS_NIS_REGION_2019, to = CLS_NIS_COUNTRY,
+       relation = "N:1", via = "hierarchy",
+       notes = "All regions aggregate to Belgium (NIS code 1000)"),
+  list(from = CLS_NIS_REGION_2025, to = CLS_NIS_COUNTRY,
+       relation = "N:1", via = "hierarchy",
+       notes = "All regions aggregate to Belgium (NIS code 1000)"),
+
   # --- NIS 2019 to NUTS 2021 ---
-  list(from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_LAU_2021,
+  list(from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_MUNICIPALITY_2021,
        relation = "1:1", via = "CONVERSION_NIS2019_NUTS2021",
        notes = "Direct 1:1 mapping from CONVERSION file"),
-  list(from = CLS_NUTS_LAU_2021, to = CLS_NUTS_DISTRICT_2021,
+  list(from = CLS_NUTS_MUNICIPALITY_2021, to = CLS_NUTS_DISTRICT_2021,
        relation = "N:1", via = "CONVERSION_NIS2019_NUTS2021",
        notes = "LAU to NUTS3 from CD_LVL_SUP hierarchy"),
   list(from = CLS_NUTS_DISTRICT_2021, to = CLS_NUTS_PROVINCE_2021,
@@ -415,11 +428,11 @@ CONVERSION_GRAPH_EDGES <- list(
          "(many communes per NUTS3) and would create a spurious simple path ",
          "NUTS_DISTRICT_2021 -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027."
        )),
-  # NIS_MUNICIPALITY_2025 -> NUTS_LAU_2021: deliberately absent.
+  # NIS_MUNICIPALITY_2025 -> NUTS_MUNICIPALITY_2021: deliberately absent.
   # LAU (Local Administrative Unit) is a 1:1 identifier for NIS 2019 communes.
   # Fused communes in NIS 2025 do not have a single LAU code (LAU is undefined
   # after a merge of two or more communes). Adding this edge would create a
-  # spurious simple path NIS_MUNICIPALITY_2025 -> NUTS_LAU_2021 -> NIS_MUNICIPALITY_2019
+  # spurious simple path NIS_MUNICIPALITY_2025 -> NUTS_MUNICIPALITY_2021 -> NIS_MUNICIPALITY_2019
   # that silently gives NA for fused communes instead of their 2019 constituents.
   # Users who need LAU codes for 2025 communes should convert via NIS 2019 and
   # filter for unchanged communes.
@@ -502,6 +515,7 @@ MASTER_COMMUNE_KNOWN_COLS <- c(
   MASTER_COMMUNE_CORE_COLS,
   "tx_arr_fr", "tx_arr_nl", "cd_arr_2digit",
   "tx_prov_fr", "tx_prov_nl", "tx_region_fr", "tx_region_nl",
+  "cd_nis_country",
   "cd_nuts_lau", "cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
   "tx_nuts3_fr", "tx_nuts3_nl",
   "cd_nuts3_2027", "cd_nuts2_2027", "cd_nuts1_2027", "cd_nuts0_2027",
