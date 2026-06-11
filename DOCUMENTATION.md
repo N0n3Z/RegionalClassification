@@ -31,6 +31,7 @@
 9. [Classes d'erreur et avertissements](#9-classes-derreur-et-avertissements)
 10. [Suite de tests](#10-suite-de-tests)
 11. [Reconstruction du snapshot](#11-reconstruction-du-snapshot)
+12. [Datasets d'exemple](#12-datasets-dexemple)
 
 ---
 
@@ -822,6 +823,66 @@ save_master_tables(md)                     # ecrit inst/extdata/*.rds
 `build_master_table()` valide le schema de la table `communes` au build et leve
 `rcl_schema_error` si des colonnes obligatoires sont absentes ou si les types
 ne correspondent pas au registre `CLASSIFICATION_NODES`.
+
+---
+
+## 12. Datasets d'exemple
+
+Le package inclut huit `data.table` prets a l'emploi (charges avec `data()`).
+Toutes les valeurs socio-economiques sont **fictives** (generees par `set.seed(42)`).
+
+### Datasets propres (couverture complete)
+
+Chaque dataset contient une ligne par unite geographique, avec cinq colonnes :
+la colonne code + `population`, `emplois`, `masse_sal`, `taux_activite`.
+
+| Dataset | Code col | N lignes | Classification |
+|---------|----------|----------|----------------|
+| `rc_full_municipalities_2019` | `cd_commune` | 583 | `NIS_MUNICIPALITY_2019` |
+| `rc_full_municipalities_2025` | `cd_commune` | 567 | `NIS_MUNICIPALITY_2025` |
+| `rc_full_districts_2019`      | `cd_arr`     |  44 | `NIS_DISTRICT_2019` |
+| `rc_full_regions_2019`        | `cd_region`  |   3 | `NIS_REGION_2019` |
+| `rc_full_nuts3_2021`          | `cd_nuts3`   |  44 | `NUTS_DISTRICT_2021` |
+| `rc_full_nuts3_2027`          | `cd_nuts3_2027` | 44 | `NUTS_DISTRICT_2027` |
+| `rc_full_postal`              | `cd_postal`  | 1 149 | `POSTAL` |
+
+### Dataset sale (`rc_dirty_municipalities_2019`)
+
+319 lignes basees sur `NIS_MUNICIPALITY_2019` avec quatre types d'anomalies
+intentionnelles, pour demonstrer `diagnose_classification()` et `validate_codes()` :
+
+| Anomalie | Quantite |
+|----------|----------|
+| Doublons de lignes | 5 communes repetees |
+| Codes d'une autre version | 4 codes NIS 2025 absents de 2019 |
+| Code NA | 2 lignes |
+| Valeur `population` NA | 8 lignes |
+
+```r
+data(rc_dirty_municipalities_2019)
+master_data <- load_master_data()
+
+# Diagnostic complet
+diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data,
+                        classification = "NIS_MUNICIPALITY_2019")
+
+# Validation code par code
+validate_codes(rc_dirty_municipalities_2019$cd_commune,
+               "NIS_MUNICIPALITY_2019", master_data)
+
+# Auto-detection (si la classification n'est pas connue a l'avance)
+diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
+```
+
+### Regeneration
+
+Les fichiers `.rda` dans `data/` sont produits par :
+
+```r
+source("data-raw/generate_example_datasets.R")
+```
+
+La graine aleatoire `set.seed(42)` garantit la reproductibilite.
 
 ---
 

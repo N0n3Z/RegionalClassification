@@ -23,7 +23,7 @@ master_data <- load_master_data()
 # 1. Classifications disponibles
 # ==============================================================================
 
-# Liste tous les identifiants canoniques (22 au total)
+# Liste tous les identifiants canoniques (23 au total)
 get_all_classification_nodes()
 
 # Matrice de conversions possibles
@@ -462,7 +462,67 @@ withCallingHandlers(
 
 
 # ==============================================================================
-# 10. Correspondance floue de noms -- fuzzy_match_names()
+# 10. Datasets d'exemple complets
+# ==============================================================================
+#
+# Le package inclut huit datasets prets a l'emploi :
+#
+#   Datasets propres (une ligne par unite geographique) :
+#     rc_full_municipalities_2019  -- 583 communes NIS 2019
+#     rc_full_municipalities_2025  -- 567 communes NIS 2025
+#     rc_full_districts_2019       -- 44 arrondissements NIS 2019
+#     rc_full_regions_2019         -- 3 regions NIS 2019
+#     rc_full_nuts3_2021           -- 44 regions NUTS3 2021
+#     rc_full_nuts3_2027           -- 44 regions NUTS3 2027
+#     rc_full_postal               -- 1 149 codes postaux
+#
+#   Dataset sale (pour tester le diagnostic) :
+#     rc_dirty_municipalities_2019 -- 319 lignes avec doublons, codes inconnus,
+#                                     valeurs NA et codes d'une autre version
+
+# --- 10a. Conversion complete d'un dataset propre ------------------------------
+data(rc_full_municipalities_2019)
+
+convert_dataset(rc_full_municipalities_2019, "cd_commune",
+                from = "NIS_MUNICIPALITY_2019",
+                to   = "NUTS_DISTRICT_2021",
+                master_data)
+
+# --- 10b. NUTS3 2021 -> NUTS2 2021 --------------------------------------------
+data(rc_full_nuts3_2021)
+
+convert_dataset(rc_full_nuts3_2021, "cd_nuts3",
+                from = "NUTS_DISTRICT_2021",
+                to   = "NUTS_PROVINCE_2021",
+                master_data)
+
+# --- 10c. Codes postaux -> communes NIS 2019 -----------------------------------
+data(rc_full_postal)
+
+convert_dataset(rc_full_postal, "cd_postal",
+                from = "POSTAL",
+                to   = "NIS_MUNICIPALITY_2019",
+                master_data)
+
+# --- 10d. Diagnostic du dataset sale ------------------------------------------
+data(rc_dirty_municipalities_2019)
+
+# Verification contre NIS_MUNICIPALITY_2019
+diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data,
+                        classification = "NIS_MUNICIPALITY_2019")
+# Signale : doublons, codes inconnus (version 2025), codes NA
+
+# Validation precise
+val <- validate_codes(rc_dirty_municipalities_2019$cd_commune,
+                      "NIS_MUNICIPALITY_2019", master_data)
+val[is_valid == FALSE]
+
+# Auto-detection de la meilleure classification
+diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
+
+
+# ==============================================================================
+# 11. Correspondance floue de noms -- fuzzy_match_names()
 # ==============================================================================
 
 fuzzy_match_names(
@@ -481,7 +541,7 @@ fuzzy_match_names(
 
 
 # ==============================================================================
-# 11. Visualisation (requiert visNetwork)
+# 12. Visualisation (requiert visNetwork)
 # ==============================================================================
 
 # Graphe des relations entre classifications
@@ -495,7 +555,7 @@ visualize_hierarchy("NIS_2019", master_data)
 
 
 # ==============================================================================
-# 12. Utilitaires
+# 13. Utilitaires
 # ==============================================================================
 
 # Chemin de conversion detaille avec semantique de perimetre
