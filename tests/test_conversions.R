@@ -341,7 +341,7 @@ run_all_tests <- function(master_data) {
     r_det <- diagnose_classification(comm_dt, "code", master_data, verbose = FALSE)
     stopifnot(r_det$mode == "detect")
     stopifnot(r_det$recommendation == "NIS_MUNICIPALITY_2019")
-    stopifnot(r_det$classification_type == "NIS_COMMUNE")
+    stopifnot(r_det$classification_type == "NIS_MUNICIPALITY")
     stopifnot(r_det$version == "2019")
     cat(sprintf("  Auto-detected: %s (v%s)\n",
                 r_det$classification_type, r_det$version))

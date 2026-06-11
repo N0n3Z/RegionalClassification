@@ -252,7 +252,7 @@ MY_TESTS <- list(
     classification = NULL,   # auto-detection
     check_fn    = function(r, master_data) {
       r$recommendation      == "NIS_MUNICIPALITY_2019" &&
-      r$classification_type == "NIS_COMMUNE" &&
+      r$classification_type == "NIS_MUNICIPALITY" &&
       r$version             == "2019"
     }
   ),

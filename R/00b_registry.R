@@ -369,7 +369,7 @@ CLASSIFICATION_NODES <- list(
 #'
 #' Returns `list(type, version)` matching the format produced by the legacy
 #' `.parse_classification_id()` in R/07_diagnose.R.  Fixes the gaps in that
-#' function: `NIS_*_BEFORE_2019`, `NIS_ARRONDISSEMENT/PROVINCE/REGION_2025`,
+#' function: `NIS_*_BEFORE_2019`, `NIS_DISTRICT/PROVINCE/REGION_2025`,
 #' and `NUTS_COUNTRY` now return correct values instead of the fallback default.
 #' @noRd
 .node_parse <- function(id) {
