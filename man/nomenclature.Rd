@@ -7,7 +7,7 @@
 nomenclature(system, level = NULL, version = NULL)
 }
 \arguments{
-\item{system}{Classification system: "NIS", "NUTS", "POSTAL", "INTERNAL"
+\item{system}{Classification system: "NIS", "NUTS", "POSTAL", "NBB"
 (case-insensitive). Passing an existing \code{nomenclature} returns it
 unchanged.}
 
@@ -21,26 +21,26 @@ An object of class \code{nomenclature}.
 }
 \description{
 Builds a structured handle for a classification, identified by its
-\code{system} (NIS, NUTS, POSTAL, INTERNAL), \code{level} (commune,
-arrondissement, province, region, nuts3, lau, postal, ...) and \code{version}
+\code{system} (NIS, NUTS, POSTAL, NBB), \code{level} (municipality,
+district, province, region, country, lau, postal) and \code{version}
 (e.g. "2019", "2025", "BEFORE_2019", "2021", "2027"). The triplet must
 resolve to exactly one known classification.
 }
 \details{
 \code{level} and/or \code{version} may be omitted when the remaining
 components are unambiguous (e.g. \code{nomenclature("POSTAL")},
-\code{nomenclature("NUTS", "nuts0")}).
+\code{nomenclature("NUTS", "country")}).
 
 This object is the recommended way to work programmatically (loop over
 versions/levels) and to navigate aggregation links
 (\code{\link{nomenclature_children}}, \code{\link{nomenclature_parents}}).
-Plain string identifiers (e.g. \code{"NIS_COMMUNE_2019"}) remain accepted by
+Plain string identifiers (e.g. \code{"NIS_MUNICIPALITY_2019"}) remain accepted by
 all functions.
 }
 \examples{
-nomenclature("NIS", "commune", "2019")
-nomenclature("NUTS", "nuts3", 2021)
+nomenclature("NIS", "municipality", "2019")
+nomenclature("NUTS", "district", 2021)
 nomenclature("POSTAL")
 # Dynamic construction:
-lapply(c("2019", "2025"), function(v) nomenclature("NIS", "commune", v))
+lapply(c("2019", "2025"), function(v) nomenclature("NIS", "municipality", v))
 }

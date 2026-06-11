@@ -44,7 +44,7 @@ et a travers le temps. Il couvre quatre systemes :
 | **NIS** (Statbel) | `NIS_*_{BEFORE_2019,2019,2025}` | `21004` (Bruxelles), `63000` (arr. Verviers) |
 | **NUTS** (Eurostat) | `NUTS{0,1,2,3}_202{1,7}`, `NUTS_LAU_2021` | `"BE100"`, `"BE211"` |
 | **Postal** (bpost) | `POSTAL` | `1000`, `2000` |
-| **Interne** | `INTERNAL_ARRONDISSEMENT` | `"21"` (Bxl), `"65"` (Verviers FR), `"66"` (Verviers DE) |
+| **Interne** | `NBB_DISTRICT_2021` | `"21"` (Bxl), `"65"` (Verviers FR), `"66"` (Verviers DE) |
 
 Deux dimensions temporelles :
 - **NIS** : `BEFORE_2019` (591 communes), `2019` (583), `2025` (567) -- les communes
@@ -52,7 +52,7 @@ Deux dimensions temporelles :
 - **NUTS** : `2021` (en vigueur) et `2027` (Reglement UE 2026/195).
 
 **Proprietes cles de l'API :**
-- Codes NIS et POSTAL sont de type **integer** ; codes NUTS et INTERNAL sont de type
+- Codes NIS et POSTAL sont de type **integer** ; codes NUTS et NBB sont de type
   **character**.
 - `convert_codes()` renvoie toujours un `data.table(code_from, code_to, nature)`.
 - Les conversions ambigues (1:N, M:N) sont bloquees par defaut ; `allow_ambiguous = TRUE`
@@ -69,28 +69,28 @@ get_all_classification_nodes()
 
 | Identifiant                       | Systeme  | Niveau         | Version     | Type  |
 |-----------------------------------|----------|----------------|-------------|-------|
-| `NIS_COMMUNE_BEFORE_2019`         | NIS      | commune        | BEFORE_2019 | int   |
-| `NIS_ARRONDISSEMENT_BEFORE_2019`  | NIS      | arrondissement | BEFORE_2019 | int   |
+| `NIS_MUNICIPALITY_BEFORE_2019`         | NIS      | municipality   | BEFORE_2019 | int   |
+| `NIS_DISTRICT_BEFORE_2019`  | NIS      | district       | BEFORE_2019 | int   |
 | `NIS_PROVINCE_BEFORE_2019`        | NIS      | province       | BEFORE_2019 | int   |
 | `NIS_REGION_BEFORE_2019`          | NIS      | region         | BEFORE_2019 | int   |
-| `NIS_COMMUNE_2019`                | NIS      | commune        | 2019        | int   |
-| `NIS_ARRONDISSEMENT_2019`         | NIS      | arrondissement | 2019        | int   |
+| `NIS_MUNICIPALITY_2019`                | NIS      | municipality   | 2019        | int   |
+| `NIS_DISTRICT_2019`         | NIS      | district       | 2019        | int   |
 | `NIS_PROVINCE_2019`               | NIS      | province       | 2019        | int   |
 | `NIS_REGION_2019`                 | NIS      | region         | 2019        | int   |
-| `NIS_COMMUNE_2025`                | NIS      | commune        | 2025        | int   |
-| `NIS_ARRONDISSEMENT_2025`         | NIS      | arrondissement | 2025        | int   |
+| `NIS_MUNICIPALITY_2025`                | NIS      | municipality   | 2025        | int   |
+| `NIS_DISTRICT_2025`         | NIS      | district       | 2025        | int   |
 | `NIS_PROVINCE_2025`               | NIS      | province       | 2025        | int   |
 | `NIS_REGION_2025`                 | NIS      | region         | 2025        | int   |
-| `NUTS_LAU_2021`                   | NUTS     | lau            | 2021        | chr   |
-| `NUTS3_2021`                      | NUTS     | nuts3          | 2021        | chr   |
-| `NUTS2_2021`                      | NUTS     | nuts2          | 2021        | chr   |
-| `NUTS1_2021`                      | NUTS     | nuts1          | 2021        | chr   |
-| `NUTS0`                           | NUTS     | nuts0          | NA          | chr   |
-| `NUTS3_2027`                      | NUTS     | nuts3          | 2027        | chr   |
-| `NUTS2_2027`                      | NUTS     | nuts2          | 2027        | chr   |
-| `NUTS1_2027`                      | NUTS     | nuts1          | 2027        | chr   |
+| `NUTS_LAU_2021`                   | NUTS     | municipality   | 2021        | chr   | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat). Niveau LAU de la hierarchie NUTS (LAU < NUTS3 < ... < NUTS_COUNTRY). |
+| `NUTS_DISTRICT_2021`                      | NUTS     | district       | 2021        | chr   |
+| `NUTS_PROVINCE_2021`                      | NUTS     | province       | 2021        | chr   |
+| `NUTS_REGION_2021`                      | NUTS     | region         | 2021        | chr   |
+| `NUTS_COUNTRY`                           | NUTS     | country        | NA          | chr   |
+| `NUTS_DISTRICT_2027`                      | NUTS     | district       | 2027        | chr   |
+| `NUTS_PROVINCE_2027`                      | NUTS     | province       | 2027        | chr   |
+| `NUTS_REGION_2027`                      | NUTS     | region         | 2027        | chr   |
 | `POSTAL`                          | POSTAL   | postal         | NA          | int   |
-| `INTERNAL_ARRONDISSEMENT`         | INTERNAL | arrondissement | NA          | chr   |
+| `NBB_DISTRICT_2021`         | NBB      | district       | 2021        | chr   |
 
 **Alias acceptes** : les identifiants tolerent plusieurs formes abreges
 (ex. `"CP"`, `"CODE_POSTAL"`, `"POSTAL"` ; `"COMMUNE_2019"`, `"NIS_COM_2019"`).
@@ -118,9 +118,9 @@ Cardinalites :
 
 | Cardinalite | Signification | Exemple |
 |-------------|---------------|---------|
-| `1:1` | bijection exacte | `NIS_COMMUNE_2019 -> NUTS_LAU_2021` |
-| `N:1` | agregation (N sources -> 1 cible) | `NIS_COMMUNE_2019 -> NUTS3_2021` |
-| `1:N` | eclatement (1 source -> N cibles) | `NIS_COMMUNE_2025 -> NUTS3_2021` pour 3 fusions cross-NUTS3 |
+| `1:1` | bijection exacte | `NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021` |
+| `N:1` | agregation (N sources -> 1 cible) | `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021` |
+| `1:N` | eclatement (1 source -> N cibles) | `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` pour 3 fusions cross-NUTS3 |
 | `M:N` | chevauchement complet | `NIS_PROVINCE_2019 -> NIS_REGION_2019` (Brabant 20000) |
 
 ### 3.2 Aretes inverses
@@ -129,7 +129,7 @@ Chaque arete est automatiquement inversee au chargement du graphe (sauf `no_reve
 avec la cardinalite symetrique (`1:1` reste `1:1`, `N:1` devient `1:N`, etc.).
 
 `no_reverse = TRUE` protege les aretes dont l'inversion serait semantiquement incorrecte.
-Exemple : l'inverse de `NIS_COMMUNE_2025 -> NUTS3_2021` (`1:N`) est `1:N` depuis la
+Exemple : l'inverse de `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` (`1:N`) est `1:N` depuis la
 perspective NUTS3 (beaucoup de communes partagent un NUTS3), pas `N:1`.
 
 ### 3.3 Recherche de chemin (BFS)
@@ -150,12 +150,12 @@ que pour les aretes primitives).
 
 ### 3.5 Conversions notables
 
-- **`NUTS3_2021 <-> NUTS3_2027`** : **pas de lien direct**. Trois communes ont change
+- **`NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027`** : **pas de lien direct**. Trois communes ont change
   de province entre 2019 et 2025, deplaceant leur NUTS3. La conversion doit passer par NIS :
-  `NUTS3_2021 -> NIS_COMMUNE -> NIS_COMMUNE_2025 -> NUTS3_2027`.
+  `NUTS_DISTRICT_2021 -> NIS_COMMUNE -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027`.
 - **`province -> region`** est `M:N` (Brabant 20000 couvre 3 regions). Utiliser
   `NIS_COMMUNE_* -> NIS_REGION_*` (N:1) pour un chemin sans ambiguite.
-- **Verviers** (`NIS_ARRONDISSEMENT_2019 = 63000`) est le seul arrondissement 1:N
+- **Verviers** (`NIS_DISTRICT_2019 = 63000`) est le seul arrondissement 1:N
   vers NUTS3 (BE335 francophone + BE336 germanophone).
 
 ---
@@ -168,19 +168,19 @@ et reportee dans `check_conversion_path()` (champ `perimeter_relations`) ainsi q
 
 | Valeur      | Definition | Exemples |
 |-------------|------------|---------|
-| `temporal`  | Meme systeme, versions differentes. Les limites peuvent evoluer edition par edition mais sans chevauchement entre systemes. | `NIS_COMMUNE_2019 -> NIS_COMMUNE_2025` |
-| `identity`  | Arete `1:1` -- correspondance bijective, meme territoire effectif. | `NIS_COMMUNE_2019 -> NUTS_LAU_2021` |
-| `nesting`   | Arete `N:1` -- N unites fines s'agglomerent en 1 unite grossiere. Le perimetre source est entierement contenu dans la cible. | `NIS_COMMUNE_2019 -> NUTS3_2021` |
-| `overlap`   | Arete `1:N` ou `M:N` -- une unite source **enjambe** plusieurs cibles. Seule categorie qui brise la preservation du perimetre. | `NIS_ARRONDISSEMENT_2019 -> NUTS3_2021` |
+| `temporal`  | Meme systeme, versions differentes. Les limites peuvent evoluer edition par edition mais sans chevauchement entre systemes. | `NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025` |
+| `identity`  | Arete `1:1` -- correspondance bijective, meme territoire effectif. | `NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021` |
+| `nesting`   | Arete `N:1` -- N unites fines s'agglomerent en 1 unite grossiere. Le perimetre source est entierement contenu dans la cible. | `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021` |
+| `overlap`   | Arete `1:N` ou `M:N` -- une unite source **enjambe** plusieurs cibles. Seule categorie qui brise la preservation du perimetre. | `NIS_DISTRICT_2019 -> NUTS_DISTRICT_2021` |
 
 **Statut global d'un chemin :**
 - `"preserving"` : aucun saut n'est `overlap`.
 - `"crossing"` : au moins un saut est `overlap`.
 
 ```r
-is_perimeter_preserving("NIS_COMMUNE_2019", "NUTS3_2021")   # TRUE
-is_perimeter_preserving("NIS_COMMUNE_2025", "NUTS3_2021")   # FALSE
-is_perimeter_preserving("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")  # TRUE (temporal)
+is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")   # TRUE
+is_perimeter_preserving("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # FALSE
+is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")  # TRUE (temporal)
 ```
 
 ---
@@ -209,7 +209,7 @@ is_perimeter_preserving("NIS_COMMUNE_2019", "NIS_COMMUNE_2025")  # TRUE (tempora
 - `CHANGE_PROV` : 1 commune (11056 -> 46030)
 
 **Symetrie temporelle** : la nature est preservee sur le chemin inverse.
-`convert_codes(46030L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", md, allow_ambiguous=TRUE)`
+`convert_codes(46030L, "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", md, allow_ambiguous=TRUE)`
 renvoie `CHANGE_PROV` pour la ligne `code_to == 11056`.
 
 ---
@@ -263,16 +263,16 @@ l'avertissement `rcl_unmatched_codes` est emis.
 
 ```r
 # Simple N:1
-convert_codes(c(21004L, 11002L), "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 
 # Temporel avec nature
-convert_codes(c(11002L, 11007L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+convert_codes(c(11002L, 11007L), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 # code_from  code_to  nature
 #     11002    11002  UNCHANGED
 #     11007    11002  FUSION
 
 # Ambigu -- Verviers
-convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
               master_data, allow_ambiguous = TRUE)
 # code_from  code_to  nature
 #     63000    BE335  OVERLAP
@@ -296,7 +296,7 @@ auto-genere si `NULL`). Si `from = NULL`, auto-detecte la classification source 
 
 ```r
 dt <- data.table(commune = c(21004L, 11002L), pop = c(180000, 530000))
-convert_dataset(dt, "commune", "NUTS3_2021", master_data, from = "NIS_COMMUNE_2019")
+convert_dataset(dt, "commune", "NUTS_DISTRICT_2021", master_data, from = "NIS_MUNICIPALITY_2019")
 #    commune      pop  cd_nuts3_2021
 # 1:   21004   180000         BE100
 # 2:   11002   530000         BE211
@@ -358,7 +358,7 @@ Verifie l'appartenance des codes a une classification.
 Retourne `data.table(code, is_valid)`.
 
 ```r
-validate_codes(c(21004L, 99999L), "NIS_COMMUNE_2019", master_data)
+validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
 #    code  is_valid
 #   21004      TRUE
 #   99999     FALSE
@@ -380,10 +380,10 @@ Si `weights = TRUE`, ajoute une colonne `weight` (utilise les poids enregistres 
 `register_split_weights()`, ou 0.5 egal pour les paires ambigues sans poids).
 
 ```r
-cw <- get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+cw <- get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 # 583 lignes (une par commune 2019), avec code_from, code_to
 
-get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data, weights = TRUE)
+get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
 # Colonne weight : 0.5/0.5 pour Verviers (63000) par defaut
 ```
 
@@ -429,7 +429,7 @@ Retourne un `data.table(code_from, code_to, weight)` pre-rempli avec des poids e
 (1/N). Sert de point de depart pour definir des poids personnalises.
 
 ```r
-tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
 # code_from  code_to  weight
 #     63000    BE335     0.5
 #     63000    BE336     0.5
@@ -467,7 +467,7 @@ Convertit un panel longitudinal spanning plusieurs versions NIS vers une version
 - `period_col` : colonne des periodes (annee, trimestre, etc.).
 - `code_col` : colonne des codes geographiques.
 - `value_cols` : colonnes de valeurs a convertir.
-- `version_map` : `list("NIS_COMMUNE_2019" = 2022L, "NIS_COMMUNE_2025" = 2025L)`.
+- `version_map` : `list("NIS_MUNICIPALITY_2019" = 2022L, "NIS_MUNICIPALITY_2025" = 2025L)`.
   Chaque entree associe une classification a un ou plusieurs periodes.
 - `to` : classification cible.
 - `fun` : fonction d'agregation pour `value_type = "additive"` (defaut `sum`).
@@ -489,8 +489,8 @@ rebase_series(
   period_col  = "year",
   code_col    = "commune",
   value_cols  = "pop",
-  version_map = list("NIS_COMMUNE_2019" = 2022L, "NIS_COMMUNE_2025" = 2025L),
-  to          = "NIS_COMMUNE_2025",
+  version_map = list("NIS_MUNICIPALITY_2019" = 2022L, "NIS_MUNICIPALITY_2025" = 2025L),
+  to          = "NIS_MUNICIPALITY_2025",
   master_data = master_data
 )
 # 2022 : commune 11002 -> 530000 + 42000 = 572000 (fusionne)
@@ -511,7 +511,7 @@ Necessite le package `stringdist` (Suggests).
 ```r
 fuzzy_match_names(
   c("Bruxeles", "Antwerpn", "Liege"),
-  target = "NIS_COMMUNE_2019",
+  target = "NIS_MUNICIPALITY_2019",
   master_data,
   max_dist = 0.3
 )
@@ -532,9 +532,9 @@ Interface programmatique pour manipuler les classifications dynamiquement.
 Construit un objet `nomenclature` valide contre `CLASSIFICATION_NODES`.
 
 ```r
-n <- nomenclature("NIS", "commune", "2019")
+n <- nomenclature("NIS", "municipality", "2019")
 nom_system(n)   # "NIS"
-nom_level(n)    # "commune"
+nom_level(n)    # "municipality"
 nom_version(n)  # "2019"
 ```
 
@@ -619,9 +619,9 @@ convert_codes(codes, from, to, md)
 Chaque entree est une liste avec :
 
 ```r
-CLASSIFICATION_NODES[["NIS_COMMUNE_2019"]]
+CLASSIFICATION_NODES[["NIS_MUNICIPALITY_2019"]]
 # $system        "NIS"
-# $level         "commune"
+# $level         "municipality"
 # $version       "2019"
 # $code_type     "integer"
 # $source_table  "communes"
@@ -634,8 +634,8 @@ CLASSIFICATION_NODES[["NIS_COMMUNE_2019"]]
 # $aggregates    character(0)   # commune est un noeud feuille
 ```
 
-Le champ `aggregates` forme un DAG (pas un arbre) : `NIS_ARRONDISSEMENT_2019` est agrege
-par la province ET par la region ; `NUTS0` agrege `NUTS1_2021` ET `NUTS1_2027`.
+Le champ `aggregates` forme un DAG (pas un arbre) : `NIS_DISTRICT_2019` est agrege
+par la province ET par la region ; `NUTS_COUNTRY` agrege `NUTS_REGION_2021` ET `NUTS_REGION_2027`.
 
 ### 7.3 Moteur de conversion (Phase 2)
 
@@ -676,7 +676,7 @@ cd_nuts3       chr   -- code NUTS3 2021
 cd_nuts2       chr   -- code NUTS2 2021
 cd_nuts1       chr   -- code NUTS1 2021
 cd_nuts3_2027  chr   -- code NUTS3 2027 (NULL si pas encore calcule)
-cd_internal    chr   -- code INTERNAL_ARRONDISSEMENT (2 chiffres)
+cd_internal    chr   -- code NBB_DISTRICT_2021 (2 chiffres)
 ```
 
 ### `postal` -- codes postaux

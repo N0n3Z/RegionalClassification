@@ -11,7 +11,7 @@ nomenclature_levels(system)
 nomenclature_versions(system)
 }
 \arguments{
-\item{system}{Classification system ("NIS", "NUTS", "POSTAL", "INTERNAL").}
+\item{system}{Classification system ("NIS", "NUTS", "POSTAL", "NBB").}
 }
 \value{
 A character vector (\code{nomenclature_versions} may contain

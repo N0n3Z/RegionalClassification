@@ -28,13 +28,13 @@ Derives cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0, cd_nuts_lau, and
 cd_arr_internal for NIS 2025 communes from the NIS 2019 master:
 - Unchanged communes (same code in 2019 and 2025): copy directly.
 - Changed communes (in nis_changes[from_version=="2019"]):
-  collect the NUTS3_2021 of all constituent 2019 communes and assign it
+  collect the NUTS_DISTRICT_2021 of all constituent 2019 communes and assign it
   only if all constituents share the same NUTS3; else NA +
   rcl_ambiguous_backfill warning. cd_nuts_lau stays NA for fusions (LAU
   is a 1:1 commune identifier and is undefined after a merge).
 }
 \details{
-The 2025 master must already carry cd_nuts3_2027 etc. (added by
-add_nuts2027_columns before this call, via the NIS 2025 NUTS 2027 file).
+The 2025 master must already carry cd_nuts3_2027 etc. (added from the
+NIS 2025 NUTS 2027 source file during the 2025 master build step).
 }
 \keyword{internal}

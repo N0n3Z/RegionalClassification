@@ -27,9 +27,9 @@ same conversion pair.
 \donttest{
   # Register population-based Verviers split (indicative values)
   register_split_weights(
-    from       = "NIS_ARRONDISSEMENT_2019",
-    to         = "NUTS3_2021",
-    weights_dt = data.table(
+    from       = "NIS_DISTRICT_2019",
+    to         = "NUTS_DISTRICT_2021",
+    weights_dt = data.table::data.table(
       code_from = c(63000L, 63000L),
       code_to   = c("BE335", "BE336"),
       weight    = c(0.857, 0.143)

@@ -21,6 +21,6 @@ Phase 3: driven entirely by the registry (.node_reference_codes) instead of
 a hardcoded switch over source-table columns.  Any classification that has
 at least one non-NA label (name_fr or name_nl) in the entities table is
 now supported automatically.  An abort is raised only when no labels are
-available (e.g. NUTS2, NUTS1, NUTS0 which carry no names).
+available (e.g. NUTS2, NUTS1, NUTS_COUNTRY which carry no names).
 }
 \keyword{internal}

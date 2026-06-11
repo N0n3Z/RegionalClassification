@@ -11,5 +11,7 @@ utils::globalVariables(c(
   # get_conversion_matrix / visualize helpers
   "is_simple", "status",
   # get_label / build_crosswalk_table helpers (09_query.R)
-  "label", "weight", "w"
+  "label", "weight", "w",
+  # .normalize_conversion_result row-count helper (03_convert.R)
+  ".n_to"
 ))

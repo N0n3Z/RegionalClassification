@@ -35,7 +35,7 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
 
   # 1. Inspect the template -- equal weights are the starting point
   tpl <- split_weights_template(
-    "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data
   )
   #    code_from code_to weight
   # 1:     63000   BE335    0.5
@@ -48,7 +48,7 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
 
   # 3a. Register for repeated use
   register_split_weights(
-    "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", tpl, variable = "population"
   )
 
   # 3b. Or pass directly to split_ambiguous
@@ -56,7 +56,7 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
     year = c(2020L, 2021L), arr = c(63000L, 63000L), emploi = c(120000, 122000)
   )
   split_ambiguous(arr_data, "arr", value_cols = "emploi",
-                  from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+                  from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
                   master_data = master_data, weights = tpl, verbose = FALSE)
 }
 }

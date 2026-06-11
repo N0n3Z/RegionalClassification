@@ -32,7 +32,7 @@ head(rc_communes_2019)
 \donttest{
   master_data <- load_master_data()
   convert_dataset(rc_communes_2019, "cd_commune",
-                  to = "NUTS3_2021", master_data)
+                  to = "NUTS_DISTRICT_2021", master_data)
 }
 }
 \keyword{datasets}

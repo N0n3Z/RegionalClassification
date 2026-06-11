@@ -22,8 +22,8 @@ Returns NULL when no confident match is found.
 \examples{
 \donttest{
   master_data <- load_master_data()
-  detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_COMMUNE_2019"
-  detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS3_2021"
+  detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_MUNICIPALITY_2019"
+  detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS_DISTRICT_2021"
   detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
 }
 }

@@ -35,8 +35,8 @@
 ## Bug fixes
 
 * Corrected the cardinality of three commune -> NUTS3 edges in the conversion
-  graph (`NIS_COMMUNE_BEFORE_2019 -> NUTS3_2021`, `NIS_COMMUNE_BEFORE_2019 ->
-  NUTS3_2027`, `NIS_COMMUNE_2019 -> NUTS3_2027`) from `1:1` to `N:1`: many
+  graph (`NIS_MUNICIPALITY_BEFORE_2019 -> NUTS_DISTRICT_2021`, `NIS_MUNICIPALITY_BEFORE_2019 ->
+  NUTS_DISTRICT_2027`, `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2027`) from `1:1` to `N:1`: many
   communes share one NUTS3 region. They were previously labelled `1:1`, which
   made their reverse appear `1:1` too, so `check_conversion_path()` wrongly
   reported descents such as `NUTS3 -> commune`, `NUTS3 -> NUTS_LAU` and
@@ -46,14 +46,14 @@
   `check_conversion_path()` reports as reachable. Previously the path checker
   did a generic graph BFS while the executor only knew hand-written single-hop
   handlers (plus a POSTAL special case), so conversions such as
-  `NUTS3_2021 -> NUTS1_2021`, `NUTS3_2021 -> NUTS0` or `NUTS1_2021 -> NUTS0`
+  `NUTS_DISTRICT_2021 -> NUTS_REGION_2021`, `NUTS_DISTRICT_2021 -> NUTS_COUNTRY` or `NUTS_REGION_2021 -> NUTS_COUNTRY`
   validated as "simple" but then failed with `rcl_no_route`. The executor now
   composes single-hop handlers along a path in the handler graph, keeping the
   graph as the single source of truth for topology.
 * Added the previously-missing simple single-hop handlers
-  `NIS_PROVINCE_* -> NIS_REGION_*`, `NIS_ARRONDISSEMENT_BEFORE_2019 ->
-  NIS_PROVINCE_BEFORE_2019`, `NUTS2_2021 -> NUTS1_2021`, `NUTS1_2021 -> NUTS0`
-  and `NUTS1_2027 -> NUTS0`.
+  `NIS_PROVINCE_* -> NIS_REGION_*`, `NIS_DISTRICT_BEFORE_2019 ->
+  NIS_PROVINCE_BEFORE_2019`, `NUTS_PROVINCE_2021 -> NUTS_REGION_2021`, `NUTS_REGION_2021 -> NUTS_COUNTRY`
+  and `NUTS_REGION_2027 -> NUTS_COUNTRY`.
 
 ## Improvements
 

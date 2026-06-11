@@ -75,9 +75,9 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
     message(sprintf(
       "Master data loaded from '%s': %d communes NIS 2019, %d NIS 2025, %d NIS BEFORE_2019",
       dir,
-      nrow(result$communes[nis_version == "2019"]),
-      nrow(result$communes[nis_version == "2025"]),
-      nrow(result$communes[nis_version == "BEFORE_2019"])
+      nrow(result$communes[nis_version == VER_2019]),
+      nrow(result$communes[nis_version == VER_2025]),
+      nrow(result$communes[nis_version == VER_BEFORE_2019])
     ))
   } else {
     message(sprintf("Master data loaded from '%s' (some tables missing -- run rebuild_master_data())", dir))
@@ -96,7 +96,7 @@ load_master_data <- function(dir = .get_prebuilt_dir()) {
 #'                  Defaults to inst/extdata/ (accessible after package install).
 #' @return master_data list (same as load_master_data() output), invisibly
 #' @examples
-#' \donttest{
+#' \dontrun{
 #'   # Only needed when raw source files in data/raw/ change
 #'   master_data <- rebuild_master_data()
 #' }

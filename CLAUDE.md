@@ -42,7 +42,7 @@ The package normally runs off the pre-built snapshot in `inst/extdata/*.rds`
 - `R/07_dataset_convert.R`, `R/07_split_ambiguous.R`, `R/10_rebase.R` — dataset-
   level conversion, weighted M:N splitting (Verviers), longitudinal rebasing.
 
-Facts worth knowing: NIS/POSTAL/INTERNAL codes are **integer**, NUTS codes are
+Facts worth knowing: NIS/POSTAL codes are **integer**, NUTS codes are
 **character**. Verviers (NIS arr 63000) is the canonical ambiguous case
 (NUTS3 BE335 FR + BE336 DE). The conversion graph and the executor must stay in
 lock-step — `tests/testthat/test-route-parity.R` guards that.

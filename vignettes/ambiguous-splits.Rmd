@@ -18,7 +18,7 @@ L'arrondissement de Verviers (NIS 63000) est le seul arrondissement belge à che
 - **BE335** — Arr. de Verviers — Communes francophones
 - **BE336** — Arr. de Verviers — Communes germanophones
 
-Cette situation rend la conversion `NIS_ARRONDISSEMENT_2019 → NUTS3_2021` intrinsèquement M:N (multi-à-multi). Le package la gère de façon explicite plutôt que silencieuse.
+Cette situation rend la conversion `NIS_DISTRICT_2019 → NUTS_DISTRICT_2021` intrinsèquement M:N (multi-à-multi). Le package la gère de façon explicite plutôt que silencieuse.
 
 ---
 
@@ -29,12 +29,12 @@ library(nbbbenuts)
 master_data <- load_master_data()
 
 # Par défaut : erreur explicite si conversion ambiguë
-convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
-# Error: Conversion from 'NIS_ARRONDISSEMENT_2019' to 'NUTS3_2021' is NOT a
+convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
+# Error: Conversion from 'NIS_DISTRICT_2019' to 'NUTS_DISTRICT_2021' is NOT a
 # simple (direct) conversion.
 
 # Vérifier avant de convertir
-check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+check_conversion_path("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 # $is_simple    FALSE
 ```
 
@@ -44,8 +44,8 @@ check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
 # Forcer le retour de toutes les correspondances
 result <- convert_codes(
   63000L,
-  from             = "NIS_ARRONDISSEMENT_2019",
-  to               = "NUTS3_2021",
+  from             = "NIS_DISTRICT_2019",
+  to               = "NUTS_DISTRICT_2021",
   master_data,
   allow_ambiguous  = TRUE
 )
@@ -76,8 +76,8 @@ result <- split_ambiguous(
   dt         = emploi,
   code_col   = "arr_code",
   value_cols = c("emplois", "masse_sal"),
-  from       = "NIS_ARRONDISSEMENT_2019",
-  to         = "NUTS3_2021",
+  from       = "NIS_DISTRICT_2019",
+  to         = "NUTS_DISTRICT_2021",
   master_data,
   value_type = "additive"   # totaux à redistribuer
 )
@@ -110,8 +110,8 @@ result_weighted <- split_ambiguous(
   dt         = emploi[arr_code == 63000L],
   code_col   = "arr_code",
   value_cols = "masse_sal",
-  from       = "NIS_ARRONDISSEMENT_2019",
-  to         = "NUTS3_2021",
+  from       = "NIS_DISTRICT_2019",
+  to         = "NUTS_DISTRICT_2021",
   master_data,
   weights    = weights_pop,
   value_type = "additive"
@@ -137,8 +137,8 @@ result_ratio <- split_ambiguous(
   dt         = taux,
   code_col   = "arr_code",
   value_cols = c("taux_emploi", "salaire_moyen"),
-  from       = "NIS_ARRONDISSEMENT_2019",
-  to         = "NUTS3_2021",
+  from       = "NIS_DISTRICT_2019",
+  to         = "NUTS_DISTRICT_2021",
   master_data,
   value_type = "ratio"   # taux : pas de redistribution
 )
@@ -154,8 +154,8 @@ Pour réutiliser les mêmes poids dans plusieurs appels, enregistrez-les une foi
 ```{r register-weights}
 # Enregistrer les poids population pour Verviers
 register_split_weights(
-  from     = "NIS_ARRONDISSEMENT_2019",
-  to       = "NUTS3_2021",
+  from     = "NIS_DISTRICT_2019",
+  to       = "NUTS_DISTRICT_2021",
   weights_dt = data.table(
     code_from = c(63000L, 63000L),
     code_to   = c("BE335", "BE336"),
@@ -169,10 +169,10 @@ result <- split_ambiguous(
   dt         = emploi,
   code_col   = "arr_code",
   value_cols = "masse_sal",
-  from       = "NIS_ARRONDISSEMENT_2019",
-  to         = "NUTS3_2021",
+  from       = "NIS_DISTRICT_2019",
+  to         = "NUTS_DISTRICT_2021",
   master_data,
-  weights    = get_split_weights("NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+  weights    = get_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
                                   variable = "population")
 )
 ```
@@ -181,5 +181,5 @@ result <- split_ambiguous(
 # Lister tous les poids enregistrés dans la session
 list_split_weights()
 # FROM                      TO          VARIABLE    ROWS
-# NIS_ARRONDISSEMENT_2019   NUTS3_2021  population  2
+# NIS_DISTRICT_2019   NUTS_DISTRICT_2021  population  2
 ```

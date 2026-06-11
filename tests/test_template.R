@@ -38,8 +38,8 @@ MY_TESTS <- list(
   #
   # Champs :
   #   input     Vecteur de codes source (integer ou character)
-  #   from      Classification source   (ex: "NIS_COMMUNE_2019")
-  #   to        Classification cible    (ex: "NUTS3_2027")
+  #   from      Classification source   (ex: "NIS_MUNICIPALITY_2019")
+  #   to        Classification cible    (ex: "NUTS_DISTRICT_2027")
   #   expected  Vecteur des codes attendus en sortie, dans le meme ordre
   #             que input. Utilisez NA pour les codes sans correspondance.
   # ----------------------------------------------------------------------------
@@ -48,8 +48,8 @@ MY_TESTS <- list(
     description = "Bruxelles (21004) reste BE100 en NUTS 2027",
     type        = "convert",
     input       = c(21004L),
-    from        = "NIS_COMMUNE_2019",
-    to          = "NUTS3_2027",
+    from        = "NIS_MUNICIPALITY_2019",
+    to          = "NUTS_DISTRICT_2027",
     expected    = c("BE100")
   ),
 
@@ -57,8 +57,8 @@ MY_TESTS <- list(
     description = "Antwerpen (11002) passe de BE211 (2021) a BE261 (2027)",
     type        = "convert",
     input       = c(11002L),
-    from        = "NIS_COMMUNE_2019",
-    to          = "NUTS3_2027",
+    from        = "NIS_MUNICIPALITY_2019",
+    to          = "NUTS_DISTRICT_2027",
     expected    = c("BE261")
   ),
 
@@ -67,7 +67,7 @@ MY_TESTS <- list(
     type        = "convert",
     input       = c(1000L, 2000L, 4000L),
     from        = "POSTAL",
-    to          = "NIS_COMMUNE_2019",
+    to          = "NIS_MUNICIPALITY_2019",
     expected    = c(21004L, 11002L, 62063L)
   ),
 
@@ -75,8 +75,8 @@ MY_TESTS <- list(
     description = "NIS 2025 commune -> NUTS3 2027 via fichier officiel",
     type        = "convert",
     input       = c(11002L, 44021L, 71072L),
-    from        = "NIS_COMMUNE_2025",
-    to          = "NUTS3_2027",
+    from        = "NIS_MUNICIPALITY_2025",
+    to          = "NUTS_DISTRICT_2027",
     expected    = c("BE261", "BE274", "BE227")
   ),
 
@@ -84,8 +84,8 @@ MY_TESTS <- list(
     description = "Roundtrip NUTS3 2021 <-> 2027 : BE231 -> BE271 -> BE231",
     type        = "convert",
     input       = c("BE100", "BE231", "BE335"),
-    from        = "NUTS3_2021",
-    to          = "NUTS3_2027",
+    from        = "NUTS_DISTRICT_2021",
+    to          = "NUTS_DISTRICT_2027",
     expected    = c("BE100", "BE271", "BE335")
   ),
 
@@ -94,8 +94,8 @@ MY_TESTS <- list(
     type        = "convert",
     # 55022 = Fosses-la-Ville (fusionne en 2019 -> 58001 = Mettet)
     input       = c(55022L),
-    from        = "NIS_COMMUNE_BEFORE_2019",
-    to          = "NUTS3_2021",
+    from        = "NIS_MUNICIPALITY_BEFORE_2019",
+    to          = "NUTS_DISTRICT_2021",
     expected    = c("BE352")
   ),
 
@@ -121,8 +121,8 @@ MY_TESTS <- list(
       salaire = c(3500, 2900, 2600)
     ),
     code_col    = "commune",
-    from        = "NIS_COMMUNE_2019",
-    to          = "NUTS3_2021",
+    from        = "NIS_MUNICIPALITY_2019",
+    to          = "NUTS_DISTRICT_2021",
     target_col  = "cd_nuts3_2021",
     check_fn    = function(r) {
       r[commune == 21004L, cd_nuts3_2021] == "BE100" &&
@@ -140,7 +140,7 @@ MY_TESTS <- list(
     ),
     code_col    = "nuts",
     from        = NULL,       # auto-detection
-    to          = "NUTS3_2027",
+    to          = "NUTS_DISTRICT_2027",
     target_col  = "cd_nuts3_2027",
     check_fn    = function(r) {
       "cd_nuts3_2027" %in% names(r) &&
@@ -171,8 +171,8 @@ MY_TESTS <- list(
     ),
     code_col    = "arr_code",
     value_cols  = "masse_sal",
-    from        = "NIS_ARRONDISSEMENT_2019",
-    to          = "NUTS3_2021",
+    from        = "NIS_DISTRICT_2019",
+    to          = "NUTS_DISTRICT_2021",
     weights     = NULL,       # poids egaux -> 50/50
     value_type  = "additive",
     check_fn    = function(r) {
@@ -191,8 +191,8 @@ MY_TESTS <- list(
     ),
     code_col    = "arr_code",
     value_cols  = "masse_sal",
-    from        = "NIS_ARRONDISSEMENT_2019",
-    to          = "NUTS3_2021",
+    from        = "NIS_DISTRICT_2019",
+    to          = "NUTS_DISTRICT_2021",
     weights     = data.table::data.table(
       code_from = c(63000L, 63000L),
       code_to   = c("BE335", "BE336"),
@@ -221,12 +221,12 @@ MY_TESTS <- list(
     type        = "diagnose",
     dt          = NULL,       # NULL = utiliser tous les codes de reference (voir check_fn)
     code_col    = "nuts3",
-    classification = "NUTS3_2021",
+    classification = "NUTS_DISTRICT_2021",
     check_fn    = function(r, master_data) {
       # Construit un jeu complet a la volee
       dt_full <- data.table::data.table(nuts3 = master_data$nuts3_ref_2021$cd_nuts3)
       res <- diagnose_classification(dt_full, "nuts3", master_data,
-                                     classification = "NUTS3_2021", verbose = FALSE)
+                                     classification = "NUTS_DISTRICT_2021", verbose = FALSE)
       res$status == "COMPLETE" && res$n_missing == 0L
     }
   ),
@@ -236,7 +236,7 @@ MY_TESTS <- list(
     type        = "diagnose",
     dt          = data.table::data.table(nuts3 = c("BE100", "BE211", "BE999")),
     code_col    = "nuts3",
-    classification = "NUTS3_2021",
+    classification = "NUTS_DISTRICT_2021",
     check_fn    = function(r, master_data) {
       r$n_unknown == 1L && "BE999" %in% r$unknown_codes$code
     }
@@ -251,8 +251,8 @@ MY_TESTS <- list(
     code_col    = "code",
     classification = NULL,   # auto-detection
     check_fn    = function(r, master_data) {
-      r$recommendation      == "NIS_COMMUNE_2019" &&
-      r$classification_type == "NIS_COMMUNE" &&
+      r$recommendation      == "NIS_MUNICIPALITY_2019" &&
+      r$classification_type == "NIS_MUNICIPALITY" &&
       r$version             == "2019"
     }
   ),
@@ -269,7 +269,7 @@ MY_TESTS <- list(
     description = "custom : Verviers arrondissement produit 2 codes NUTS3",
     type        = "custom",
     fn          = function(master_data) {
-      r <- convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+      r <- convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
                          master_data, allow_ambiguous = TRUE)
       nrow(r) == 2L &&
       all(c("BE335", "BE336") %in% r$code_to)

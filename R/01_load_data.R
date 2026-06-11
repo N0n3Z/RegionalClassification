@@ -253,7 +253,7 @@ parse_nuts_arrondissement <- function(nuts_arr_dt) {
   # Also extract NUTS hierarchy from this file
   for (y in years) {
     nuts_version <- as.character(y)
-    hier <- dt[Y_BASE_CLIST_ARCA == y & C_OVER_CLIST_ARCA %in% c("NUTS0", "NUTS1", "NUTS2"),
+    hier <- dt[Y_BASE_CLIST_ARCA == y & C_OVER_CLIST_ARCA %in% c("NUTS_COUNTRY", "NUTS1", "NUTS2"),
                .(cd_nuts3 = C_BASE_CODE_ARCA,
                  nuts_level = C_OVER_CLIST_ARCA,
                  cd_nuts_parent = C_OVER_CODE_ARCA)]

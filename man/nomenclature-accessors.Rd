@@ -24,7 +24,7 @@ A length-one character vector (\code{nom_version} returns
 Extract the system, level or version of a \code{nomenclature}.
 }
 \examples{
-n <- nomenclature("NIS", "commune", "2019")
+n <- nomenclature("NIS", "municipality", "2019")
 nom_system(n)
 nom_level(n)
 nom_version(n)

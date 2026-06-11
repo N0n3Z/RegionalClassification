@@ -71,9 +71,9 @@ message("To rebuild master_data from raw source files:")
 message("  master_data <- rebuild_master_data()")
 message("")
 message("Example:")
-message('  convert_codes(c(1000, 2000, 4000), "POSTAL", "NUTS3_2021", master_data)')
-message('  print_conversion_check("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")')
-message('  fuzzy_match_names(c("Bruxeles", "Anvers"), "NIS_COMMUNE_2019", master_data)')
+message('  convert_codes(c(1000, 2000, 4000), "POSTAL", "NUTS_DISTRICT_2021", master_data)')
+message('  print_conversion_check("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")')
+message('  fuzzy_match_names(c("Bruxeles", "Anvers"), "NIS_MUNICIPALITY_2019", master_data)')
 message("")
 
 # --- Run tests if in test mode ---

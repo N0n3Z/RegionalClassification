@@ -16,7 +16,7 @@
 #' @examples
 #' \donttest{
 #'   visualize_classification_graph()
-#'   visualize_classification_graph(highlight_from = "NIS_COMMUNE_2019")
+#'   visualize_classification_graph(highlight_from = "NIS_MUNICIPALITY_2019")
 #'   visualize_classification_graph(output_file = "classification_graph.html")
 #' }
 #' @export
@@ -37,7 +37,7 @@ visualize_classification_graph <- function(highlight_from = NULL,
     if (grepl("^NIS_", n)) return("#4A90D9")       # Blue for NIS
     if (grepl("^NUTS", n)) return("#E67E22")        # Orange for NUTS
     if (grepl("^POSTAL", n)) return("#27AE60")      # Green for Postal
-    if (grepl("^INTERNAL", n)) return("#8E44AD")    # Purple for Internal
+    if (grepl("^NBB", n)) return("#8E44AD")          # Purple for NBB internal
     return("#95A5A6")                                # Gray for others
   })
 
@@ -46,7 +46,7 @@ visualize_classification_graph <- function(highlight_from = NULL,
     if (grepl("^NIS_", n)) return("NIS")
     if (grepl("^NUTS", n)) return("NUTS")
     if (grepl("^POSTAL", n)) return("POSTAL")
-    if (grepl("^INTERNAL", n)) return("INTERNAL")
+    if (grepl("^NBB", n)) return("NBB")
     return("OTHER")
   })
 
@@ -171,7 +171,7 @@ print_text_graph <- function() {
   cat("  (N:1 a chaque etape)\n\n")
 
   cat("--- NUTS Hierarchy (2021) ---\n")
-  cat("  LAU -> NUTS3 -> NUTS2 -> NUTS1 -> NUTS0\n")
+  cat("  LAU -> NUTS3 -> NUTS2 -> NUTS1 -> NUTS_COUNTRY\n")
   cat("  (N:1 a chaque etape)\n\n")
 
   cat("--- Cross-classification links ---\n")
@@ -274,10 +274,10 @@ visualize_hierarchy <- function(classification, master_data,
   cls <- toupper(trimws(classification))
 
   if (cls %in% c("NIS_2019", "NIS2019")) {
-    return(print_nis_tree(master_data$communes[nis_version == "2019"], max_communes))
+    return(print_nis_tree(master_data$communes[nis_version == VER_2019], max_communes))
   }
   if (cls %in% c("NIS_2025", "NIS2025")) {
-    return(print_nis_tree(master_data$communes[nis_version == "2025"], max_communes))
+    return(print_nis_tree(master_data$communes[nis_version == VER_2025], max_communes))
   }
   if (cls %in% c("NUTS_2021", "NUTS2021")) {
     return(print_nuts_tree(master_data, max_communes))
@@ -362,7 +362,7 @@ print_nis_tree <- function(communes, max_communes = 3) {
 #' @noRd
 print_nuts_tree <- function(master_data, max_communes = 3) {
 
-  master <- master_data$communes[nis_version == "2019"]
+  master <- master_data$communes[nis_version == VER_2019]
 
   cat("\nNUTS 2021 Hierarchy (Belgium)\n")
   cat("BE (Belgique/Belgie)\n")

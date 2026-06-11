@@ -34,8 +34,8 @@ head(rc_arrondissements_2019)
     dt         = rc_arrondissements_2019,
     code_col   = "cd_arr",
     value_cols = c("emplois", "masse_sal"),
-    from       = "NIS_ARRONDISSEMENT_2019",
-    to         = "NUTS3_2021",
+    from       = "NIS_DISTRICT_2019",
+    to         = "NUTS_DISTRICT_2021",
     master_data
   )
 }

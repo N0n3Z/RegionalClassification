@@ -12,10 +12,10 @@ that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
 }
 \details{
 \describe{
-  \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"INTERNAL"`.}
-  \item{level}{Granularity within the system (e.g. `"commune"`, `"nuts3"`).}
+  \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"NBB"`.}
+  \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"country"`, `"lau"`).}
   \item{version}{Classification version string, or `NA_character_` when not
-    versioned (POSTAL, INTERNAL, NUTS0).}
+    versioned (POSTAL, NUTS_COUNTRY).}
   \item{code_type}{Physical storage type: `"integer"` or `"character"`.}
   \item{source_table}{Which master table holds the codes: `"communes"` or
     `"postal"`.}
@@ -34,8 +34,8 @@ that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
   \item{aggregates}{Character vector of the node id(s) this node is the direct
     aggregation of (the finer level it groups). `character(0)` for base/leaf
     levels. The aggregation graph is a DAG, not a tree: an arrondissement is
-    aggregated by BOTH a province and a region, and `NUTS0` aggregates both
-    `NUTS1_2021` and `NUTS1_2027`. Province -> region is deliberately NOT an
+    aggregated by BOTH a province and a region, and `NUTS_COUNTRY` aggregates both
+    `NUTS_REGION_2021` and `NUTS_REGION_2027`. Province -> region is deliberately NOT an
     aggregation (province 20000 Brabant spans 3 regions); a region aggregates
     arrondissements directly. Used by `nomenclature_children()` /
     `nomenclature_parents()` and validated against the conversion graph.}

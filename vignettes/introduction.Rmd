@@ -20,7 +20,7 @@ Belgian administrative data references geography in many ways — NIS commune co
 NUTS regions, postal codes, internal arrondissement codes — and these change over
 time as communes merge or district borders shift. This package unifies all of them.
 
-All classification identifiers are strict uppercase strings (e.g. `"NIS_COMMUNE_2019"`).
+All classification identifiers are strict uppercase strings (e.g. `"NIS_MUNICIPALITY_2019"`).
 See `?classification_reference` for the full list, or call:
 
 ```{r}
@@ -59,8 +59,8 @@ convert_codes(codes, from, to, master_data)
 ```{r}
 result <- convert_codes(
   c(21004L, 11002L, 44021L, 62063L),
-  from = "NIS_COMMUNE_2019",
-  to   = "NUTS3_2021",
+  from = "NIS_MUNICIPALITY_2019",
+  to   = "NUTS_DISTRICT_2021",
   master_data
 )
 # code_from  code_to
@@ -73,7 +73,7 @@ result <- convert_codes(
 ### Postal codes → NIS communes
 
 ```{r}
-convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
+convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 ```
 
 ### NIS commune → all geographic levels
@@ -81,12 +81,12 @@ convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
 ```{r}
 commune <- 11002L  # Antwerpen
 
-convert_codes(commune, "NIS_COMMUNE_2019", "NIS_ARRONDISSEMENT_2019", master_data)
-convert_codes(commune, "NIS_COMMUNE_2019", "NIS_PROVINCE_2019",       master_data)
-convert_codes(commune, "NIS_COMMUNE_2019", "NIS_REGION_2019",         master_data)
-convert_codes(commune, "NIS_COMMUNE_2019", "NUTS3_2021",              master_data)
-convert_codes(commune, "NIS_COMMUNE_2019", "NUTS2_2021",              master_data)
-convert_codes(commune, "NIS_COMMUNE_2019", "INTERNAL_ARRONDISSEMENT", master_data)
+convert_codes(commune, "NIS_MUNICIPALITY_2019", "NIS_DISTRICT_2019", master_data)
+convert_codes(commune, "NIS_MUNICIPALITY_2019", "NIS_PROVINCE_2019",       master_data)
+convert_codes(commune, "NIS_MUNICIPALITY_2019", "NIS_REGION_2019",         master_data)
+convert_codes(commune, "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021",              master_data)
+convert_codes(commune, "NIS_MUNICIPALITY_2019", "NUTS_PROVINCE_2021",              master_data)
+convert_codes(commune, "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", master_data)
 ```
 
 ---
@@ -111,21 +111,21 @@ Temporal conversions return a `nature` column describing the type of change:
 
 ```{r}
 # NIS 2019 -> NIS 2025: nature column shows what changed
-convert_codes(c(71002L, 71011L), "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+convert_codes(c(71002L, 71011L), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from  code_to   nature
 #        71002    71072   FUSION
 #        71011    71072   FUSION
 
 # CHANGE_DSTR: commune 44045 moved to a different arrondissement
-convert_codes(44045L, "NIS_COMMUNE_2019", "NIS_COMMUNE_2025", master_data)
+convert_codes(44045L, "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from  code_to       nature
 #        44045    46029  CHANGE_DSTR
 
 # NIS 2025 -> NIS 2019 (fused commune returns multiple rows)
-convert_codes(71072L, "NIS_COMMUNE_2025", "NIS_COMMUNE_2019", master_data)
+convert_codes(71072L, "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data)
 
 # NIS BEFORE_2019 -> NIS 2019
-convert_codes(c(55022L, 56011L), "NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019", master_data)
+convert_codes(c(55022L, 56011L), "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019", master_data)
 ```
 
 ---
@@ -139,7 +139,7 @@ codes per EU regulation 2026/195.
 ```{r}
 convert_codes(
   c(21004L, 11002L, 44021L),
-  "NIS_COMMUNE_2019", "NUTS3_2027",
+  "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027",
   master_data
 )
 # 21004 → BE100  (Brussels, unchanged)
@@ -156,14 +156,14 @@ two NUTS3 regions: BE335 (francophone) and BE336 (germanophone).
 
 ```{r}
 # Force all possible mappings
-convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
               master_data, allow_ambiguous = TRUE)
 # code_from  code_to
 #     63000   BE335
 #     63000   BE336
 
 # Check a path before converting
-check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+check_conversion_path("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 # $is_simple    FALSE
 ```
 
@@ -181,8 +181,8 @@ dt <- data.table(
 )
 
 convert_dataset(dt, "commune",
-                from = "NIS_COMMUNE_2019",
-                to   = "NUTS3_2021",
+                from = "NIS_MUNICIPALITY_2019",
+                to   = "NUTS_DISTRICT_2021",
                 master_data)
 # Adds column 'cd_nuts3_2021' with converted codes.
 ```
@@ -196,7 +196,7 @@ convert_dataset(dt, "commune",
 Check whether codes belong to a known classification:
 
 ```{r}
-validate_codes(c(21004L, 99999L, 11002L), "NIS_COMMUNE_2019", master_data)
+validate_codes(c(21004L, 99999L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
 #    code  is_valid
 #   21004      TRUE
 #   99999     FALSE
@@ -206,24 +206,24 @@ validate_codes(c(21004L, 99999L, 11002L), "NIS_COMMUNE_2019", master_data)
 ### Get official names
 
 ```{r}
-get_label(c(21004L, 11002L), "NIS_COMMUNE_2019", master_data, lang = "fr")
+get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
 #    code       label
 #   21004   Bruxelles
 #   11002      Anvers
 
-get_label(c("BE100", "BE211"), "NUTS3_2021", master_data, lang = "nl")
+get_label(c("BE100", "BE211"), "NUTS_DISTRICT_2021", master_data, lang = "nl")
 ```
 
 ### Build a crosswalk table
 
 ```{r}
 # Simple pair: one row per source code
-get_crosswalk("NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 
 # With weights for the ambiguous Verviers split
-get_crosswalk("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data,
+get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
               weights = TRUE)
-# NIS_ARRONDISSEMENT_2019  NUTS3_2021  weight
+# NIS_DISTRICT_2019  NUTS_DISTRICT_2021  weight
 #                   63000       BE335   0.500
 #                   63000       BE336   0.500
 # (equal weights by default; use register_split_weights() for custom ones)
@@ -252,9 +252,9 @@ rebase_series(
   period_col  = "year",
   code_col    = "commune",
   value_cols  = "population",
-  version_map = list("NIS_COMMUNE_2019" = 2022L,
-                     "NIS_COMMUNE_2025" = 2025L),
-  to          = "NIS_COMMUNE_2025",
+  version_map = list("NIS_MUNICIPALITY_2019" = 2022L,
+                     "NIS_MUNICIPALITY_2025" = 2025L),
+  to          = "NIS_MUNICIPALITY_2025",
   master_data = master_data
 )
 # 2022: commune 11002 → 18000 + 8500 = 26500 (fused)
@@ -269,7 +269,7 @@ by weight.
 
 ```{r}
 # Step 1: get the template with equal weights as a starting point
-tpl <- split_weights_template("NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data)
+tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
 #   code_from  code_to  weight
 #       63000    BE335     0.5
 #       63000    BE336     0.5
@@ -286,15 +286,15 @@ rebase_series(
   period_col  = "year",
   code_col    = "arr",
   value_cols  = "emploi",
-  version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-  to          = "NUTS3_2021",
+  version_map = list("NIS_DISTRICT_2019" = 2022L),
+  to          = "NUTS_DISTRICT_2021",
   master_data = master_data,
   split       = tpl
 )
 
 # Step 3b: register for repeated use in the session
 register_split_weights(
-  "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
+  "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", tpl, variable = "population"
 )
 
 rebase_series(
@@ -302,8 +302,8 @@ rebase_series(
   period_col  = "year",
   code_col    = "arr",
   value_cols  = "emploi",
-  version_map = list("NIS_ARRONDISSEMENT_2019" = 2022L),
-  to          = "NUTS3_2021",
+  version_map = list("NIS_DISTRICT_2019" = 2022L),
+  to          = "NUTS_DISTRICT_2021",
   master_data = master_data
   # split = "population" is the default
 )
@@ -325,14 +325,14 @@ nuts3_data <- data.table(
 )
 
 diagnose_classification(nuts3_data, "nuts3", master_data,
-                        classification = "NUTS3_2021")
+                        classification = "NUTS_DISTRICT_2021")
 # ================================================================
 #   CLASSIFICATION DIAGNOSTIC
 # ================================================================
 #   Dataset        : 3 rows  |  column 'nuts3'
 #   Classification : NUTS3
 #   Version        : 2021
-#   Reference      : NUTS3_2021  (44 codes)
+#   Reference      : NUTS_DISTRICT_2021  (44 codes)
 # ================================================================
 #   Coverage   : 3 / 44  [##------------------] 6.8%
 #   ...
@@ -358,7 +358,7 @@ Match approximate or misspelled names to official codes:
 ```{r}
 fuzzy_match_names(
   names    = c("Bruxeles", "Antwerpn", "Liege", "Vervirs"),
-  target   = "NIS_COMMUNE_2019",
+  target   = "NIS_MUNICIPALITY_2019",
   master_data,
   max_dist = 0.3,
   language = "both"
@@ -386,10 +386,10 @@ Key identifiers:
 
 | Level            | Identifiers |
 |------------------|-------------|
-| Communes         | `NIS_COMMUNE_BEFORE_2019`, `NIS_COMMUNE_2019`, `NIS_COMMUNE_2025` |
-| Arrondissements  | `NIS_ARRONDISSEMENT_2019`, `NIS_ARRONDISSEMENT_2025` |
+| Communes         | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` |
+| Arrondissements  | `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025` |
 | Provinces        | `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025` |
 | Regions          | `NIS_REGION_2019`, `NIS_REGION_2025` |
-| NUTS 2021        | `NUTS_LAU_2021`, `NUTS3_2021`, `NUTS2_2021`, `NUTS1_2021`, `NUTS0` |
-| NUTS 2027        | `NUTS3_2027`, `NUTS2_2027`, `NUTS1_2027` |
-| Other            | `POSTAL`, `INTERNAL_ARRONDISSEMENT` |
+| NUTS 2021        | `NUTS_LAU_2021`, `NUTS_DISTRICT_2021`, `NUTS_PROVINCE_2021`, `NUTS_REGION_2021`, `NUTS_COUNTRY` |
+| NUTS 2027        | `NUTS_DISTRICT_2027`, `NUTS_PROVINCE_2027`, `NUTS_REGION_2027` |
+| Other            | `POSTAL`, `NBB_DISTRICT_2021` |

@@ -41,13 +41,13 @@ in the target values).
 }
 \examples{
 # Simple, perimeter-preserving path
-check_conversion_path("NIS_COMMUNE_2019", "NUTS3_2021")
+check_conversion_path("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
 
 # Ambiguous path (Verviers splits two NUTS3 regions)
-check_conversion_path("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+check_conversion_path("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 
 # Multi-hop path via intermediate classification
-check_conversion_path("POSTAL", "NUTS3_2027")
+check_conversion_path("POSTAL", "NUTS_DISTRICT_2027")
 }
 \seealso{
 \code{\link{is_perimeter_preserving}} for a simple logical wrapper,

@@ -26,7 +26,7 @@
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   convert_dataset(rc_communes_2019, "cd_commune",
-#'                   to = "NUTS3_2021", master_data)
+#'                   to = "NUTS_DISTRICT_2021", master_data)
 #' }
 "rc_communes_2019"
 
@@ -53,7 +53,7 @@
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   convert_dataset(rc_communes_2025, "cd_commune",
-#'                   from = "NIS_COMMUNE_2025", to = "NUTS3_2027", master_data)
+#'                   from = "NIS_MUNICIPALITY_2025", to = "NUTS_DISTRICT_2027", master_data)
 #' }
 "rc_communes_2025"
 
@@ -77,7 +77,7 @@
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   convert_dataset(rc_postal, "cd_postal",
-#'                   from = "POSTAL", to = "NIS_COMMUNE_2019", master_data)
+#'                   from = "POSTAL", to = "NIS_MUNICIPALITY_2019", master_data)
 #' }
 "rc_postal"
 
@@ -108,8 +108,8 @@
 #'     dt         = rc_arrondissements_2019,
 #'     code_col   = "cd_arr",
 #'     value_cols = c("emplois", "masse_sal"),
-#'     from       = "NIS_ARRONDISSEMENT_2019",
-#'     to         = "NUTS3_2021",
+#'     from       = "NIS_DISTRICT_2019",
+#'     to         = "NUTS_DISTRICT_2021",
 #'     master_data
 #'   )
 #' }
@@ -138,9 +138,9 @@
 #'   master_data <- load_master_data()
 #'
 #'   # Aggregate NUTS3 2021 to NUTS2 2021
-#'   # Note: NUTS3_2021 and NUTS3_2027 cover different geographic areas;
+#'   # Note: NUTS_DISTRICT_2021 and NUTS_DISTRICT_2027 cover different geographic areas;
 #'   # there is no direct conversion between them (see ?classification_reference).
 #'   convert_dataset(rc_nuts3_2021, "cd_nuts3",
-#'                   from = "NUTS3_2021", to = "NUTS2_2021", master_data)
+#'                   from = "NUTS_DISTRICT_2021", to = "NUTS_PROVINCE_2021", master_data)
 #' }
 "rc_nuts3_2021"

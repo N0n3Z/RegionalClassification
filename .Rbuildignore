@@ -12,6 +12,7 @@
 ^demo$
 ^REFACTORING_PLAN\.md$
 ^REFACTOR_CROSSWALKS\.md$
+^REFACTOR_LAU_NAMING\.md$
 ^DOCUMENTATION\.md$
 ^CLAUDE\.md$
 ^\.claude$

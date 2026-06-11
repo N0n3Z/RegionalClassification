@@ -14,8 +14,8 @@
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_COMMUNE_2019"
-#'   detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS3_2021"
+#'   detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_MUNICIPALITY_2019"
+#'   detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS_DISTRICT_2021"
 #'   detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
 #' }
 #' @export
@@ -33,9 +33,9 @@ detect_classification <- function(codes, master_data) {
 
   if (all_char) {
     # NUTS codes: "BE" + 2/3/5 chars
-    if      (all(nchar(codes_chr) == 5)) return("NUTS3_2021")
-    else if (all(nchar(codes_chr) == 4)) return("NUTS2_2021")
-    else if (all(nchar(codes_chr) <= 3)) return("NUTS1_2021")
+    if      (all(nchar(codes_chr) == 5)) return("NUTS_DISTRICT_2021")
+    else if (all(nchar(codes_chr) == 4)) return("NUTS_PROVINCE_2021")
+    else if (all(nchar(codes_chr) <= 3)) return("NUTS_REGION_2021")
     return(NULL)
   }
 
@@ -74,30 +74,30 @@ detect_classification <- function(codes, master_data) {
   # - NIS_2025    if any input code exists only in NIS_2025
   # - NIS_2019    as the stable default when codes exist in multiple versions
   nis_comm_candidates <- intersect(
-    c("NIS_COMMUNE_BEFORE_2019", "NIS_COMMUNE_2019", "NIS_COMMUNE_2025"),
+    c("NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025"),
     rates_dt[rate >= best$rate * 0.95, classification]
   )
 
   if (length(nis_comm_candidates) > 1) {
-    ref2019 <- refs[["NIS_COMMUNE_2019"]]
-    ref2025 <- refs[["NIS_COMMUNE_2025"]]
-    refb19  <- if ("NIS_COMMUNE_BEFORE_2019" %in% names(refs))
-                 refs[["NIS_COMMUNE_BEFORE_2019"]] else character(0)
+    ref2019 <- refs[["NIS_MUNICIPALITY_2019"]]
+    ref2025 <- refs[["NIS_MUNICIPALITY_2025"]]
+    refb19  <- if ("NIS_MUNICIPALITY_BEFORE_2019" %in% names(refs))
+                 refs[["NIS_MUNICIPALITY_BEFORE_2019"]] else character(0)
 
     has_before2019_only <- any(codes_chr %in% setdiff(refb19, ref2019))
     has_2025_only       <- any(codes_chr %in% setdiff(ref2025, ref2019))
 
-    if      (has_before2019_only) return("NIS_COMMUNE_BEFORE_2019")
-    else if (has_2025_only)       return("NIS_COMMUNE_2025")
-    else                          return("NIS_COMMUNE_2019")
+    if      (has_before2019_only) return("NIS_MUNICIPALITY_BEFORE_2019")
+    else if (has_2025_only)       return("NIS_MUNICIPALITY_2025")
+    else                          return("NIS_MUNICIPALITY_2019")
   }
 
   # Fallback priority for other ties
   close <- rates_dt[rate >= best$rate * 0.95]
   if (nrow(close) > 1) {
-    priority <- c("NIS_COMMUNE_2019", "NIS_COMMUNE_2025", "NIS_COMMUNE_BEFORE_2019",
-                  "NIS_ARRONDISSEMENT_2019", "NIS_PROVINCE_2019", "NIS_REGION_2019",
-                  "POSTAL", "INTERNAL_ARRONDISSEMENT")
+    priority <- c("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_BEFORE_2019",
+                  "NIS_DISTRICT_2019", "NIS_PROVINCE_2019", "NIS_REGION_2019",
+                  "POSTAL", "NBB_DISTRICT_2021")
     for (p in priority) {
       if (p %in% close$classification) return(p)
     }

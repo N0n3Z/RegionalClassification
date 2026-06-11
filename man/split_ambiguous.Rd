@@ -61,7 +61,8 @@ registered weights.
 }
 \examples{
 \donttest{
-  arr_salaries <- data.table(
+  master_data <- load_master_data()
+  arr_salaries <- data.table::data.table(
     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
     total_wage = c(5e9, 3e9, 1e9),
     avg_salary = c(2900, 2700, 2400)
@@ -70,19 +71,19 @@ registered weights.
   # Equal weights (default)
   split_ambiguous(arr_salaries, "arr_code",
                   value_cols = c("total_wage", "avg_salary"),
-                  from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+                  from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
                   master_data,
                   value_type = "additive")
 
   # Manual population weights for Verviers
-  weights <- data.table(
+  weights <- data.table::data.table(
     code_from = c(63000L, 63000L),
     code_to   = c("BE335", "BE336"),
     weight    = c(0.857, 0.143)
   )
   split_ambiguous(arr_salaries, "arr_code",
                   value_cols = "total_wage",
-                  from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+                  from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
                   master_data,
                   weights    = weights,
                   value_type = "additive")

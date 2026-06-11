@@ -31,7 +31,8 @@
 #'
 #' @examples
 #' \donttest{
-#'   arr_salaries <- data.table(
+#'   master_data <- load_master_data()
+#'   arr_salaries <- data.table::data.table(
 #'     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
 #'     total_wage = c(5e9, 3e9, 1e9),
 #'     avg_salary = c(2900, 2700, 2400)
@@ -40,19 +41,19 @@
 #'   # Equal weights (default)
 #'   split_ambiguous(arr_salaries, "arr_code",
 #'                   value_cols = c("total_wage", "avg_salary"),
-#'                   from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+#'                   from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
 #'                   master_data,
 #'                   value_type = "additive")
 #'
 #'   # Manual population weights for Verviers
-#'   weights <- data.table(
+#'   weights <- data.table::data.table(
 #'     code_from = c(63000L, 63000L),
 #'     code_to   = c("BE335", "BE336"),
 #'     weight    = c(0.857, 0.143)
 #'   )
 #'   split_ambiguous(arr_salaries, "arr_code",
 #'                   value_cols = "total_wage",
-#'                   from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+#'                   from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
 #'                   master_data,
 #'                   weights    = weights,
 #'                   value_type = "additive")
@@ -200,9 +201,9 @@ split_ambiguous <- function(
 #' \donttest{
 #'   # Register population-based Verviers split (indicative values)
 #'   register_split_weights(
-#'     from       = "NIS_ARRONDISSEMENT_2019",
-#'     to         = "NUTS3_2021",
-#'     weights_dt = data.table(
+#'     from       = "NIS_DISTRICT_2019",
+#'     to         = "NUTS_DISTRICT_2021",
+#'     weights_dt = data.table::data.table(
 #'       code_from = c(63000L, 63000L),
 #'       code_to   = c("BE335", "BE336"),
 #'       weight    = c(0.857, 0.143)
@@ -241,12 +242,12 @@ register_split_weights <- function(from, to, weights_dt, variable = "population"
 #' \donttest{
 #'   library(data.table)
 #'   register_split_weights(
-#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
 #'     data.table(code_from = c(63000L, 63000L),
 #'                code_to   = c("BE335", "BE336"),
 #'                weight    = c(0.857, 0.143))
 #'   )
-#'   get_split_weights("NIS_ARRONDISSEMENT_2019", "NUTS3_2021")
+#'   get_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 #' }
 #' @export
 get_split_weights <- function(from, to, variable = "population") {
@@ -320,7 +321,7 @@ clear_split_weights <- function() {
 #'
 #'   # 1. Inspect the template -- equal weights are the starting point
 #'   tpl <- split_weights_template(
-#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", master_data
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data
 #'   )
 #'   #    code_from code_to weight
 #'   # 1:     63000   BE335    0.5
@@ -333,7 +334,7 @@ clear_split_weights <- function() {
 #'
 #'   # 3a. Register for repeated use
 #'   register_split_weights(
-#'     "NIS_ARRONDISSEMENT_2019", "NUTS3_2021", tpl, variable = "population"
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", tpl, variable = "population"
 #'   )
 #'
 #'   # 3b. Or pass directly to split_ambiguous
@@ -341,7 +342,7 @@ clear_split_weights <- function() {
 #'     year = c(2020L, 2021L), arr = c(63000L, 63000L), emploi = c(120000, 122000)
 #'   )
 #'   split_ambiguous(arr_data, "arr", value_cols = "emploi",
-#'                   from = "NIS_ARRONDISSEMENT_2019", to = "NUTS3_2021",
+#'                   from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
 #'                   master_data = master_data, weights = tpl, verbose = FALSE)
 #' }
 #' @seealso [register_split_weights()], [rebase_series()], [split_ambiguous()]
@@ -390,8 +391,8 @@ split_weights_template <- function(from, to, master_data) {
   # Phase 4c: look up weights with primitive-overlap-edge anchoring.
   # If weights are not registered for the user-supplied (from, to) pair, also
   # try the first overlap edge in the conversion path.  This lets a user
-  # register weights once for (NIS_ARR_2019 -> NUTS3_2021) and have them
-  # automatically apply when converting NIS_ARR_2019 -> NUTS2_2021 or any
+  # register weights once for (NIS_ARR_2019 -> NUTS_DISTRICT_2021) and have them
+  # automatically apply when converting NIS_ARR_2019 -> NUTS_PROVINCE_2021 or any
   # other pair that traverses that same overlap edge.
   .get_reg_weights <- function(variable = "population") {
     reg <- get_split_weights(from, to, variable = variable)

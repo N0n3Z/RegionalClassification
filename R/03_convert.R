@@ -14,8 +14,8 @@
 #' conversion path and applies the necessary transformations.
 #'
 #' @param codes Vector of codes to convert
-#' @param from Source classification (e.g., "NIS_COMMUNE_2019", "POSTAL", "NUTS3_2021")
-#' @param to Target classification (e.g., "NUTS3_2021", "NIS_COMMUNE_2025")
+#' @param from Source classification (e.g., "NIS_MUNICIPALITY_2019", "POSTAL", "NUTS_DISTRICT_2021")
+#' @param to Target classification (e.g., "NUTS_DISTRICT_2021", "NIS_MUNICIPALITY_2025")
 #' @param master_data Output from build_master_table()
 #' @param allow_ambiguous Logical. If FALSE (default), raises error on M:N conversions.
 #'   If TRUE, returns all possible mappings.
@@ -30,16 +30,16 @@
 #'
 #'   # NIS communes -> NUTS3 2021
 #'   convert_codes(c(21004L, 11002L, 62063L),
-#'                 "NIS_COMMUNE_2019", "NUTS3_2021", master_data)
+#'                 "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 #'
 #'   # Postal codes -> NIS communes
-#'   convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_COMMUNE_2019", master_data)
+#'   convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 #'
 #'   # NIS communes -> NUTS3 2027
-#'   convert_codes(c(21004L, 11002L), "NIS_COMMUNE_2019", "NUTS3_2027", master_data)
+#'   convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027", master_data)
 #'
 #'   # Ambiguous conversion (Verviers arrondissement spans two NUTS3 regions)
-#'   convert_codes(63000L, "NIS_ARRONDISSEMENT_2019", "NUTS3_2021",
+#'   convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
 #'                 master_data, allow_ambiguous = TRUE)
 #' }
 #' @export
@@ -166,7 +166,7 @@ normalize_classification_id <- function(class_id) {
       # Determine the perimeter semantics of the (from -> to) conversion.
       # check_conversion_path() is used (rather than a direct lookup in
       # CONVERSION_GRAPH_EDGES) because many crosswalk entries are shortcut /
-      # composite edges (e.g. NIS_COMMUNE_2019 -> NUTS3_2021 is stored as a
+      # composite edges (e.g. NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021 is stored as a
       # single crosswalk hop but declared as two hops in CGE).  The graph BFS
       # result is cached by build_conversion_graph() so repeated calls are O(1).
       pc <- tryCatch(check_conversion_path(from, to), error = function(e) NULL)
