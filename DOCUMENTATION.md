@@ -9,7 +9,7 @@
 ## Table des matieres
 
 1. [Vue d'ensemble](#1-vue-densemble)
-2. [Les 22 classifications supportees](#2-les-22-classifications-supportees)
+2. [Les 23 classifications supportees](#2-les-23-classifications-supportees)
 3. [Le graphe de conversion](#3-le-graphe-de-conversion)
 4. [Semantique de perimetre](#4-semantique-de-perimetre)
 5. [La colonne `nature`](#5-la-colonne-nature)
@@ -42,7 +42,7 @@ et a travers le temps. Il couvre quatre systemes :
 | Systeme | Identifiant | Exemples de codes |
 |---------|-------------|-------------------|
 | **NIS** (Statbel) | `NIS_*_{BEFORE_2019,2019,2025}` | `21004` (Bruxelles), `63000` (arr. Verviers) |
-| **NUTS** (Eurostat) | `NUTS{0,1,2,3}_202{1,7}`, `NUTS_LAU_2021` | `"BE100"`, `"BE211"` |
+| **NUTS** (Eurostat) | `NUTS{0,1,2,3}_202{1,7}`, `NUTS_MUNICIPALITY_2021` | `"BE100"`, `"BE211"` |
 | **Postal** (bpost) | `POSTAL` | `1000`, `2000` |
 | **Interne** | `NBB_DISTRICT_2021` | `"21"` (Bxl), `"65"` (Verviers FR), `"66"` (Verviers DE) |
 
@@ -61,7 +61,7 @@ Deux dimensions temporelles :
 
 ---
 
-## 2. Les 22 classifications supportees
+## 2. Les 23 classifications supportees
 
 ```r
 get_all_classification_nodes()
@@ -81,7 +81,8 @@ get_all_classification_nodes()
 | `NIS_DISTRICT_2025`         | NIS      | district       | 2025        | int   |
 | `NIS_PROVINCE_2025`               | NIS      | province       | 2025        | int   |
 | `NIS_REGION_2025`                 | NIS      | region         | 2025        | int   |
-| `NUTS_LAU_2021`                   | NUTS     | municipality   | 2021        | chr   | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat). Niveau LAU de la hierarchie NUTS (LAU < NUTS3 < ... < NUTS_COUNTRY). |
+| `NIS_COUNTRY`                     | NIS      | country        | NA          | int   | Code NIS 1000 (source Statbel : 01000 / ROYAUME / HET RIJK). Non-versionne. |
+| `NUTS_MUNICIPALITY_2021`                   | NUTS     | municipality   | 2021        | chr   | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat). Niveau LAU de la hierarchie NUTS (LAU < NUTS3 < ... < NUTS_COUNTRY). |
 | `NUTS_DISTRICT_2021`                      | NUTS     | district       | 2021        | chr   |
 | `NUTS_PROVINCE_2021`                      | NUTS     | province       | 2021        | chr   |
 | `NUTS_REGION_2021`                      | NUTS     | region         | 2021        | chr   |
@@ -96,7 +97,7 @@ get_all_classification_nodes()
 (ex. `"CP"`, `"CODE_POSTAL"`, `"POSTAL"` ; `"COMMUNE_2019"`, `"NIS_COM_2019"`).
 Voir `normalize_classification_id()`.
 
-**Registre machine** : `CLASSIFICATION_NODES` (liste nommee de 22 entrees, `R/00b_registry.R`)
+**Registre machine** : `CLASSIFICATION_NODES` (liste nommee de 23 entrees, `R/00b_registry.R`)
 contient pour chaque noeud :
 
 ```
@@ -118,7 +119,7 @@ Cardinalites :
 
 | Cardinalite | Signification | Exemple |
 |-------------|---------------|---------|
-| `1:1` | bijection exacte | `NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021` |
+| `1:1` | bijection exacte | `NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021` |
 | `N:1` | agregation (N sources -> 1 cible) | `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021` |
 | `1:N` | eclatement (1 source -> N cibles) | `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` pour 3 fusions cross-NUTS3 |
 | `M:N` | chevauchement complet | `NIS_PROVINCE_2019 -> NIS_REGION_2019` (Brabant 20000) |
@@ -169,7 +170,7 @@ et reportee dans `check_conversion_path()` (champ `perimeter_relations`) ainsi q
 | Valeur      | Definition | Exemples |
 |-------------|------------|---------|
 | `temporal`  | Meme systeme, versions differentes. Les limites peuvent evoluer edition par edition mais sans chevauchement entre systemes. | `NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025` |
-| `identity`  | Arete `1:1` -- correspondance bijective, meme territoire effectif. | `NIS_MUNICIPALITY_2019 -> NUTS_LAU_2021` |
+| `identity`  | Arete `1:1` -- correspondance bijective, meme territoire effectif. | `NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021` |
 | `nesting`   | Arete `N:1` -- N unites fines s'agglomerent en 1 unite grossiere. Le perimetre source est entierement contenu dans la cible. | `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021` |
 | `overlap`   | Arete `1:N` ou `M:N` -- une unite source **enjambe** plusieurs cibles. Seule categorie qui brise la preservation du perimetre. | `NIS_DISTRICT_2019 -> NUTS_DISTRICT_2021` |
 
@@ -577,7 +578,7 @@ Arbre hierarchique NIS pour une version donnee (`"NIS_2019"` ou `"NIS_2025"`).
 ```
 R/
  00_config.R          -- CLASSIFICATION_REGISTRY, CONVERSION_GRAPH_EDGES, constantes NIS
- 00b_registry.R       -- CLASSIFICATION_NODES (source de verite unique, 22 noeuds)
+ 00b_registry.R       -- CLASSIFICATION_NODES (source de verite unique, 23 noeuds)
  00c_nomenclature.R   -- objet nomenclature + S3 methods
  01_load_data.R       -- chargement et parsing des fichiers bruts (Excel)
  02_build_master_table.R -- construction de entities + crosswalks + tables sources
@@ -757,7 +758,7 @@ tests/testthat/
   test-crosswalks-golden.R     -- golden fixture : sorties figees du moteur
   test-crosswalks-parity.R     -- parite crosswalk <-> moteur par arete
   test-route-parity.R          -- toute conversion simple est executable
-  test-registry.R              -- CLASSIFICATION_NODES : structure, count (22)
+  test-registry.R              -- CLASSIFICATION_NODES : structure, count (23)
   test-registry-consistency.R  -- coherence CLASSIFICATION_NODES <-> CLASSIFICATION_REGISTRY
   test-split-registry.R        -- registre de poids (register/get/clear)
   test-convert-dataset.R       -- convert_dataset()

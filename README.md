@@ -6,7 +6,7 @@ R package for converting Belgian geographic codes between classification systems
 
 Belgian administrative data uses multiple overlapping classification systems that change over time. This package provides a unified, graph-based interface to convert between them — with explicit handling of ambiguous (M:N or 1:N) mappings.
 
-**22 supported classifications:**
+**23 supported classifications:**
 
 | System | Identifiers |
 |--------|-------------|
@@ -14,7 +14,8 @@ Belgian administrative data uses multiple overlapping classification systems tha
 | **NIS arrondissements** | `NIS_DISTRICT_BEFORE_2019`, `_2019`, `_2025` |
 | **NIS provinces** | `NIS_PROVINCE_BEFORE_2019`, `_2019`, `_2025` |
 | **NIS regions** | `NIS_REGION_BEFORE_2019`, `_2019`, `_2025` |
-| **NUTS 2021** | `NUTS_LAU_2021`, `NUTS_DISTRICT_2021`, `NUTS_PROVINCE_2021`, `NUTS_REGION_2021`, `NUTS_COUNTRY` |
+| **NIS country** | `NIS_COUNTRY` (code 1000 — Belgium) |
+| **NUTS 2021** | `NUTS_MUNICIPALITY_2021`, `NUTS_DISTRICT_2021`, `NUTS_PROVINCE_2021`, `NUTS_REGION_2021`, `NUTS_COUNTRY` |
 | **NUTS 2027** | `NUTS_DISTRICT_2027`, `NUTS_PROVINCE_2027`, `NUTS_REGION_2027` |
 | **Other** | `POSTAL` (postal codes), `NBB_DISTRICT_2021` |
 
@@ -235,7 +236,7 @@ nbbbenuts/
 │   ├── 09_query.R               # get_crosswalk(), get_label(), validate_codes()
 │   ├── 10_rebase.R              # rebase_series()
 │   ├── classifications.R        # Reference documentation for all classification identifiers
-│   └── registry.R               # CLASSIFICATION_NODES (22-entry single source of truth)
+│   └── registry.R               # CLASSIFICATION_NODES (23-entry single source of truth)
 ├── inst/extdata/                # Pre-built RDS snapshot (communes, postal, nis_changes)
 ├── data/raw/                    # Source files (not versioned)
 └── tests/testthat/              # 680 automated tests

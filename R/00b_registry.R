@@ -18,7 +18,7 @@
 
 #' Classification node registry
 #'
-#' Named list with one entry per valid classification identifier (the 22 nodes
+#' Named list with one entry per valid classification identifier (the 23 nodes
 #' that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
 #'
 #' \describe{
