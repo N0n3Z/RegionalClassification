@@ -40,6 +40,7 @@
 #' | `NIS_DISTRICT_2025`        | Arrondissements (2025)          |
 #' | `NIS_PROVINCE_2025`              | Provinces (2025)                |
 #' | `NIS_REGION_2025`                | Regions (2025)                  |
+#' | `NIS_COUNTRY`                    | Country level (Belgium, NIS code 1000) -- version-invariant |
 #'
 #' ## NUTS classifications (Eurostat)
 #'
@@ -89,6 +90,9 @@
 #' | `NIS_MUNICIPALITY_2025`            | `NIS_REGION_2025`                | (y) N:1  |
 #' | `NIS_DISTRICT_2025`     | `NIS_PROVINCE_2025`              | (y) N:1  |
 #' | `NIS_PROVINCE_2025`           | `NIS_REGION_2025`                | (!) M:N  |
+#' | `NIS_REGION_BEFORE_2019`      | `NIS_COUNTRY`                    | (y) N:1  |
+#' | `NIS_REGION_2019`             | `NIS_COUNTRY`                    | (y) N:1  |
+#' | `NIS_REGION_2025`             | `NIS_COUNTRY`                    | (y) N:1  |
 #' | `NIS_MUNICIPALITY_2025`            | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 #' | `NIS_MUNICIPALITY_2025`            | `NUTS_PROVINCE_2027`                     | (y) N:1  |
 #' | `NIS_MUNICIPALITY_2025`            | `NUTS_REGION_2027`                     | (y) N:1  |

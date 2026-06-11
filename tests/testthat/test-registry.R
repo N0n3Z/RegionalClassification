@@ -67,7 +67,7 @@ test_that("non-NA label columns exist in the source table", {
   }
 })
 
-# -- .node_parse() covers all 22 nodes ----------------------------------------
+# -- .node_parse() covers all 23 nodes ----------------------------------------
 test_that(".node_parse() returns non-NA type for every node", {
   for (id in VALID_CLASSIFICATIONS) {
     p <- nbbbenuts:::.node_parse(id)
@@ -103,7 +103,7 @@ test_that(".node_label_meta() returns the five expected fields", {
   expect_equal(meta$fr,   "tx_nuts3_fr")
 })
 
-test_that(".node_label_meta() returns correct values for all 22 nodes", {
+test_that(".node_label_meta() returns correct values for all 23 nodes", {
   # .LABEL_META has been removed; verify key nodes directly against known values.
   check <- function(id, exp_ver, exp_code, exp_fr, exp_nl, exp_src) {
     m <- nbbbenuts:::.node_label_meta(id)
@@ -124,7 +124,7 @@ test_that(".node_label_meta() returns correct values for all 22 nodes", {
   check(CLS_NUTS_DISTRICT_2027,          "2025",        "cd_nuts3_2027", NA_character_,  NA_character_,   "communes")
   check(CLS_POSTAL,              "2019",        "cd_postal",     "tx_postal_name_fr","tx_postal_name_nl","postal")
   check(CLS_NBB_DISTRICT_2021,"2019",     "cd_arr_internal","tx_arr_fr",   "tx_arr_nl",     "communes")
-  # All 22 nodes resolvable without error
+  # All 23 nodes resolvable without error
   for (id in VALID_CLASSIFICATIONS) {
     m <- nbbbenuts:::.node_label_meta(id)
     expect_true(is.list(m) && length(m) == 5L, info = id)
