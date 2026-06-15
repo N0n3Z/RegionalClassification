@@ -45,9 +45,10 @@
 #'     aggregation of (the finer level it groups). `character(0)` for base/leaf
 #'     levels. The aggregation graph is a DAG, not a tree: an arrondissement is
 #'     aggregated by BOTH a province and a region, and `NUTS_COUNTRY` aggregates both
-#'     `NUTS_REGION_2021` and `NUTS_REGION_2027`. Province -> region is deliberately NOT an
-#'     aggregation (province 20000 Brabant spans 3 regions); a region aggregates
-#'     arrondissements directly. Used by `nomenclature_children()` /
+#'     `NUTS_REGION_2021` and `NUTS_REGION_2027`. A region is modelled as aggregating
+#'     arrondissements directly (so an arrondissement has two parents); note that
+#'     province -> region is itself a clean N:1 nesting in the conversion graph
+#'     (the 1995 Brabant split + a Brussels pseudo-province). Used by `nomenclature_children()` /
 #'     `nomenclature_parents()` and validated against the conversion graph.}
 #' }
 #'

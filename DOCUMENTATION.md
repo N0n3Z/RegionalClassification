@@ -123,7 +123,7 @@ Cardinalites :
 | `1:1` | bijection exacte | `NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021` |
 | `N:1` | agregation (N sources -> 1 cible) | `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021` |
 | `1:N` | eclatement (1 source -> N cibles) | `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` pour 3 fusions cross-NUTS3 |
-| `M:N` | chevauchement complet | `NIS_PROVINCE_2019 -> NIS_REGION_2019` (Brabant 20000) |
+| `M:N` | chevauchement complet | (aucune arete M:N actuellement ; cardinalite supportee par le framework) |
 
 ### 3.2 Aretes inverses
 
@@ -155,8 +155,11 @@ que pour les aretes primitives).
 - **`NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027`** : **pas de lien direct**. Trois communes ont change
   de province entre 2019 et 2025, deplaceant leur NUTS3. La conversion doit passer par NIS :
   `NUTS_DISTRICT_2021 -> NIS_COMMUNE -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027`.
-- **`province -> region`** est `M:N` (Brabant 20000 couvre 3 regions). Utiliser
-  `NIS_COMMUNE_* -> NIS_REGION_*` (N:1) pour un chemin sans ambiguite.
+- **`province -> region`** est `N:1` (emboitement). Depuis la scission du Brabant
+  en 1995, la province unifiee 20000 n'existe plus : Vlaams-Brabant (20001) est en
+  Flandre, le Brabant wallon (20002) en Wallonie, et Bruxelles-Capitale utilise une
+  pseudo-province (4000) egale a son code de region. Chaque province appartient donc
+  a exactement une region. Voir `docs/PROVINCE_REGION_NESTING.md`.
 - **Verviers** (`NIS_DISTRICT_2019 = 63000`) est le seul arrondissement 1:N
   vers NUTS3 (BE335 francophone + BE336 germanophone).
 

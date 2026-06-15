@@ -309,9 +309,11 @@ nomenclature_versions <- function(system) {
 #' aggregated by BOTH a province and a region).
 #'
 #' The aggregation structure is a DAG, not a tree: a NIS district has two
-#' parents (province and region), and \code{NUTS_COUNTRY} aggregates both the 2021 and
-#' 2027 NUTS region levels. Province -> region is deliberately not an aggregation
-#' (province 20000 "Brabant" spans three regions).
+#' parents (province and region) because a region is modelled as aggregating
+#' arrondissements directly, and \code{NUTS_COUNTRY} aggregates both the 2021 and
+#' 2027 NUTS region levels. Note that province -> region is itself a clean N:1
+#' nesting in the conversion graph (since the 1995 Brabant split every province
+#' belongs to exactly one region; Brussels uses a pseudo-province).
 #'
 #' @param x A \code{nomenclature} object (or a valid identifier).
 #' @return A list of \code{nomenclature} objects (possibly empty).

@@ -49,26 +49,19 @@ test_that("NUTS_DISTRICT_2021 -> NUTS_COUNTRY aggregates all the way to country 
   expect_true(all(r$code_to == "BE"))
 })
 
-# -- Province -> region: M:N (Brabant spans 3 regions), requires allow_ambiguous -
-test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is M:N (Brabant ambiguity)", {
-  # Non-Brabant province: 1 row, correct region, but requires allow_ambiguous
-  # because the graph declares province->region as M:N.
-  r <- convert_codes(10000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data,
-                     allow_ambiguous = TRUE)
-  expect_equal(nrow(r), 1L)
-  expect_equal(r$code_to, 2000L)
-
-  # Brabant (20000) correctly returns 3 rows: Brussels, Flemish, Walloon
-  r2 <- convert_codes(20000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data,
-                      allow_ambiguous = TRUE)
-  expect_equal(nrow(r2), 3L)
-  expect_true(all(c(2000L, 3000L, 4000L) %in% r2$code_to))
-
-  # Without allow_ambiguous: rcl_ambiguous_conversion
-  expect_error(
-    convert_codes(10000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data),
-    class = "rcl_ambiguous_conversion"
-  )
+# -- Province -> region: N:1 nesting (Brabant split since 1995) ----------------
+test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is a clean N:1 nesting", {
+  # Each province nests in exactly one region, so NO allow_ambiguous is needed.
+  # The former unified Brabant province (20000) no longer exists: it is split
+  # into Vlaams-Brabant (20001) and Brabant wallon (20002); Brussels uses a
+  # pseudo-province (4000) equal to its region code.
+  r <- convert_codes(c(10000L, 20001L, 20002L, 4000L),
+                     CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data)
+  expect_equal(nrow(r), 4L)
+  expect_equal(r[code_from == 10000L]$code_to, 2000L)  # Anvers          -> Flemish
+  expect_equal(r[code_from == 20001L]$code_to, 2000L)  # Vlaams-Brabant  -> Flemish
+  expect_equal(r[code_from == 20002L]$code_to, 3000L)  # Brabant wallon  -> Walloon
+  expect_equal(r[code_from == 4000L]$code_to,  4000L)  # Brussels pseudo -> Brussels
 })
 
 # -- POSTAL multi-hop now flows through the generic composer -------------------

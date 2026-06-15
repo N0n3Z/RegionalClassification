@@ -206,22 +206,23 @@ CONVERSION_GRAPH_EDGES <- list(
   list(from = CLS_NIS_MUNICIPALITY_BEFORE_2019, to = CLS_NIS_DISTRICT_BEFORE_2019,
        relation = "N:1", via = "hierarchy",
        notes = "Derived from commune code: first 2 digits * 1000"),
-  # Direct commune->region edge (N:1): every commune, including Brabant communes,
-  # belongs to exactly one region.  Without this direct edge the BFS would find
-  # the path via province->region which is M:N due to Brabant.
+  # Direct commune->region edge (N:1): every commune belongs to exactly one
+  # region.  Kept as a one-hop province-free path for the BFS.
   list(from = CLS_NIS_MUNICIPALITY_BEFORE_2019, to = CLS_NIS_REGION_BEFORE_2019,
        relation = "N:1", via = "hierarchy",
        notes = "Each commune belongs to exactly one region (N:1, direct column lookup)."),
   list(from = CLS_NIS_DISTRICT_BEFORE_2019, to = CLS_NIS_PROVINCE_BEFORE_2019,
        relation = "N:1", via = "hierarchy",
        notes = "Derived from REFNIS hierarchy"),
-  # Province 20000 (Brabant) spans Brussels, Flemish, and Walloon regions => M:N.
-  # Every other province maps 1:1 to its region, but the M:N declaration is
-  # required to surface the Brabant ambiguity.  Use commune-level paths instead.
+  # Province -> region is a clean N:1 nesting.  The former unified province of
+  # Brabant (legacy code 20000) was split on 1 Jan 1995 and no longer exists:
+  # Vlaams-Brabant (20001) nests in Flanders, Brabant wallon (20002) in Wallonia,
+  # and the Brussels-Capital pseudo-province (4000) in the Brussels region.
   list(from = CLS_NIS_PROVINCE_BEFORE_2019, to = CLS_NIS_REGION_BEFORE_2019,
-       relation = "M:N", via = "hierarchy",
-       notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
-                      "All other provinces are N:1.  Prefer commune-level paths.")),
+       relation = "N:1", via = "hierarchy",
+       notes = paste0("Each province nests in exactly one region (N:1). ",
+                      "Vlaams-Brabant (20001)->Flanders, Brabant wallon (20002)->Wallonia, ",
+                      "Brussels pseudo-province (4000)->Brussels. No province 20000 since 1995.")),
 
   # --- NIS BEFORE_2019 to NUTS 2021 (pre-2019 assignments) ---
   list(from = CLS_NIS_MUNICIPALITY_BEFORE_2019, to = CLS_NUTS_DISTRICT_2021,
@@ -262,9 +263,10 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "N:1", via = "hierarchy",
        notes = "Derived from REFNIS hierarchy"),
   list(from = CLS_NIS_PROVINCE_2019, to = CLS_NIS_REGION_2019,
-       relation = "M:N", via = "hierarchy",
-       notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
-                      "All other provinces are N:1.  Prefer commune-level paths.")),
+       relation = "N:1", via = "hierarchy",
+       notes = paste0("Each province nests in exactly one region (N:1). ",
+                      "Vlaams-Brabant (20001)->Flanders, Brabant wallon (20002)->Wallonia, ",
+                      "Brussels pseudo-province (4000)->Brussels. No province 20000 since 1995.")),
 
   # --- Within NIS 2025 hierarchy ---
   list(from = CLS_NIS_MUNICIPALITY_2025, to = CLS_NIS_DISTRICT_2025,
@@ -277,9 +279,10 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "N:1", via = "hierarchy",
        notes = "Derived from REFNIS hierarchy"),
   list(from = CLS_NIS_PROVINCE_2025, to = CLS_NIS_REGION_2025,
-       relation = "M:N", via = "hierarchy",
-       notes = paste0("Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). ",
-                      "All other provinces are N:1.  Prefer commune-level paths.")),
+       relation = "N:1", via = "hierarchy",
+       notes = paste0("Each province nests in exactly one region (N:1). ",
+                      "Vlaams-Brabant (20001)->Flanders, Brabant wallon (20002)->Wallonia, ",
+                      "Brussels pseudo-province (4000)->Brussels. No province 20000 since 1995.")),
 
   # --- NIS regions to NIS_COUNTRY ---
   list(from = CLS_NIS_REGION_BEFORE_2019, to = CLS_NIS_COUNTRY,
@@ -461,26 +464,55 @@ NIS_REGION_FLEMISH  <- 2000L
 NIS_REGION_WALLOON  <- 3000L
 NIS_REGION_BRUSSELS <- 4000L
 
-NIS_PROVINCE_BRABANT    <- 20000L  # Spans all 3 regions; split by arrondissement
+# --- Provinces (REFNIS) -------------------------------------------------------
+# The former unified province of Brabant (legacy code 20000) was split on
+# 1 January 1995 and NO LONGER EXISTS in any REFNIS version shipped here
+# (BEFORE_2019 / 2019 / 2025).  REFNIS instead carries two distinct provinces:
+NIS_PROVINCE_FLEMISH_BRABANT <- 20001L  # Vlaams-Brabant  -> Flemish region
+NIS_PROVINCE_WALLOON_BRABANT <- 20002L  # Brabant wallon  -> Walloon region
 
-NIS_ARR_BRUSSELS        <- 21000L  # Brussels-Capital arrondissement  -> Brussels region
-NIS_ARR_HAL_VILVORDE    <- 23000L  # Hal-Vilvorde                     -> Flemish region
-NIS_ARR_LOUVAIN         <- 24000L  # Louvain (Leuven)                 -> Flemish region
-NIS_ARR_NIVELLES        <- 25000L  # Nivelles                         -> Walloon  region
+# Brussels-Capital has NO statutory province in REFNIS (the hierarchy goes
+# commune -> arrondissement 21000 -> region 4000 directly).  To keep
+# province -> region a clean N:1 nesting, Brussels communes are assigned a
+# PSEUDO-PROVINCE whose code equals the region code (4000).  This is a synthetic
+# convention of this package, NOT an official NIS code; it is injected during
+# parsing (see 01_load_data.R) and documented in docs/PROVINCE_REGION_NESTING.md.
+# Caveat: 4000 collides numerically with the Brussels REGION code, so a bare
+# 4000 cannot be auto-distinguished between province and region (the conversion
+# API is unaffected -- it takes explicit from/to classifications).
+NIS_PROVINCE_BRUSSELS <- 4000L
 
-# Province first-digit (cd_province %/% 10000) -> NIS region code.
-# Brabant (digit 2) is NA because province 20000 spans three regions;
-# region is resolved commune-by-commune via arrondissement (see 02_build_master_table.R).
-NIS_PROV_DIGIT_TO_REGION <- c(
-  "1" = 2000L,        # Antwerp      -> Flemish
-  "2" = NA_integer_,  # Brabant      -> split (resolved by arrondissement)
-  "3" = 2000L,        # East Flanders-> Flemish  (province code 30000... wait, 3x000)
-  "4" = 2000L,        # West Flanders-> Flemish
-  "5" = 3000L,        # Hainaut      -> Walloon
-  "6" = 3000L,        # Liege        -> Walloon
-  "7" = 2000L,        # Limburg      -> Flemish
-  "8" = 3000L,        # Luxembourg   -> Walloon
-  "9" = 3000L         # Namur        -> Walloon
+NIS_ARR_BRUSSELS        <- 21000L  # Brussels-Capital arrondissement  -> Brussels pseudo-province (4000)
+NIS_ARR_HAL_VILVORDE    <- 23000L  # Hal-Vilvorde                     -> Vlaams-Brabant (20001)
+NIS_ARR_LOUVAIN         <- 24000L  # Louvain (Leuven)                 -> Vlaams-Brabant (20001)
+NIS_ARR_NIVELLES        <- 25000L  # Nivelles                         -> Brabant wallon (20002)
+
+# Arrondissement -> province overrides.  The default province is
+# (cd_arr %/% 10000) * 10000, correct for every arrondissement EXCEPT the former
+# Brabant arrondissements (digit 2) and Brussels, where the legacy digit rule
+# would wrongly collapse three regions into the defunct code 20000.
+NIS_ARR_PROVINCE_OVERRIDE <- c(
+  "23000" = 20001L,  # Hal-Vilvorde -> Vlaams-Brabant
+  "24000" = 20001L,  # Louvain      -> Vlaams-Brabant
+  "25000" = 20002L,  # Nivelles     -> Brabant wallon
+  "21000" =  4000L   # Brussels arr -> Brussels pseudo-province
+)
+
+# Province -> NIS region.  Single source of truth for province nesting now that
+# Brabant is split and Brussels has a pseudo-province; every province maps to
+# exactly one region (province -> region is N:1).
+NIS_PROVINCE_TO_REGION <- c(
+  "10000" = 2000L,  # Anvers              -> Flemish
+  "20001" = 2000L,  # Vlaams-Brabant      -> Flemish
+  "30000" = 2000L,  # Flandre occidentale -> Flemish
+  "40000" = 2000L,  # Flandre orientale   -> Flemish
+  "70000" = 2000L,  # Limbourg            -> Flemish
+  "20002" = 3000L,  # Brabant wallon      -> Walloon
+  "50000" = 3000L,  # Hainaut             -> Walloon
+  "60000" = 3000L,  # Liege               -> Walloon
+  "80000" = 3000L,  # Luxembourg          -> Walloon
+  "90000" = 3000L,  # Namur               -> Walloon
+  "4000"  = 4000L   # Brussels pseudo-prov-> Brussels
 )
 
 # --- Flat tables persisted in inst/extdata/ ---
