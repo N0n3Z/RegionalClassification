@@ -86,21 +86,22 @@ stopifnot(e$relation == "N:1")
   cas depuis la scission de 1995. À reconfirmer empiriquement après le rebuild
   via la vérification (a) ci-dessus.
 
-## 🟡 Décision optionnelle (hors périmètre de cette branche)
+## 🟢 DAG de nomenclature : restructuré (fait)
 
-Le **DAG de nomenclature** (`R/00b_registry.R`) modélise toujours la région
-comme agrégeant directement les arrondissements (un arrondissement a donc deux
-parents : province ET région). C'était justifié par l'ancien `M:N`.
+Le **DAG de nomenclature** (`R/00b_registry.R`) a été aligné sur l'emboîtement
+strict **`région → province → arrondissement → commune`** :
 
-Maintenant que `province → region` est un emboîtement propre, on *pourrait*
-restructurer le DAG en `région → province → arrondissement`. Ce n'est PAS fait
-dans cette branche car :
+- `NIS_REGION_*` agrège désormais `NIS_PROVINCE_*` (au lieu de `NIS_DISTRICT_*`).
+- Un arrondissement a donc **un seul parent** (sa province), et la région se
+  trouve un niveau au-dessus via la province.
 
-- c'est une structure distincte du graphe de conversion (la demande portait sur
-  la relation de conversion) ;
-- cela modifie le comportement public de `nomenclature_parents()` /
-  `nomenclature_children()` ;
-- cela casserait volontairement `test-nomenclature.R` (« an arrondissement is
-  aggregated by BOTH a province and a region »).
+Conséquences (déjà répercutées) :
 
-➡️ À trancher séparément si on veut aligner le DAG sur l'emboîtement strict.
+- `nomenclature_children(region)` renvoie la province ; `nomenclature_parents(district)`
+  renvoie la province.
+- `test-nomenclature.R` mis à jour (« strict region -> province -> district
+  hierarchy »).
+
+> Cette partie est du **code pur** (le registre est évalué au chargement, pas
+> issu des `.rds`) : `devtools::load_all()` suffit pour la tester, mais lancez
+> quand même la suite complète après le rebuild des données.
