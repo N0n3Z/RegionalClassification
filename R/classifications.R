@@ -114,9 +114,11 @@
 #' municipalities: `NUTS_DISTRICT_2021` -> `NIS_MUNICIPALITY_2025` -> `NUTS_DISTRICT_2027`
 #' (ambiguous, requires `allow_ambiguous = TRUE`).
 #'
-#' **Note on province -> region:** Province 20000 (Brabant) spans the Brussels,
-#' Flemish and Walloon regions, making province -> region M:N. Use municipality-level
-#' paths (`NIS_MUNICIPALITY_* -> NIS_REGION_*`) for unambiguous region lookups.
+#' **Note on province -> region:** province -> region is a clean N:1 nesting.
+#' The former unified province of Brabant (legacy code 20000) was split in 1995
+#' into Vlaams-Brabant (20001, Flemish) and Brabant wallon (20002, Walloon);
+#' Brussels-Capital uses a pseudo-province (4000) equal to its region code. Each
+#' province therefore belongs to exactly one region.
 #'
 #' **Note on NIS_DISTRICT -> NUTS_DISTRICT/NBB_DISTRICT:** Only Verviers (63000) maps to
 #' two targets (1:N). The reverse NUTS_DISTRICT -> NIS_DISTRICT is N:1 (simple).

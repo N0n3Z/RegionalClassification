@@ -122,9 +122,13 @@ parse_refnis_hierarchy <- function(refnis_dt,
     dt[, is_valid_commune := TRUE]
   }
 
+  # Vlaams-Brabant (20001) and Brabant wallon (20002) are real REFNIS provinces
+  # whose codes do NOT end in 0000, so they must be matched explicitly before the
+  # generic "commune" pattern would otherwise capture them.
   dt[, level := fcase(
     cd_refnis == 1000L, "pays",
     cd_refnis < 10000L & cd_refnis %% 1000L == 0L, "region",
+    cd_refnis %in% c(NIS_PROVINCE_FLEMISH_BRABANT, NIS_PROVINCE_WALLOON_BRABANT), "province",
     cd_refnis >= 10000L & cd_refnis %% 10000L == 0L, "province",
     cd_refnis >= 10000L & cd_refnis %% 1000L == 0L, "arrondissement",
     cd_refnis >= 10000L & cd_refnis %% 1000L != 0L & is_valid_commune, "commune",
@@ -150,26 +154,44 @@ parse_refnis_hierarchy <- function(refnis_dt,
     all = dt
   )
 
-  # Add province to arrondissements by matching against province codes
+  # Inject the synthetic Brussels-Capital PSEUDO-PROVINCE.  REFNIS has no
+  # statutory province for Brussels (commune -> arrondissement 21000 -> region
+  # 4000 directly), so we add a province row whose code equals the region code
+  # (NIS_PROVINCE_BRUSSELS = 4000) and whose label mirrors the region.  This is
+  # what makes province -> region a clean N:1 nesting (see 00_config.R and
+  # docs/PROVINCE_REGION_NESTING.md).
+  bxl_region_row <- result$regions[cd_refnis == NIS_PROVINCE_BRUSSELS]
+  if (nrow(bxl_region_row) > 0L &&
+      !(NIS_PROVINCE_BRUSSELS %in% result$provinces$cd_refnis)) {
+    result$provinces <- rbind(
+      result$provinces,
+      data.table(cd_refnis   = NIS_PROVINCE_BRUSSELS,
+                 tx_descr_fr = bxl_region_row$tx_descr_fr[1L],
+                 tx_descr_nl = bxl_region_row$tx_descr_nl[1L]),
+      fill = TRUE
+    )
+  }
+
+  # Add province to arrondissements by matching against province codes.
   provinces <- result$provinces[, .(cd_prov = cd_refnis, tx_prov_fr = tx_descr_fr)]
   arr <- result$arrondissements
+  # Default province = first 10000-block of the arrondissement.  Override the
+  # Brabant arrondissements + Brussels (NIS_ARR_PROVINCE_OVERRIDE, see 00_config.R)
+  # because the legacy digit rule would collapse them into the defunct code 20000.
   arr[, cd_prov_candidate := (cd_refnis %/% 10000L) * 10000L]
+  ovr <- NIS_ARR_PROVINCE_OVERRIDE[as.character(arr$cd_refnis)]
+  arr[, cd_prov_candidate := fifelse(is.na(ovr), cd_prov_candidate, as.integer(ovr))]
 
-  # Special case: Brussels (21000) has no province 20000 per se
-  # We need to find the actual province from the hierarchy
   arr <- merge(arr, provinces, by.x = "cd_prov_candidate", by.y = "cd_prov",
                all.x = TRUE)
   setnames(arr, "tx_prov_fr", "tx_province_fr")
-
-  # For arrondissements without matching province (Brussels),
-  # derive region directly
   result$arrondissements <- arr
 
-  # Add region to provinces using the centralised lookup table (see 00_config.R).
-  # Brabant (digit 2) stays NA; resolved per-commune in build_nis_commune_table().
+  # Add region to provinces using the centralised province -> region lookup
+  # (see 00_config.R).  Every province -- including the split Brabant provinces
+  # and the Brussels pseudo-province -- maps to exactly one region (N:1).
   provs <- result$provinces
-  digit_key <- as.character(provs$cd_refnis %/% 10000L)
-  provs[, cd_region := NIS_PROV_DIGIT_TO_REGION[digit_key]]
+  provs[, cd_region := NIS_PROVINCE_TO_REGION[as.character(cd_refnis)]]
   result$provinces <- provs
 
   return(result)

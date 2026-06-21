@@ -308,8 +308,11 @@ build_nis_commune_table <- function(nis_parsed, version) {
                                  tx_region_nl = tx_descr_nl)]
   communes <- merge(communes, reg, by = "cd_region", all.x = TRUE)
 
-  # Province 20000 (Brabant) spans all three regions; province->region is NA for it.
-  # Resolve here by arrondissement using the constants defined in 00_config.R.
+  # Defensive fallback: since the 1995 Brabant split every province (incl. the
+  # split Brabant provinces and the Brussels pseudo-province) carries a non-NA
+  # cd_region from the province merge above, so the assignments below normally
+  # do nothing.  They remain as a safety net to resolve region by arrondissement
+  # should any commune ever arrive without a province-derived region.
   bxl_reg <- nis_parsed$regions[cd_refnis == NIS_REGION_BRUSSELS]
   fl_reg  <- nis_parsed$regions[cd_refnis == NIS_REGION_FLEMISH]
   wa_reg  <- nis_parsed$regions[cd_refnis == NIS_REGION_WALLOON]
@@ -687,7 +690,7 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   xw[["NIS_DISTRICT_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
     "NIS_DISTRICT_2025", "NIS_PROVINCE_2025",       m25, "cd_arr", "cd_province")
 
-  # ---- NIS_PROVINCE -> NIS_REGION (M:N: Brabant 20000 spans 3 regions) -----
+  # ---- NIS_PROVINCE -> NIS_REGION (N:1: each province nests in one region) --
   xw[["NIS_PROVINCE_2019__NIS_REGION_2019"]] <- .pairs_xw(
     "NIS_PROVINCE_2019", "NIS_REGION_2019",       m19, "cd_province", "cd_region")
   xw[["NIS_PROVINCE_2025__NIS_REGION_2025"]] <- .pairs_xw(

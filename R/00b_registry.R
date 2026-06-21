@@ -43,12 +43,13 @@
 #'     `detect_classification()` integer matching loop.}
 #'   \item{aggregates}{Character vector of the node id(s) this node is the direct
 #'     aggregation of (the finer level it groups). `character(0)` for base/leaf
-#'     levels. The aggregation graph is a DAG, not a tree: an arrondissement is
-#'     aggregated by BOTH a province and a region, and `NUTS_COUNTRY` aggregates both
-#'     `NUTS_REGION_2021` and `NUTS_REGION_2027`. Province -> region is deliberately NOT an
-#'     aggregation (province 20000 Brabant spans 3 regions); a region aggregates
-#'     arrondissements directly. Used by `nomenclature_children()` /
-#'     `nomenclature_parents()` and validated against the conversion graph.}
+#'     levels. NIS levels form a strict hierarchy
+#'     `region -> province -> arrondissement -> municipality` (each NIS province
+#'     nests in exactly one region since the 1995 Brabant split, with Brussels
+#'     modelled as a pseudo-province). The graph is still a DAG, not a tree:
+#'     `NUTS_COUNTRY` aggregates both `NUTS_REGION_2021` and `NUTS_REGION_2027`, and
+#'     `NIS_COUNTRY` aggregates all three NIS region versions. Used by
+#'     `nomenclature_children()` / `nomenclature_parents()`.}
 #' }
 #'
 #' @export
@@ -85,7 +86,7 @@ CLASSIFICATION_NODES <- list(
     version_filter = VER_BEFORE_2019, code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
     distinct = TRUE,  detectable = FALSE,
-    aggregates = "NIS_DISTRICT_BEFORE_2019"
+    aggregates = "NIS_PROVINCE_BEFORE_2019"
   ),
 
   # ---- NIS 2019 --------------------------------------------------------------
@@ -119,7 +120,7 @@ CLASSIFICATION_NODES <- list(
     version_filter = VER_2019, code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
     distinct = TRUE,  detectable = TRUE,
-    aggregates = "NIS_DISTRICT_2019"
+    aggregates = "NIS_PROVINCE_2019"
   ),
 
   # ---- NIS 2025 --------------------------------------------------------------
@@ -153,7 +154,7 @@ CLASSIFICATION_NODES <- list(
     version_filter = VER_2025, code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
     distinct = TRUE,  detectable = FALSE,
-    aggregates = "NIS_DISTRICT_2025"
+    aggregates = "NIS_PROVINCE_2025"
   ),
 
   # ---- NIS country ------------------------------------------------------------

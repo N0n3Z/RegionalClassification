@@ -303,15 +303,17 @@ nomenclature_versions <- function(system) {
 #' Aggregation links between nomenclatures
 #'
 #' \code{nomenclature_children()} returns the finer level(s) a nomenclature is
-#' the direct aggregation of (e.g. a district aggregates municipalities).
-#' \code{nomenclature_parents()} returns the coarser level(s) that aggregate it
-#' (e.g. a municipality is aggregated by a district; a district is
-#' aggregated by BOTH a province and a region).
+#' the direct aggregation of (e.g. a district aggregates municipalities; a
+#' region aggregates provinces). \code{nomenclature_parents()} returns the coarser
+#' level(s) that aggregate it (e.g. a municipality is aggregated by a district;
+#' a district by a province; a province by a region).
 #'
-#' The aggregation structure is a DAG, not a tree: a NIS district has two
-#' parents (province and region), and \code{NUTS_COUNTRY} aggregates both the 2021 and
-#' 2027 NUTS region levels. Province -> region is deliberately not an aggregation
-#' (province 20000 "Brabant" spans three regions).
+#' NIS levels form a strict hierarchy
+#' \code{region -> province -> arrondissement -> municipality}: every NIS
+#' province nests in exactly one region since the 1995 Brabant split (Brussels is
+#' modelled as a pseudo-province). The structure is still a DAG, not a tree:
+#' \code{NUTS_COUNTRY} aggregates both the 2021 and 2027 NUTS region levels, and
+#' \code{NIS_COUNTRY} aggregates all three NIS region versions.
 #'
 #' @param x A \code{nomenclature} object (or a valid identifier).
 #' @return A list of \code{nomenclature} objects (possibly empty).

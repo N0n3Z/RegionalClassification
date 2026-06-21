@@ -107,10 +107,20 @@ test_that("nomenclature_children() returns the finer aggregated level", {
   expect_equal(length(nomenclature_children(nomenclature("NIS", "municipality", "2019"))), 0L)
 })
 
-test_that("an arrondissement is aggregated by BOTH a province and a region", {
+test_that("NIS levels form a strict region -> province -> district hierarchy", {
+  # An arrondissement has exactly ONE parent: its province (since the 1995
+  # Brabant split each province nests in a single region, so the region sits one
+  # level up via the province rather than aggregating arrondissements directly).
   parents <- nomenclature_parents(nomenclature("NIS", "district", "2019"))
-  ids <- vapply(parents, as.character, "")
-  expect_setequal(ids, c(CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019))
+  expect_setequal(vapply(parents, as.character, ""), CLS_NIS_PROVINCE_2019)
+
+  # A region aggregates provinces (not arrondissements directly).
+  reg_kids <- nomenclature_children(nomenclature("NIS", "region", "2019"))
+  expect_setequal(vapply(reg_kids, as.character, ""), CLS_NIS_PROVINCE_2019)
+
+  # A province aggregates arrondissements.
+  prov_kids <- nomenclature_children(nomenclature("NIS", "province", "2019"))
+  expect_setequal(vapply(prov_kids, as.character, ""), CLS_NIS_DISTRICT_2019)
 })
 
 test_that("NUTS_COUNTRY aggregates both the 2021 and 2027 NUTS1 levels", {

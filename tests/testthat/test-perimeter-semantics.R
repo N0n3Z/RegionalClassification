@@ -40,13 +40,19 @@ test_that(".edge_perimeter_relation returns 'overlap' for 1:N edge", {
 })
 
 test_that(".edge_perimeter_relation returns 'overlap' for M:N edge", {
-  # NIS_PROVINCE_2019 -> NIS_REGION_2019: M:N (Brabant maps to 3 regions)
+  # No M:N edge remains in the graph after the Brabant split fix (province->region
+  # is now N:1).  Exercise the classifier's M:N branch with a synthetic edge.
+  edge <- list(from = CLS_NIS_PROVINCE_2019, to = CLS_NIS_REGION_2019, relation = "M:N")
+  pr <- nbbbenuts:::.edge_perimeter_relation(edge)
+  expect_equal(pr, "overlap")
+})
+
+test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is now a 'nesting' edge (N:1)", {
   edge <- Find(function(e) e$from == CLS_NIS_PROVINCE_2019 && e$to == CLS_NIS_REGION_2019,
                CONVERSION_GRAPH_EDGES)
   expect_false(is.null(edge))
-  expect_equal(edge$relation, "M:N")
-  pr <- nbbbenuts:::.edge_perimeter_relation(edge)
-  expect_equal(pr, "overlap")
+  expect_equal(edge$relation, "N:1")
+  expect_equal(nbbbenuts:::.edge_perimeter_relation(edge), "nesting")
 })
 
 test_that(".edge_perimeter_relation returns 'nesting' for NUTS aggregation edge", {
