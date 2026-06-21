@@ -7,13 +7,13 @@
 CLASSIFICATION_NODES
 }
 \description{
-Named list with one entry per valid classification identifier (the 22 nodes
+Named list with one entry per valid classification identifier (the 23 nodes
 that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
 }
 \details{
 \describe{
   \item{system}{One of `"NIS"`, `"NUTS"`, `"POSTAL"`, `"NBB"`.}
-  \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"country"`, `"lau"`).}
+  \item{level}{Granularity within the system (e.g. `"municipality"`, `"district"`, `"province"`, `"country"`).}
   \item{version}{Classification version string, or `NA_character_` when not
     versioned (POSTAL, NUTS_COUNTRY).}
   \item{code_type}{Physical storage type: `"integer"` or `"character"`.}
@@ -33,11 +33,12 @@ that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
     `detect_classification()` integer matching loop.}
   \item{aggregates}{Character vector of the node id(s) this node is the direct
     aggregation of (the finer level it groups). `character(0)` for base/leaf
-    levels. The aggregation graph is a DAG, not a tree: an arrondissement is
-    aggregated by BOTH a province and a region, and `NUTS_COUNTRY` aggregates both
-    `NUTS_REGION_2021` and `NUTS_REGION_2027`. Province -> region is deliberately NOT an
-    aggregation (province 20000 Brabant spans 3 regions); a region aggregates
-    arrondissements directly. Used by `nomenclature_children()` /
-    `nomenclature_parents()` and validated against the conversion graph.}
+    levels. NIS levels form a strict hierarchy
+    `region -> province -> arrondissement -> municipality` (each NIS province
+    nests in exactly one region since the 1995 Brabant split, with Brussels
+    modelled as a pseudo-province). The graph is still a DAG, not a tree:
+    `NUTS_COUNTRY` aggregates both `NUTS_REGION_2021` and `NUTS_REGION_2027`, and
+    `NIS_COUNTRY` aggregates all three NIS region versions. Used by
+    `nomenclature_children()` / `nomenclature_parents()`.}
 }
 }

@@ -41,6 +41,7 @@ version variants), the extra parts are omitted.
 | `NIS_DISTRICT_2025`        | Arrondissements (2025)          |
 | `NIS_PROVINCE_2025`              | Provinces (2025)                |
 | `NIS_REGION_2025`                | Regions (2025)                  |
+| `NIS_COUNTRY`                    | Country level (Belgium, NIS code 1000) -- version-invariant |
 
 ## NUTS classifications (Eurostat)
 
@@ -90,6 +91,9 @@ requires weighted splitting (use [split_ambiguous_weights()]).
 | `NIS_MUNICIPALITY_2025`            | `NIS_REGION_2025`                | (y) N:1  |
 | `NIS_DISTRICT_2025`     | `NIS_PROVINCE_2025`              | (y) N:1  |
 | `NIS_PROVINCE_2025`           | `NIS_REGION_2025`                | (!) M:N  |
+| `NIS_REGION_BEFORE_2019`      | `NIS_COUNTRY`                    | (y) N:1  |
+| `NIS_REGION_2019`             | `NIS_COUNTRY`                    | (y) N:1  |
+| `NIS_REGION_2025`             | `NIS_COUNTRY`                    | (y) N:1  |
 | `NIS_MUNICIPALITY_2025`            | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 | `NIS_MUNICIPALITY_2025`            | `NUTS_PROVINCE_2027`                     | (y) N:1  |
 | `NIS_MUNICIPALITY_2025`            | `NUTS_REGION_2027`                     | (y) N:1  |
@@ -111,9 +115,11 @@ and 2025, shifting their NUTS3 region. The correct path is always via NIS
 municipalities: `NUTS_DISTRICT_2021` -> `NIS_MUNICIPALITY_2025` -> `NUTS_DISTRICT_2027`
 (ambiguous, requires `allow_ambiguous = TRUE`).
 
-**Note on province -> region:** Province 20000 (Brabant) spans the Brussels,
-Flemish and Walloon regions, making province -> region M:N. Use municipality-level
-paths (`NIS_MUNICIPALITY_* -> NIS_REGION_*`) for unambiguous region lookups.
+**Note on province -> region:** province -> region is a clean N:1 nesting.
+The former unified province of Brabant (legacy code 20000) was split in 1995
+into Vlaams-Brabant (20001, Flemish) and Brabant wallon (20002, Walloon);
+Brussels-Capital uses a pseudo-province (4000) equal to its region code. Each
+province therefore belongs to exactly one region.
 
 **Note on NIS_DISTRICT -> NUTS_DISTRICT/NBB_DISTRICT:** Only Verviers (63000) maps to
 two targets (1:N). The reverse NUTS_DISTRICT -> NIS_DISTRICT is N:1 (simple).
