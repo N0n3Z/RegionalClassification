@@ -61,10 +61,19 @@ stopifnot(identical(
   CLS_NIS_PROVINCE_2019))
 ```
 
-## 6. Commit & push (si tout est vert)
+## 6. Régénérer le site pkgdown (docs/)
+
+Le site `docs/` est un artefact généré qui n'a PAS été reconstruit lors du
+rebuild initial : il référence encore l'ancien `M:N (Brabant 20000)`.
+
+```r
+pkgdown::build_site()        # régénère docs/reference/*, docs/articles/*, etc.
+```
+
+## 7. Commit & push (si tout est vert)
 
 ```sh
 git add -A
 git commit -m "chore: rebuild data + golden + docs after province->region nesting fix"
-git push -u origin check_relation
+git push -u origin <branche>
 ```
