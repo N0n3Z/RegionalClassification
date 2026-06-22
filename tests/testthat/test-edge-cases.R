@@ -101,3 +101,42 @@ test_that("normalize_classification_id accepts canonical identifiers", {
   expect_equal(nbbbenuts:::normalize_classification_id(CLS_POSTAL),
                CLS_POSTAL)
 })
+
+# ==============================================================================
+# Collision 4000 : pseudo-province Bruxelles-Capitale
+# ==============================================================================
+# Code 4000 appears in three classifications simultaneously:
+#   - NIS_PROVINCE_2019 (pseudo-province of Brussels-Capital, equal to region code)
+#   - NIS_REGION_2019   (Brussels-Capital region)
+#   - POSTAL            (postal code for Liege)
+# These tests pin the expected behaviour so any future change is explicit.
+
+# -- Test E12: detect_classification prefere NIS_PROVINCE_2019 pour 4000 ------
+test_that("detect_classification resolves ambiguous code 4000 to NIS_PROVINCE_2019", {
+  # NIS_PROVINCE_2019 is detectable=TRUE and wins the tie-break over
+  # NIS_REGION_2019 (detectable=FALSE) and POSTAL.
+  result <- detect_classification(4000L, master_data)
+  expect_equal(result, CLS_NIS_PROVINCE_2019)
+})
+
+# -- Test E13: 4000 est valide dans les trois classifications ------------------
+test_that("code 4000 is valid in NIS_PROVINCE_2019, NIS_REGION_2019, and POSTAL", {
+  expect_true(validate_codes(4000L, CLS_NIS_PROVINCE_2019, master_data)$is_valid)
+  expect_true(validate_codes(4000L, CLS_NIS_REGION_2019,   master_data)$is_valid)
+  expect_true(validate_codes(4000L, CLS_POSTAL,            master_data)$is_valid)
+})
+
+# -- Test E14: province 4000 -> region 4000 (auto-correspondance N:1) ---------
+test_that("NIS_PROVINCE_2019 4000 converts to NIS_REGION_2019 4000 (self-mapping)", {
+  result <- convert_codes(4000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data)
+  expect_equal(nrow(result), 1L)
+  expect_equal(result$code_from, 4000L)
+  expect_equal(result$code_to,   4000L)
+  # N:1 nesting: no allow_ambiguous needed
+})
+
+# -- Test E15: path province->region est simple (N:1, pas M:N) ----------------
+test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 conversion path is simple (N:1)", {
+  chk <- check_conversion_path(CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019)
+  expect_true(chk$is_simple)
+})
