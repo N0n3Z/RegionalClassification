@@ -57,9 +57,3 @@ lock-step — `tests/testthat/test-route-parity.R` guards that.
 - After changing roxygen, run `devtools::document()` so `man/` and `NAMESPACE`
   stay in sync.
 
-## In-progress work
-
-A multi-phase refactor is planned (single-source-of-truth classification
-registry + NIS 2025 → NUTS 2021 paths + uniform `convert_codes()` return schema).
-See **`REFACTORING_PLAN.md`** at the repo root for the full plan, current branch
-state, and phase-by-phase steps. Start there when resuming.
