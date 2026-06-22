@@ -74,14 +74,14 @@ requires weighted splitting (use [split_ambiguous_weights()]).
 | `NIS_MUNICIPALITY_BEFORE_2019`     | `NIS_DISTRICT_BEFORE_2019` | (y) N:1  |
 | `NIS_MUNICIPALITY_BEFORE_2019`     | `NIS_REGION_BEFORE_2019`         | (y) N:1  |
 | `NIS_DISTRICT_BEFORE_2019` | `NIS_PROVINCE_BEFORE_2019`    | (y) N:1  |
-| `NIS_PROVINCE_BEFORE_2019`    | `NIS_REGION_BEFORE_2019`         | (!) M:N  |
+| `NIS_PROVINCE_BEFORE_2019`    | `NIS_REGION_BEFORE_2019`         | (y) N:1  |
 | `NIS_MUNICIPALITY_BEFORE_2019`     | `NIS_MUNICIPALITY_2019`               | (y) N:1  |
 | `NIS_MUNICIPALITY_BEFORE_2019`     | `NUTS_DISTRICT_2021`                     | (y) N:1  |
 | `NIS_MUNICIPALITY_BEFORE_2019`     | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 | `NIS_MUNICIPALITY_2019`            | `NIS_DISTRICT_2019`        | (y) N:1  |
 | `NIS_MUNICIPALITY_2019`            | `NIS_REGION_2019`                | (y) N:1  |
 | `NIS_DISTRICT_2019`     | `NIS_PROVINCE_2019`              | (y) N:1  |
-| `NIS_PROVINCE_2019`           | `NIS_REGION_2019`                | (!) M:N  |
+| `NIS_PROVINCE_2019`           | `NIS_REGION_2019`                | (y) N:1  |
 | `NIS_MUNICIPALITY_2019`            | `NIS_MUNICIPALITY_2025`               | (y) N:1  |
 | `NIS_MUNICIPALITY_2019`            | `NUTS_MUNICIPALITY_2021`                  | (y) 1:1  |
 | `NIS_MUNICIPALITY_2019`            | `NUTS_DISTRICT_2027`                     | (y) N:1  |
@@ -90,7 +90,7 @@ requires weighted splitting (use [split_ambiguous_weights()]).
 | `NIS_MUNICIPALITY_2025`            | `NIS_DISTRICT_2025`        | (y) N:1  |
 | `NIS_MUNICIPALITY_2025`            | `NIS_REGION_2025`                | (y) N:1  |
 | `NIS_DISTRICT_2025`     | `NIS_PROVINCE_2025`              | (y) N:1  |
-| `NIS_PROVINCE_2025`           | `NIS_REGION_2025`                | (!) M:N  |
+| `NIS_PROVINCE_2025`           | `NIS_REGION_2025`                | (y) N:1  |
 | `NIS_REGION_BEFORE_2019`      | `NIS_COUNTRY`                    | (y) N:1  |
 | `NIS_REGION_2019`             | `NIS_COUNTRY`                    | (y) N:1  |
 | `NIS_REGION_2025`             | `NIS_COUNTRY`                    | (y) N:1  |
