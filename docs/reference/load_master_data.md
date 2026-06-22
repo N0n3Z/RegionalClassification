@@ -28,7 +28,7 @@ needed at runtime.
 ``` r
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   # master_data now contains all lookup tables, ready for convert_codes() etc.
 # }
 ```

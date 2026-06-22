@@ -92,7 +92,7 @@ showcase `diagnose_classification()`, `validate_codes()`, and
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span>  <span class="va">master_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="load_master_data.html">load_master_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Auto-detect and diagnose the classification</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="diagnose_classification.html">diagnose_classification</a></span><span class="op">(</span><span class="va">rc_dirty_municipalities_2019</span>, <span class="st">"cd_commune"</span>, <span class="va">master_data</span><span class="op">)</span></span></span>
@@ -104,21 +104,21 @@ showcase `diagnose_classification()`, `validate_codes()`, and
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Classification            Version        Match%    Cover%  Unknown%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ------------------------------------------------------------------</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_MUNICIPALITY          2019            98.7%     51.5%      1.3% &lt;-- best</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_MUNICIPALITY          2019            98.0%     51.3%      2.0% &lt;-- best</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   NUTS_MUNICIPALITY         2021            98.0%     51.3%      2.0%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_MUNICIPALITY          BEFORE_2019     94.7%     48.9%      5.3%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_MUNICIPALITY          2025            94.1%     50.4%      5.9%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_MUNICIPALITY          2025            93.4%     50.3%      6.6%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_PROVINCE              2019             0.7%     18.2%     99.3%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_PROVINCE              2025             0.7%     18.2%     99.3%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_PROVINCE              BEFORE_2019      0.7%     18.2%     99.3%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   NBB_DISTRICT              2021             0.0%      0.0%    100.0%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_COUNTRY               --               0.0%      0.0%    100.0%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_DISTRICT              2019             0.0%      0.0%    100.0%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NIS_DISTRICT              2025             0.0%      0.0%    100.0%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ----------------------------------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Recommendation</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Classification : NIS_MUNICIPALITY</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Version        : 2019</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Identifier     : NIS_MUNICIPALITY_2019</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Coverage       : 300 / 583 codes present (51.5%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Coverage       : 298 / 581 codes present (51.3%)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Missing codes  : 11004, 11007, 11008, 11016, 11018 ... (+278 more)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ================================================================</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

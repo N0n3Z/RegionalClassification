@@ -56,7 +56,7 @@ data(rc_dirty_municipalities_2019)
 
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
 
   # Auto-detect and diagnose the classification
   diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
@@ -68,21 +68,21 @@ data(rc_dirty_municipalities_2019)
 #> 
 #>   Classification            Version        Match%    Cover%  Unknown%
 #>   ------------------------------------------------------------------
-#>   NIS_MUNICIPALITY          2019            98.7%     51.5%      1.3% <-- best
+#>   NIS_MUNICIPALITY          2019            98.0%     51.3%      2.0% <-- best
 #>   NUTS_MUNICIPALITY         2021            98.0%     51.3%      2.0%
 #>   NIS_MUNICIPALITY          BEFORE_2019     94.7%     48.9%      5.3%
-#>   NIS_MUNICIPALITY          2025            94.1%     50.4%      5.9%
+#>   NIS_MUNICIPALITY          2025            93.4%     50.3%      6.6%
+#>   NIS_PROVINCE              2019             0.7%     18.2%     99.3%
+#>   NIS_PROVINCE              2025             0.7%     18.2%     99.3%
+#>   NIS_PROVINCE              BEFORE_2019      0.7%     18.2%     99.3%
 #>   NBB_DISTRICT              2021             0.0%      0.0%    100.0%
-#>   NIS_COUNTRY               --               0.0%      0.0%    100.0%
-#>   NIS_DISTRICT              2019             0.0%      0.0%    100.0%
-#>   NIS_DISTRICT              2025             0.0%      0.0%    100.0%
 #> 
 #> ----------------------------------------------------------------
 #>   Recommendation
 #>     Classification : NIS_MUNICIPALITY
 #>     Version        : 2019
 #>     Identifier     : NIS_MUNICIPALITY_2019
-#>     Coverage       : 300 / 583 codes present (51.5%)
+#>     Coverage       : 298 / 581 codes present (51.3%)
 #>     Missing codes  : 11004, 11007, 11008, 11016, 11018 ... (+278 more)
 #> ================================================================
 #> 

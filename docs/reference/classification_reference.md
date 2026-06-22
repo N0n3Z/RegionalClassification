@@ -66,14 +66,14 @@ means a M:N mapping that requires weighted splitting (use
 N:1 \| \| \`NIS_MUNICIPALITY_BEFORE_2019\` \| \`NIS_REGION_BEFORE_2019\`
 \| (y) N:1 \| \| \`NIS_DISTRICT_BEFORE_2019\` \|
 \`NIS_PROVINCE_BEFORE_2019\` \| (y) N:1 \| \|
-\`NIS_PROVINCE_BEFORE_2019\` \| \`NIS_REGION_BEFORE_2019\` \| (!) M:N \|
+\`NIS_PROVINCE_BEFORE_2019\` \| \`NIS_REGION_BEFORE_2019\` \| (y) N:1 \|
 \| \`NIS_MUNICIPALITY_BEFORE_2019\` \| \`NIS_MUNICIPALITY_2019\` \| (y)
 N:1 \| \| \`NIS_MUNICIPALITY_BEFORE_2019\` \| \`NUTS_DISTRICT_2021\` \|
 (y) N:1 \| \| \`NIS_MUNICIPALITY_BEFORE_2019\` \| \`NUTS_DISTRICT_2027\`
 \| (y) N:1 \| \| \`NIS_MUNICIPALITY_2019\` \| \`NIS_DISTRICT_2019\` \|
 (y) N:1 \| \| \`NIS_MUNICIPALITY_2019\` \| \`NIS_REGION_2019\` \| (y)
 N:1 \| \| \`NIS_DISTRICT_2019\` \| \`NIS_PROVINCE_2019\` \| (y) N:1 \|
-\| \`NIS_PROVINCE_2019\` \| \`NIS_REGION_2019\` \| (!) M:N \| \|
+\| \`NIS_PROVINCE_2019\` \| \`NIS_REGION_2019\` \| (y) N:1 \| \|
 \`NIS_MUNICIPALITY_2019\` \| \`NIS_MUNICIPALITY_2025\` \| (y) N:1 \| \|
 \`NIS_MUNICIPALITY_2019\` \| \`NUTS_MUNICIPALITY_2021\` \| (y) 1:1 \| \|
 \`NIS_MUNICIPALITY_2019\` \| \`NUTS_DISTRICT_2027\` \| (y) N:1 \| \|
@@ -82,7 +82,7 @@ N:1 \| \| \`NIS_DISTRICT_2019\` \| \`NIS_PROVINCE_2019\` \| (y) N:1 \|
 \`NIS_MUNICIPALITY_2025\` \| \`NIS_DISTRICT_2025\` \| (y) N:1 \| \|
 \`NIS_MUNICIPALITY_2025\` \| \`NIS_REGION_2025\` \| (y) N:1 \| \|
 \`NIS_DISTRICT_2025\` \| \`NIS_PROVINCE_2025\` \| (y) N:1 \| \|
-\`NIS_PROVINCE_2025\` \| \`NIS_REGION_2025\` \| (!) M:N \| \|
+\`NIS_PROVINCE_2025\` \| \`NIS_REGION_2025\` \| (y) N:1 \| \|
 \`NIS_REGION_BEFORE_2019\` \| \`NIS_COUNTRY\` \| (y) N:1 \| \|
 \`NIS_REGION_2019\` \| \`NIS_COUNTRY\` \| (y) N:1 \| \|
 \`NIS_REGION_2025\` \| \`NIS_COUNTRY\` \| (y) N:1 \| \|
@@ -108,10 +108,12 @@ NUTS3 region. The correct path is always via NIS municipalities:
 \`NUTS_DISTRICT_2021\` -\> \`NIS_MUNICIPALITY_2025\` -\>
 \`NUTS_DISTRICT_2027\` (ambiguous, requires \`allow_ambiguous = TRUE\`).
 
-\*\*Note on province -\> region:\*\* Province 20000 (Brabant) spans the
-Brussels, Flemish and Walloon regions, making province -\> region M:N.
-Use municipality-level paths (\`NIS_MUNICIPALITY\_\* -\>
-NIS_REGION\_\*\`) for unambiguous region lookups.
+\*\*Note on province -\> region:\*\* province -\> region is a clean N:1
+nesting. The former unified province of Brabant (legacy code 20000) was
+split in 1995 into Vlaams-Brabant (20001, Flemish) and Brabant wallon
+(20002, Walloon); Brussels-Capital uses a pseudo-province (4000) equal
+to its region code. Each province therefore belongs to exactly one
+region.
 
 \*\*Note on NIS_DISTRICT -\> NUTS_DISTRICT/NBB_DISTRICT:\*\* Only
 Verviers (63000) maps to two targets (1:N). The reverse NUTS_DISTRICT

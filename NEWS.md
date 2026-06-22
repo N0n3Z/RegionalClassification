@@ -2,6 +2,23 @@
 
 ## Breaking changes
 
+* **NIS province codes for Brabant and Brussels changed.** The defunct unified
+  Brabant province code `20000` (split in 1995) is no longer produced. NIS
+  province output now uses the real REFNIS codes — `20001` (Vlaams-Brabant,
+  Flemish) and `20002` (Brabant wallon, Walloon) — and Brussels-Capital is
+  assigned a synthetic **pseudo-province `4000`** (equal to its region code, as
+  it has no statutory province). Any code keyed on `20000` must be updated.
+  Caveat: a bare `4000` cannot be auto-detected as province vs region; pass an
+  explicit classification. See `docs/PROVINCE_REGION_NESTING.md`.
+
+* **`NIS_PROVINCE_* -> NIS_REGION_*` is now `N:1` (nesting), not `M:N`.** Each
+  province nests in exactly one region, so the conversion no longer requires
+  `allow_ambiguous = TRUE` and its `perimeter_relation` is `"nesting"` instead of
+  `"overlap"`. The nomenclature aggregation DAG was nested accordingly
+  (`region -> province -> arrondissement -> municipality`): a region now
+  aggregates provinces (previously arrondissements directly), so an
+  arrondissement has a single parent.
+
 * **Classification IDs renamed** to the `SYSTEM_LEVEL_VERSION` convention.
   All 14 identifiers have changed; update any hard-coded strings in your code:
 

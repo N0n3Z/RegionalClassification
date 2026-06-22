@@ -41,18 +41,18 @@ list_available_conversions()
 #>  1: NIS_MUNICIPALITY_BEFORE_2019 NIS_DISTRICT_BEFORE_2019      N:1
 #>  2: NIS_MUNICIPALITY_BEFORE_2019   NIS_REGION_BEFORE_2019      N:1
 #>  3:     NIS_DISTRICT_BEFORE_2019 NIS_PROVINCE_BEFORE_2019      N:1
-#>  4:     NIS_PROVINCE_BEFORE_2019   NIS_REGION_BEFORE_2019      M:N
+#>  4:     NIS_PROVINCE_BEFORE_2019   NIS_REGION_BEFORE_2019      N:1
 #>  5: NIS_MUNICIPALITY_BEFORE_2019       NUTS_DISTRICT_2021      N:1
 #>  6: NIS_MUNICIPALITY_BEFORE_2019       NUTS_DISTRICT_2027      N:1
 #>  7: NIS_MUNICIPALITY_BEFORE_2019    NIS_MUNICIPALITY_2019      N:1
 #>  8:        NIS_MUNICIPALITY_2019        NIS_DISTRICT_2019      N:1
 #>  9:        NIS_MUNICIPALITY_2019          NIS_REGION_2019      N:1
 #> 10:            NIS_DISTRICT_2019        NIS_PROVINCE_2019      N:1
-#> 11:            NIS_PROVINCE_2019          NIS_REGION_2019      M:N
+#> 11:            NIS_PROVINCE_2019          NIS_REGION_2019      N:1
 #> 12:        NIS_MUNICIPALITY_2025        NIS_DISTRICT_2025      N:1
 #> 13:        NIS_MUNICIPALITY_2025          NIS_REGION_2025      N:1
 #> 14:            NIS_DISTRICT_2025        NIS_PROVINCE_2025      N:1
-#> 15:            NIS_PROVINCE_2025          NIS_REGION_2025      M:N
+#> 15:            NIS_PROVINCE_2025          NIS_REGION_2025      N:1
 #> 16:       NIS_REGION_BEFORE_2019              NIS_COUNTRY      N:1
 #> 17:              NIS_REGION_2019              NIS_COUNTRY      N:1
 #> 18:              NIS_REGION_2025              NIS_COUNTRY      N:1
@@ -84,18 +84,18 @@ list_available_conversions()
 #>  1:            nesting
 #>  2:            nesting
 #>  3:            nesting
-#>  4:            overlap
+#>  4:            nesting
 #>  5:            nesting
 #>  6:            nesting
 #>  7:           temporal
 #>  8:            nesting
 #>  9:            nesting
 #> 10:            nesting
-#> 11:            overlap
+#> 11:            nesting
 #> 12:            nesting
 #> 13:            nesting
 #> 14:            nesting
-#> 15:            overlap
+#> 15:            nesting
 #> 16:            nesting
 #> 17:            nesting
 #> 18:            nesting
@@ -127,18 +127,18 @@ list_available_conversions()
 #>  1:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Derived from commune code: first 2 digits * 1000
 #>  2:                                                                                                                                                                                                                                                                                                                                                                                                                                          Each commune belongs to exactly one region (N:1, direct column lookup).
 #>  3:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Derived from REFNIS hierarchy
-#>  4:                                                                                                                                                                                                                                                                                                                                                                                 Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). All other provinces are N:1.  Prefer commune-level paths.
+#>  4:                                                                                                                                                                                                                                                                                                                    Each province nests in exactly one region (N:1). Vlaams-Brabant (20001)->Flanders, Brabant wallon (20002)->Wallonia, Brussels pseudo-province (4000)->Brussels. No province 20000 since 1995.
 #>  5:                                                                                                                                                                                                                                                                                                                                                  Many communes share one NUTS3 (N:1); the reverse NUTS3 -> commune is ambiguous. Uses historical NUTS assignments (DT_VLDT_STOP = 2019-01-01 for changed codes).
 #>  6:                                                                                                                                                                                                                                                                             N:1 (same as BEFORE_2019->NUTS_DISTRICT_2021). Path: NIS_MUNICIPALITY_BEFORE_2019 -> NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027. Uses the official REFNIS_2025-NUTS_2027 mapping, not a code-rename table.
 #>  7:                                                                                                                                                                                                                                                                                                                                                            Unchanged communes: 1:1 (same code). Merged communes resolved via REFNIS_CHANGE_BEFORE2019.xlsx. N:1 forward (no splits); reverse is 1:N (ambiguous).
 #>  8:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Derived from commune code: first 2 digits * 1000
 #>  9:                                                                                                                                                                                                                                                                                                                                                                                                                                          Each commune belongs to exactly one region (N:1, direct column lookup).
 #> 10:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Derived from REFNIS hierarchy
-#> 11:                                                                                                                                                                                                                                                                                                                                                                                 Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). All other provinces are N:1.  Prefer commune-level paths.
+#> 11:                                                                                                                                                                                                                                                                                                                    Each province nests in exactly one region (N:1). Vlaams-Brabant (20001)->Flanders, Brabant wallon (20002)->Wallonia, Brussels pseudo-province (4000)->Brussels. No province 20000 since 1995.
 #> 12:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Derived from commune code: first 2 digits * 1000
 #> 13:                                                                                                                                                                                                                                                                                                                                                                                                                                          Each commune belongs to exactly one region (N:1, direct column lookup).
 #> 14:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Derived from REFNIS hierarchy
-#> 15:                                                                                                                                                                                                                                                                                                                                                                                 Province 20000 (Brabant) maps to 3 regions (Brussels/Flemish/Walloon). All other provinces are N:1.  Prefer commune-level paths.
+#> 15:                                                                                                                                                                                                                                                                                                                    Each province nests in exactly one region (N:1). Vlaams-Brabant (20001)->Flanders, Brabant wallon (20002)->Wallonia, Brussels pseudo-province (4000)->Brussels. No province 20000 since 1995.
 #> 16:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 All regions aggregate to Belgium (NIS code 1000)
 #> 17:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 All regions aggregate to Belgium (NIS code 1000)
 #> 18:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 All regions aggregate to Belgium (NIS code 1000)

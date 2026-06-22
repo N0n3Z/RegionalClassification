@@ -29,7 +29,7 @@ Character classification identifier, or NULL if no confident match.
 ``` r
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_MUNICIPALITY_2019"
 #> [1] "NIS_MUNICIPALITY_2019"
   detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS_DISTRICT_2021"

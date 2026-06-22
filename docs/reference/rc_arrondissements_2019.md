@@ -50,7 +50,7 @@ head(rc_arrondissements_2019)
 
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
 
   # Verviers (63000) is ambiguous: spans BE335 and BE336
   split_ambiguous(

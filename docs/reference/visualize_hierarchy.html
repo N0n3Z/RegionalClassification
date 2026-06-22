@@ -71,11 +71,11 @@
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span>  <span class="va">master_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="load_master_data.html">load_master_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019</span>
 <span class="r-in"><span>  <span class="fu">visualize_hierarchy</span><span class="op">(</span><span class="st">"NIS_2019"</span>,  <span class="va">master_data</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Region: RÉGION DE BRUXELLES-CAPITALE (4000)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   +-- Province: (pas de province) (20000)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   +-- Province: RÉGION DE BRUXELLES-CAPITALE (4000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       +-- Arr: Arrondissement de Bruxelles-Capitale (21000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Anderlecht (21001)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Auderghem (21002)</span>
@@ -145,7 +145,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Kruibeke (46013)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Lokeren (46014)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       +-- ... et 4 autres communes</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: (pas de province) (20000)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: Province du Brabant Flamand (20001)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   |-- Arr: Arrondissement de Hal-Vilvorde (23000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   |   |-- Asse (23002)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   |   |-- Beersel (23003)</span>
@@ -198,7 +198,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Koksijde (38014)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           +-- ... et 2 autres communes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Region: RÉGION WALLONNE (3000)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: (pas de province) (20000)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: Province du Brabant Wallon (20002)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   +-- Arr: Arrondissement de Nivelles (25000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Beauvechain (25005)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Braine-l'Alleud (25014)</span>
@@ -322,7 +322,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Baerle-Duc (13002)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Balen (13003)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       +-- ... et 24 autres communes</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: (pas de province) (20000)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: Province du Brabant Flamand (20001)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   |-- Arr: Arrondissement de Hal-Vilvorde (23000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   |   |-- Asse (23002)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   |   |-- Beersel (23003)</span>
@@ -422,14 +422,14 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Herstappe (73028)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           +-- ... et 7 autres communes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Region: RÉGION DE BRUXELLES-CAPITALE (4000)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   +-- Province: (pas de province) (20000)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   +-- Province: RÉGION DE BRUXELLES-CAPITALE (4000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       +-- Arr: Arrondissement de Bruxelles-Capitale (21000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Anderlecht (21001)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Auderghem (21002)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           |-- Berchem-Sainte-Agathe (21003)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           +-- ... et 16 autres communes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Region: RÉGION WALLONNE (3000)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: (pas de province) (20000)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |-- Province: Province du Brabant Wallon (20002)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |   +-- Arr: Arrondissement de Nivelles (25000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Beauvechain (25005)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   |       |-- Braine-l'Alleud (25014)</span>
