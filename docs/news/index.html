@@ -40,7 +40,9 @@
 <h2 class="pkg-version" data-toc-text="development version" id="nbbbenuts-development-version">nbbbenuts (development version)<a class="anchor" aria-label="anchor" href="#nbbbenuts-development-version"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
-<ul><li>
+<ul><li><p><strong>NIS province codes for Brabant and Brussels changed.</strong> The defunct unified Brabant province code <code>20000</code> (split in 1995) is no longer produced. NIS province output now uses the real REFNIS codes — <code>20001</code> (Vlaams-Brabant, Flemish) and <code>20002</code> (Brabant wallon, Walloon) — and Brussels-Capital is assigned a synthetic <strong>pseudo-province <code>4000</code></strong> (equal to its region code, as it has no statutory province). Any code keyed on <code>20000</code> must be updated. Caveat: a bare <code>4000</code> cannot be auto-detected as province vs region; pass an explicit classification. See <code>docs/PROVINCE_REGION_NESTING.md</code>.</p></li>
+<li><p><strong><code>NIS_PROVINCE_* -&gt; NIS_REGION_*</code> is now <code>N:1</code> (nesting), not <code>M:N</code>.</strong> Each province nests in exactly one region, so the conversion no longer requires <code>allow_ambiguous = TRUE</code> and its <code>perimeter_relation</code> is <code>"nesting"</code> instead of <code>"overlap"</code>. The nomenclature aggregation DAG was nested accordingly (<code>region -&gt; province -&gt; arrondissement -&gt; municipality</code>): a region now aggregates provinces (previously arrondissements directly), so an arrondissement has a single parent.</p></li>
+<li>
 <p><strong>Classification IDs renamed</strong> to the <code>SYSTEM_LEVEL_VERSION</code> convention. All 14 identifiers have changed; update any hard-coded strings in your code:</p>
 <table class="table"><thead><tr><th>Old identifier</th>
 <th>New identifier</th>

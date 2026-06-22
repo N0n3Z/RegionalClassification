@@ -89,7 +89,7 @@ produce one row each.
 ``` r
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpQNI466/temp_libpath2a8447f11d6b/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   arr_salaries <- data.table::data.table(
     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
     total_wage = c(5e9, 3e9, 1e9),

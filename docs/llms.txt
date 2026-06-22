@@ -19,8 +19,11 @@ of ambiguous (M:N or 1:N) mappings.
 | **NIS provinces** | `NIS_PROVINCE_BEFORE_2019`, `_2019`, `_2025` |
 | **NIS regions** | `NIS_REGION_BEFORE_2019`, `_2019`, `_2025` |
 | **NIS country** | `NIS_COUNTRY` (code 1000 — Belgium) |
-| **NUTS 2021** | `NUTS_MUNICIPALITY_2021`, `NUTS_DISTRICT_2021`, `NUTS_PROVINCE_2021`, `NUTS_REGION_2021`, `NUTS_COUNTRY` |
-| **NUTS 2027** | `NUTS_DISTRICT_2027`, `NUTS_PROVINCE_2027`, `NUTS_REGION_2027` |
+| **NUTS LAU** | `NUTS_MUNICIPALITY_2021` |
+| **NUTS arrondissements** (NUTS 3) | `NUTS_DISTRICT_2021`, `_2027` |
+| **NUTS provinces** (NUTS 2) | `NUTS_PROVINCE_2021`, `_2027` |
+| **NUTS regions** (NUTS 1) | `NUTS_REGION_2021`, `_2027` |
+| **NUTS country** (NUTS 0) | `NUTS_COUNTRY` (code BE — Belgium) |
 | **Other** | `POSTAL` (postal codes), `NBB_DISTRICT_2021` |
 
 All identifiers are case-insensitive. Unknown identifiers raise a typed

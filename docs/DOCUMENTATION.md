@@ -47,7 +47,7 @@ de classification et a travers le temps. Il couvre quatre systemes :
 | Systeme | Identifiant | Exemples de codes |
 |----|----|----|
 | **NIS** (Statbel) | `NIS_*_{BEFORE_2019,2019,2025}` | `21004` (Bruxelles), `63000` (arr. Verviers) |
-| **NUTS** (Eurostat) | `NUTS{0,1,2,3}_202{1,7}`, `NUTS_MUNICIPALITY_2021` | `"BE100"`, `"BE211"` |
+| **NUTS** (Eurostat) | `NUTS_{DISTRICT,PROVINCE,REGION}_{2021,2027}`, `NUTS_MUNICIPALITY_2021`, `NUTS_COUNTRY` | `"BE100"`, `"BE211"` |
 | **Postal** (bpost) | `POSTAL` | `1000`, `2000` |
 | **Interne** | `NBB_DISTRICT_2021` | `"21"` (Bxl), `"65"` (Verviers FR), `"66"` (Verviers DE) |
 
@@ -74,31 +74,23 @@ doit passer (FAIL 0 \| WARN 0 \| SKIP 8 \| PASS 949) avant tout commit.
 get_all_classification_nodes()
 ```
 
-| Identifiant                    | Systeme | Niveau       | Version     | Type |
-|--------------------------------|---------|--------------|-------------|------|
-| `NIS_MUNICIPALITY_BEFORE_2019` | NIS     | municipality | BEFORE_2019 | int  |
-| `NIS_DISTRICT_BEFORE_2019`     | NIS     | district     | BEFORE_2019 | int  |
-| `NIS_PROVINCE_BEFORE_2019`     | NIS     | province     | BEFORE_2019 | int  |
-| `NIS_REGION_BEFORE_2019`       | NIS     | region       | BEFORE_2019 | int  |
-| `NIS_MUNICIPALITY_2019`        | NIS     | municipality | 2019        | int  |
-| `NIS_DISTRICT_2019`            | NIS     | district     | 2019        | int  |
-| `NIS_PROVINCE_2019`            | NIS     | province     | 2019        | int  |
-| `NIS_REGION_2019`              | NIS     | region       | 2019        | int  |
-| `NIS_MUNICIPALITY_2025`        | NIS     | municipality | 2025        | int  |
-| `NIS_DISTRICT_2025`            | NIS     | district     | 2025        | int  |
-| `NIS_PROVINCE_2025`            | NIS     | province     | 2025        | int  |
-| `NIS_REGION_2025`              | NIS     | region       | 2025        | int  |
-| `NIS_COUNTRY`                  | NIS     | country      | NA          | int  |
-| `NUTS_MUNICIPALITY_2021`       | NUTS    | municipality | 2021        | chr  |
-| `NUTS_DISTRICT_2021`           | NUTS    | district     | 2021        | chr  |
-| `NUTS_PROVINCE_2021`           | NUTS    | province     | 2021        | chr  |
-| `NUTS_REGION_2021`             | NUTS    | region       | 2021        | chr  |
-| `NUTS_COUNTRY`                 | NUTS    | country      | NA          | chr  |
-| `NUTS_DISTRICT_2027`           | NUTS    | district     | 2027        | chr  |
-| `NUTS_PROVINCE_2027`           | NUTS    | province     | 2027        | chr  |
-| `NUTS_REGION_2027`             | NUTS    | region       | 2027        | chr  |
-| `POSTAL`                       | POSTAL  | postal       | NA          | int  |
-| `NBB_DISTRICT_2021`            | NBB     | district     | 2021        | chr  |
+Organisees **par niveau** ; les versions figurent dans le detail de
+chaque niveau (et non en lignes separees). Total : 23 identifiants.
+
+| Systeme | Niveau | Identifiants (par version) | Type | Notes |
+|----|----|----|----|----|
+| NIS | municipality | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` | int | Communes (les versions refletent les vagues de fusion 2019/2025) |
+| NIS | district | `NIS_DISTRICT_BEFORE_2019`, `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025` | int | Arrondissements |
+| NIS | province | `NIS_PROVINCE_BEFORE_2019`, `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025` | int | Scission Brabant : `20001` Brabant flamand / `20002` Brabant wallon ; Bruxelles pseudo-province `4000` |
+| NIS | region | `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, `NIS_REGION_2025` | int | Flamande `2000`, Wallonne `3000`, Bruxelles `4000` |
+| NIS | country | `NIS_COUNTRY` | int | Code NIS `1000` (source Statbel : 01000 / ROYAUME / HET RIJK). Non-versionne. |
+| NUTS | LAU / municipality | `NUTS_MUNICIPALITY_2021` | chr | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat) |
+| NUTS | district (NUTS 3) | `NUTS_DISTRICT_2021`, `NUTS_DISTRICT_2027` | chr |  |
+| NUTS | province (NUTS 2) | `NUTS_PROVINCE_2021`, `NUTS_PROVINCE_2027` | chr |  |
+| NUTS | region (NUTS 1) | `NUTS_REGION_2021`, `NUTS_REGION_2027` | chr |  |
+| NUTS | country (NUTS 0) | `NUTS_COUNTRY` | chr | Non-versionne |
+| POSTAL | postal | `POSTAL` | int | Codes postaux bpost |
+| NBB | district | `NBB_DISTRICT_2021` | chr | Code interne 2 chiffres ; Verviers scinde : 65=FR, 66=DE |
 
 **Alias acceptes** : les identifiants tolerent plusieurs formes abreges
 (ex. `"CP"`, `"CODE_POSTAL"`, `"POSTAL"` ; `"COMMUNE_2019"`,

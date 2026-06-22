@@ -85,7 +85,7 @@
 </tr><tr><td>
 <strong>NUTS</strong> (Eurostat)</td>
 <td>
-<code>NUTS{0,1,2,3}_202{1,7}</code>, <code>NUTS_MUNICIPALITY_2021</code>
+<code>NUTS_{DISTRICT,PROVINCE,REGION}_{2021,2027}</code>, <code>NUTS_MUNICIPALITY_2021</code>, <code>NUTS_COUNTRY</code>
 </td>
 <td>
 <code>"BE100"</code>, <code>"BE211"</code>
@@ -107,126 +107,88 @@
 <h2 id="id_2-les-23-classifications-supportees">2. Les 23 classifications supportees<a class="anchor" aria-label="anchor" href="#id_2-les-23-classifications-supportees"></a></h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/get_all_classification_nodes.html">get_all_classification_nodes</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<table class="table"><colgroup><col width="43%"><col width="12%"><col width="19%"><col width="16%"><col width="8%"></colgroup><thead><tr><th>Identifiant</th>
-<th>Systeme</th>
+<p>Organisees <strong>par niveau</strong> ; les versions figurent dans le detail de chaque niveau (et non en lignes separees). Total : 23 identifiants.</p>
+<table class="table"><colgroup><col width="7%"><col width="15%"><col width="66%"><col width="4%"><col width="5%"></colgroup><thead><tr><th>Systeme</th>
 <th>Niveau</th>
-<th>Version</th>
+<th>Identifiants (par version)</th>
 <th>Type</th>
-</tr></thead><tbody><tr><td><code>NIS_MUNICIPALITY_BEFORE_2019</code></td>
-<td>NIS</td>
+<th>Notes</th>
+</tr></thead><tbody><tr><td>NIS</td>
 <td>municipality</td>
-<td>BEFORE_2019</td>
+<td>
+<code>NIS_MUNICIPALITY_BEFORE_2019</code>, <code>NIS_MUNICIPALITY_2019</code>, <code>NIS_MUNICIPALITY_2025</code>
+</td>
 <td>int</td>
-</tr><tr><td><code>NIS_DISTRICT_BEFORE_2019</code></td>
-<td>NIS</td>
+<td>Communes (les versions refletent les vagues de fusion 2019/2025)</td>
+</tr><tr><td>NIS</td>
 <td>district</td>
-<td>BEFORE_2019</td>
+<td>
+<code>NIS_DISTRICT_BEFORE_2019</code>, <code>NIS_DISTRICT_2019</code>, <code>NIS_DISTRICT_2025</code>
+</td>
 <td>int</td>
-</tr><tr><td><code>NIS_PROVINCE_BEFORE_2019</code></td>
-<td>NIS</td>
+<td>Arrondissements</td>
+</tr><tr><td>NIS</td>
 <td>province</td>
-<td>BEFORE_2019</td>
+<td>
+<code>NIS_PROVINCE_BEFORE_2019</code>, <code>NIS_PROVINCE_2019</code>, <code>NIS_PROVINCE_2025</code>
+</td>
 <td>int</td>
-</tr><tr><td><code>NIS_REGION_BEFORE_2019</code></td>
-<td>NIS</td>
+<td>Scission Brabant : <code>20001</code> Brabant flamand / <code>20002</code> Brabant wallon ; Bruxelles pseudo-province <code>4000</code>
+</td>
+</tr><tr><td>NIS</td>
 <td>region</td>
-<td>BEFORE_2019</td>
+<td>
+<code>NIS_REGION_BEFORE_2019</code>, <code>NIS_REGION_2019</code>, <code>NIS_REGION_2025</code>
+</td>
 <td>int</td>
-</tr><tr><td><code>NIS_MUNICIPALITY_2019</code></td>
-<td>NIS</td>
-<td>municipality</td>
-<td>2019</td>
-<td>int</td>
-</tr><tr><td><code>NIS_DISTRICT_2019</code></td>
-<td>NIS</td>
-<td>district</td>
-<td>2019</td>
-<td>int</td>
-</tr><tr><td><code>NIS_PROVINCE_2019</code></td>
-<td>NIS</td>
-<td>province</td>
-<td>2019</td>
-<td>int</td>
-</tr><tr><td><code>NIS_REGION_2019</code></td>
-<td>NIS</td>
-<td>region</td>
-<td>2019</td>
-<td>int</td>
-</tr><tr><td><code>NIS_MUNICIPALITY_2025</code></td>
-<td>NIS</td>
-<td>municipality</td>
-<td>2025</td>
-<td>int</td>
-</tr><tr><td><code>NIS_DISTRICT_2025</code></td>
-<td>NIS</td>
-<td>district</td>
-<td>2025</td>
-<td>int</td>
-</tr><tr><td><code>NIS_PROVINCE_2025</code></td>
-<td>NIS</td>
-<td>province</td>
-<td>2025</td>
-<td>int</td>
-</tr><tr><td><code>NIS_REGION_2025</code></td>
-<td>NIS</td>
-<td>region</td>
-<td>2025</td>
-<td>int</td>
-</tr><tr><td><code>NIS_COUNTRY</code></td>
-<td>NIS</td>
+<td>Flamande <code>2000</code>, Wallonne <code>3000</code>, Bruxelles <code>4000</code>
+</td>
+</tr><tr><td>NIS</td>
 <td>country</td>
-<td>NA</td>
+<td><code>NIS_COUNTRY</code></td>
 <td>int</td>
-</tr><tr><td><code>NUTS_MUNICIPALITY_2021</code></td>
-<td>NUTS</td>
-<td>municipality</td>
-<td>2021</td>
+<td>Code NIS <code>1000</code> (source Statbel : 01000 / ROYAUME / HET RIJK). Non-versionne.</td>
+</tr><tr><td>NUTS</td>
+<td>LAU / municipality</td>
+<td><code>NUTS_MUNICIPALITY_2021</code></td>
 <td>chr</td>
-</tr><tr><td><code>NUTS_DISTRICT_2021</code></td>
-<td>NUTS</td>
-<td>district</td>
-<td>2021</td>
+<td>Bijection 1:1 avec <code>NIS_MUNICIPALITY_2019</code> en Belgique (meme territoire, codage Eurostat)</td>
+</tr><tr><td>NUTS</td>
+<td>district (NUTS 3)</td>
+<td>
+<code>NUTS_DISTRICT_2021</code>, <code>NUTS_DISTRICT_2027</code>
+</td>
 <td>chr</td>
-</tr><tr><td><code>NUTS_PROVINCE_2021</code></td>
-<td>NUTS</td>
-<td>province</td>
-<td>2021</td>
+<td></td>
+</tr><tr><td>NUTS</td>
+<td>province (NUTS 2)</td>
+<td>
+<code>NUTS_PROVINCE_2021</code>, <code>NUTS_PROVINCE_2027</code>
+</td>
 <td>chr</td>
-</tr><tr><td><code>NUTS_REGION_2021</code></td>
-<td>NUTS</td>
-<td>region</td>
-<td>2021</td>
+<td></td>
+</tr><tr><td>NUTS</td>
+<td>region (NUTS 1)</td>
+<td>
+<code>NUTS_REGION_2021</code>, <code>NUTS_REGION_2027</code>
+</td>
 <td>chr</td>
-</tr><tr><td><code>NUTS_COUNTRY</code></td>
-<td>NUTS</td>
-<td>country</td>
-<td>NA</td>
+<td></td>
+</tr><tr><td>NUTS</td>
+<td>country (NUTS 0)</td>
+<td><code>NUTS_COUNTRY</code></td>
 <td>chr</td>
-</tr><tr><td><code>NUTS_DISTRICT_2027</code></td>
-<td>NUTS</td>
-<td>district</td>
-<td>2027</td>
-<td>chr</td>
-</tr><tr><td><code>NUTS_PROVINCE_2027</code></td>
-<td>NUTS</td>
-<td>province</td>
-<td>2027</td>
-<td>chr</td>
-</tr><tr><td><code>NUTS_REGION_2027</code></td>
-<td>NUTS</td>
-<td>region</td>
-<td>2027</td>
-<td>chr</td>
-</tr><tr><td><code>POSTAL</code></td>
-<td>POSTAL</td>
+<td>Non-versionne</td>
+</tr><tr><td>POSTAL</td>
 <td>postal</td>
-<td>NA</td>
+<td><code>POSTAL</code></td>
 <td>int</td>
-</tr><tr><td><code>NBB_DISTRICT_2021</code></td>
-<td>NBB</td>
+<td>Codes postaux bpost</td>
+</tr><tr><td>NBB</td>
 <td>district</td>
-<td>2021</td>
+<td><code>NBB_DISTRICT_2021</code></td>
 <td>chr</td>
+<td>Code interne 2 chiffres ; Verviers scinde : 65=FR, 66=DE</td>
 </tr></tbody></table><p><strong>Alias acceptes</strong> : les identifiants tolerent plusieurs formes abreges (ex. <code>"CP"</code>, <code>"CODE_POSTAL"</code>, <code>"POSTAL"</code> ; <code>"COMMUNE_2019"</code>, <code>"NIS_COM_2019"</code>). Voir <code>normalize_classification_id()</code>.</p>
 <p><strong>Registre machine</strong> : <code>CLASSIFICATION_NODES</code> (liste nommee de 23 entrees, <code>R/00b_registry.R</code>) contient pour chaque noeud :</p>
 <pre><code>system, level, version, code_type, source_table, version_filter,

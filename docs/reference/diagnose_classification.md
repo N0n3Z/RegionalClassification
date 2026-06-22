@@ -125,7 +125,7 @@ the closest one.
 ``` r
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpQNI466/temp_libpath2a8447f11d6b/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   # Check mode
   nuts3_data <- data.table::data.table(nuts3 = c("BE100","BE211","BE332"), val = 1:3)
   diagnose_classification(nuts3_data, "nuts3", master_data,

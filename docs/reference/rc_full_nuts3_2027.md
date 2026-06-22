@@ -53,7 +53,7 @@ head(rc_full_nuts3_2027)
 
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpQNI466/temp_libpath2a8447f11d6b/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   convert_dataset(rc_full_nuts3_2027, "cd_nuts3_2027",
                   from = "NUTS_DISTRICT_2027",
                   to   = "NUTS_PROVINCE_2027", master_data)

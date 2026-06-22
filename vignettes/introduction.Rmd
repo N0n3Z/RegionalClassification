@@ -384,12 +384,18 @@ get_all_classification_nodes()
 
 Key identifiers:
 
-| Level            | Identifiers |
-|------------------|-------------|
-| Communes         | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` |
-| Arrondissements  | `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025` |
-| Provinces        | `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025` |
-| Regions          | `NIS_REGION_2019`, `NIS_REGION_2025` |
-| NUTS 2021        | `NUTS_MUNICIPALITY_2021`, `NUTS_DISTRICT_2021`, `NUTS_PROVINCE_2021`, `NUTS_REGION_2021`, `NUTS_COUNTRY` |
-| NUTS 2027        | `NUTS_DISTRICT_2027`, `NUTS_PROVINCE_2027`, `NUTS_REGION_2027` |
-| Other            | `POSTAL`, `NBB_DISTRICT_2021` |
+Organised by level; versions are listed within each level (not as separate rows).
+
+| Level                          | Identifiers (per version) |
+|--------------------------------|---------------------------|
+| NIS communes                   | `NIS_MUNICIPALITY_BEFORE_2019`, `_2019`, `_2025` |
+| NIS arrondissements            | `NIS_DISTRICT_BEFORE_2019`, `_2019`, `_2025` |
+| NIS provinces                  | `NIS_PROVINCE_BEFORE_2019`, `_2019`, `_2025` |
+| NIS regions                    | `NIS_REGION_BEFORE_2019`, `_2019`, `_2025` |
+| NIS country                    | `NIS_COUNTRY` |
+| NUTS LAU                        | `NUTS_MUNICIPALITY_2021` |
+| NUTS arrondissements (NUTS 3)  | `NUTS_DISTRICT_2021`, `_2027` |
+| NUTS provinces (NUTS 2)        | `NUTS_PROVINCE_2021`, `_2027` |
+| NUTS regions (NUTS 1)          | `NUTS_REGION_2021`, `_2027` |
+| NUTS country (NUTS 0)          | `NUTS_COUNTRY` |
+| Other                          | `POSTAL`, `NBB_DISTRICT_2021` |
