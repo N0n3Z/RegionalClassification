@@ -1,10 +1,10 @@
 # Aggregation links between nomenclatures
 
 `nomenclature_children()` returns the finer level(s) a nomenclature is
-the direct aggregation of (e.g. a district aggregates municipalities).
-`nomenclature_parents()` returns the coarser level(s) that aggregate it
-(e.g. a municipality is aggregated by a district; a district is
-aggregated by BOTH a province and a region).
+the direct aggregation of (e.g. a district aggregates municipalities; a
+region aggregates provinces). `nomenclature_parents()` returns the
+coarser level(s) that aggregate it (e.g. a municipality is aggregated by
+a district; a district by a province; a province by a region).
 
 ## Usage
 
@@ -26,10 +26,13 @@ A list of `nomenclature` objects (possibly empty).
 
 ## Details
 
-The aggregation structure is a DAG, not a tree: a NIS district has two
-parents (province and region), and `NUTS_COUNTRY` aggregates both the
-2021 and 2027 NUTS region levels. Province -\> region is deliberately
-not an aggregation (province 20000 "Brabant" spans three regions).
+NIS levels form a strict hierarchy
+`region -> province -> arrondissement -> municipality`: every NIS
+province nests in exactly one region since the 1995 Brabant split
+(Brussels is modelled as a pseudo-province). The structure is still a
+DAG, not a tree: `NUTS_COUNTRY` aggregates both the 2021 and 2027 NUTS
+region levels, and `NIS_COUNTRY` aggregates all three NIS region
+versions.
 
 ## Examples
 
@@ -41,8 +44,5 @@ nomenclature_children(nomenclature("NIS", "district", "2019"))  # municipality
 nomenclature_parents(nomenclature("NIS", "district", "2019"))   # province + region
 #> [[1]]
 #> <nomenclature: NIS / province / 2019>
-#> 
-#> [[2]]
-#> <nomenclature: NIS / region / 2019>
 #> 
 ```

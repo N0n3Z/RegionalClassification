@@ -27,22 +27,22 @@ ggplot object if ggplot2 available, otherwise text matrix
 #> Key: <from>
 #>                             from NBB_DISTRICT_2021 NIS_COUNTRY
 #>                           <char>            <lgcl>      <lgcl>
-#>  1:            NBB_DISTRICT_2021              TRUE       FALSE
+#>  1:            NBB_DISTRICT_2021              TRUE        TRUE
 #>  2:                  NIS_COUNTRY             FALSE        TRUE
-#>  3:            NIS_DISTRICT_2019             FALSE       FALSE
-#>  4:            NIS_DISTRICT_2025             FALSE       FALSE
-#>  5:     NIS_DISTRICT_BEFORE_2019             FALSE       FALSE
+#>  3:            NIS_DISTRICT_2019             FALSE        TRUE
+#>  4:            NIS_DISTRICT_2025             FALSE        TRUE
+#>  5:     NIS_DISTRICT_BEFORE_2019             FALSE        TRUE
 #>  6:        NIS_MUNICIPALITY_2019              TRUE        TRUE
 #>  7:        NIS_MUNICIPALITY_2025              TRUE        TRUE
 #>  8: NIS_MUNICIPALITY_BEFORE_2019              TRUE        TRUE
-#>  9:            NIS_PROVINCE_2019             FALSE       FALSE
-#> 10:            NIS_PROVINCE_2025             FALSE       FALSE
-#> 11:     NIS_PROVINCE_BEFORE_2019             FALSE       FALSE
+#>  9:            NIS_PROVINCE_2019             FALSE        TRUE
+#> 10:            NIS_PROVINCE_2025             FALSE        TRUE
+#> 11:     NIS_PROVINCE_BEFORE_2019             FALSE        TRUE
 #> 12:              NIS_REGION_2019             FALSE        TRUE
 #> 13:              NIS_REGION_2025             FALSE        TRUE
 #> 14:       NIS_REGION_BEFORE_2019             FALSE        TRUE
 #> 15:                 NUTS_COUNTRY             FALSE       FALSE
-#> 16:           NUTS_DISTRICT_2021              TRUE       FALSE
+#> 16:           NUTS_DISTRICT_2021              TRUE        TRUE
 #> 17:           NUTS_DISTRICT_2027             FALSE       FALSE
 #> 18:       NUTS_MUNICIPALITY_2021              TRUE        TRUE
 #> 19:           NUTS_PROVINCE_2021             FALSE       FALSE
@@ -135,22 +135,22 @@ ggplot object if ggplot2 available, otherwise text matrix
 #>                <lgcl>            <lgcl>                   <lgcl>
 #>     NIS_REGION_2019 NIS_REGION_2025 NIS_REGION_BEFORE_2019 NUTS_COUNTRY
 #>              <lgcl>          <lgcl>                 <lgcl>       <lgcl>
-#>  1:           FALSE           FALSE                  FALSE         TRUE
+#>  1:            TRUE           FALSE                  FALSE         TRUE
 #>  2:           FALSE           FALSE                  FALSE        FALSE
-#>  3:           FALSE           FALSE                  FALSE        FALSE
-#>  4:           FALSE           FALSE                  FALSE        FALSE
-#>  5:           FALSE           FALSE                  FALSE        FALSE
+#>  3:            TRUE           FALSE                  FALSE        FALSE
+#>  4:           FALSE            TRUE                  FALSE        FALSE
+#>  5:           FALSE           FALSE                   TRUE        FALSE
 #>  6:            TRUE            TRUE                  FALSE         TRUE
-#>  7:           FALSE            TRUE                  FALSE         TRUE
+#>  7:            TRUE            TRUE                  FALSE         TRUE
 #>  8:            TRUE            TRUE                   TRUE         TRUE
-#>  9:           FALSE           FALSE                  FALSE        FALSE
-#> 10:           FALSE           FALSE                  FALSE        FALSE
-#> 11:           FALSE           FALSE                  FALSE        FALSE
+#>  9:            TRUE           FALSE                  FALSE        FALSE
+#> 10:           FALSE            TRUE                  FALSE        FALSE
+#> 11:           FALSE           FALSE                   TRUE        FALSE
 #> 12:            TRUE           FALSE                  FALSE        FALSE
 #> 13:           FALSE            TRUE                  FALSE        FALSE
 #> 14:           FALSE           FALSE                   TRUE        FALSE
 #> 15:           FALSE           FALSE                  FALSE         TRUE
-#> 16:           FALSE           FALSE                  FALSE         TRUE
+#> 16:            TRUE           FALSE                  FALSE         TRUE
 #> 17:           FALSE           FALSE                  FALSE         TRUE
 #> 18:            TRUE            TRUE                  FALSE         TRUE
 #> 19:           FALSE           FALSE                  FALSE         TRUE
@@ -246,22 +246,22 @@ ggplot object if ggplot2 available, otherwise text matrix
 #> Key: <from>
 #>                             from NBB_DISTRICT_2021 NIS_COUNTRY
 #>                           <char>            <lgcl>      <lgcl>
-#>  1:            NBB_DISTRICT_2021              TRUE       FALSE
+#>  1:            NBB_DISTRICT_2021              TRUE        TRUE
 #>  2:                  NIS_COUNTRY             FALSE        TRUE
-#>  3:            NIS_DISTRICT_2019             FALSE       FALSE
-#>  4:            NIS_DISTRICT_2025             FALSE       FALSE
-#>  5:     NIS_DISTRICT_BEFORE_2019             FALSE       FALSE
+#>  3:            NIS_DISTRICT_2019             FALSE        TRUE
+#>  4:            NIS_DISTRICT_2025             FALSE        TRUE
+#>  5:     NIS_DISTRICT_BEFORE_2019             FALSE        TRUE
 #>  6:        NIS_MUNICIPALITY_2019              TRUE        TRUE
 #>  7:        NIS_MUNICIPALITY_2025              TRUE        TRUE
 #>  8: NIS_MUNICIPALITY_BEFORE_2019              TRUE        TRUE
-#>  9:            NIS_PROVINCE_2019             FALSE       FALSE
-#> 10:            NIS_PROVINCE_2025             FALSE       FALSE
-#> 11:     NIS_PROVINCE_BEFORE_2019             FALSE       FALSE
+#>  9:            NIS_PROVINCE_2019             FALSE        TRUE
+#> 10:            NIS_PROVINCE_2025             FALSE        TRUE
+#> 11:     NIS_PROVINCE_BEFORE_2019             FALSE        TRUE
 #> 12:              NIS_REGION_2019             FALSE        TRUE
 #> 13:              NIS_REGION_2025             FALSE        TRUE
 #> 14:       NIS_REGION_BEFORE_2019             FALSE        TRUE
 #> 15:                 NUTS_COUNTRY             FALSE       FALSE
-#> 16:           NUTS_DISTRICT_2021              TRUE       FALSE
+#> 16:           NUTS_DISTRICT_2021              TRUE        TRUE
 #> 17:           NUTS_DISTRICT_2027             FALSE       FALSE
 #> 18:       NUTS_MUNICIPALITY_2021              TRUE        TRUE
 #> 19:           NUTS_PROVINCE_2021             FALSE       FALSE
@@ -354,22 +354,22 @@ ggplot object if ggplot2 available, otherwise text matrix
 #>                <lgcl>            <lgcl>                   <lgcl>
 #>     NIS_REGION_2019 NIS_REGION_2025 NIS_REGION_BEFORE_2019 NUTS_COUNTRY
 #>              <lgcl>          <lgcl>                 <lgcl>       <lgcl>
-#>  1:           FALSE           FALSE                  FALSE         TRUE
+#>  1:            TRUE           FALSE                  FALSE         TRUE
 #>  2:           FALSE           FALSE                  FALSE        FALSE
-#>  3:           FALSE           FALSE                  FALSE        FALSE
-#>  4:           FALSE           FALSE                  FALSE        FALSE
-#>  5:           FALSE           FALSE                  FALSE        FALSE
+#>  3:            TRUE           FALSE                  FALSE        FALSE
+#>  4:           FALSE            TRUE                  FALSE        FALSE
+#>  5:           FALSE           FALSE                   TRUE        FALSE
 #>  6:            TRUE            TRUE                  FALSE         TRUE
-#>  7:           FALSE            TRUE                  FALSE         TRUE
+#>  7:            TRUE            TRUE                  FALSE         TRUE
 #>  8:            TRUE            TRUE                   TRUE         TRUE
-#>  9:           FALSE           FALSE                  FALSE        FALSE
-#> 10:           FALSE           FALSE                  FALSE        FALSE
-#> 11:           FALSE           FALSE                  FALSE        FALSE
+#>  9:            TRUE           FALSE                  FALSE        FALSE
+#> 10:           FALSE            TRUE                  FALSE        FALSE
+#> 11:           FALSE           FALSE                   TRUE        FALSE
 #> 12:            TRUE           FALSE                  FALSE        FALSE
 #> 13:           FALSE            TRUE                  FALSE        FALSE
 #> 14:           FALSE           FALSE                   TRUE        FALSE
 #> 15:           FALSE           FALSE                  FALSE         TRUE
-#> 16:           FALSE           FALSE                  FALSE         TRUE
+#> 16:            TRUE           FALSE                  FALSE         TRUE
 #> 17:           FALSE           FALSE                  FALSE         TRUE
 #> 18:            TRUE            TRUE                  FALSE         TRUE
 #> 19:           FALSE           FALSE                  FALSE         TRUE

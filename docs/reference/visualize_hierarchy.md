@@ -31,11 +31,11 @@ Character string (tree representation), printed to console
 ``` r
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpYb6NDx/temp_libpath1f90279e2a23/nbbbenuts/extdata': 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   visualize_hierarchy("NIS_2019",  master_data)
 #> 
 #> Region: RÉGION DE BRUXELLES-CAPITALE (4000)
-#>   +-- Province: (pas de province) (20000)
+#>   +-- Province: RÉGION DE BRUXELLES-CAPITALE (4000)
 #>       +-- Arr: Arrondissement de Bruxelles-Capitale (21000)
 #>           |-- Anderlecht (21001)
 #>           |-- Auderghem (21002)
@@ -105,7 +105,7 @@ Character string (tree representation), printed to console
 #>   |       |-- Kruibeke (46013)
 #>   |       |-- Lokeren (46014)
 #>   |       +-- ... et 4 autres communes
-#>   |-- Province: (pas de province) (20000)
+#>   |-- Province: Province du Brabant Flamand (20001)
 #>   |   |-- Arr: Arrondissement de Hal-Vilvorde (23000)
 #>   |   |   |-- Asse (23002)
 #>   |   |   |-- Beersel (23003)
@@ -158,7 +158,7 @@ Character string (tree representation), printed to console
 #>           |-- Koksijde (38014)
 #>           +-- ... et 2 autres communes
 #> Region: RÉGION WALLONNE (3000)
-#>   |-- Province: (pas de province) (20000)
+#>   |-- Province: Province du Brabant Wallon (20002)
 #>   |   +-- Arr: Arrondissement de Nivelles (25000)
 #>   |       |-- Beauvechain (25005)
 #>   |       |-- Braine-l'Alleud (25014)
@@ -282,7 +282,7 @@ Character string (tree representation), printed to console
 #>   |       |-- Baerle-Duc (13002)
 #>   |       |-- Balen (13003)
 #>   |       +-- ... et 24 autres communes
-#>   |-- Province: (pas de province) (20000)
+#>   |-- Province: Province du Brabant Flamand (20001)
 #>   |   |-- Arr: Arrondissement de Hal-Vilvorde (23000)
 #>   |   |   |-- Asse (23002)
 #>   |   |   |-- Beersel (23003)
@@ -382,14 +382,14 @@ Character string (tree representation), printed to console
 #>           |-- Herstappe (73028)
 #>           +-- ... et 7 autres communes
 #> Region: RÉGION DE BRUXELLES-CAPITALE (4000)
-#>   +-- Province: (pas de province) (20000)
+#>   +-- Province: RÉGION DE BRUXELLES-CAPITALE (4000)
 #>       +-- Arr: Arrondissement de Bruxelles-Capitale (21000)
 #>           |-- Anderlecht (21001)
 #>           |-- Auderghem (21002)
 #>           |-- Berchem-Sainte-Agathe (21003)
 #>           +-- ... et 16 autres communes
 #> Region: RÉGION WALLONNE (3000)
-#>   |-- Province: (pas de province) (20000)
+#>   |-- Province: Province du Brabant Wallon (20002)
 #>   |   +-- Arr: Arrondissement de Nivelles (25000)
 #>   |       |-- Beauvechain (25005)
 #>   |       |-- Braine-l'Alleud (25014)
