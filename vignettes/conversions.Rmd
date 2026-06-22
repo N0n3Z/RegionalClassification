@@ -271,7 +271,7 @@ Les quatre valeurs de `perimeter_relation` :
 | `temporal`  | Même système, versions différentes (NIS 2019 → 2025, etc.) |
 | `identity`  | Correspondance exacte 1:1 sans perte (ex. NIS_MUNICIPALITY_2019 → NUTS_MUNICIPALITY_2021 : meme territoire, meme code, systeme Eurostat) |
 | `nesting`   | Agrégation N:1 (plusieurs communes → un arrondissement) |
-| `overlap`   | La source enjambe plusieurs cibles (Verviers 1:N, Brabant M:N) |
+| `overlap`   | La source enjambe plusieurs cibles (ex. Verviers 1:N). Note : `province → region` est désormais `nesting` (N:1) depuis la scission du Brabant |
 
 ---
 

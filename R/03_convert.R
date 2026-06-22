@@ -123,7 +123,7 @@ normalize_classification_id <- function(class_id) {
 # ------------------------------------------------------------------------------
 
 # Generic single hop: looks up the (from_id, to_id) rows in md$crosswalks and
-# joins input codes against them.  M:N edges (Verviers 1:N, Brabant M:N, the
+# joins input codes against them.  Overlap edges (Verviers 1:N, the
 # 3 cross-NUTS3 NIS 2025 fusions) are handled natively via allow.cartesian.
 # Returns a data.table(code_from chr, code_to chr, nature chr) so that the
 # caller can re-coerce to the canonical node type after the lookup.
