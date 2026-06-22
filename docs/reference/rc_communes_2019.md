@@ -59,7 +59,7 @@ head(rc_communes_2019)
 
 # \donttest{
   master_data <- load_master_data()
-#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/Rtmp6rbXw4/temp_libpath26b420df5361/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
+#> Master data loaded from 'C:/Users/Dell/AppData/Local/Temp/RtmpMFZPCn/temp_libpath168c5fac3201/nbbbenuts/extdata': 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
   convert_dataset(rc_communes_2019, "cd_commune",
                   to = "NUTS_DISTRICT_2021", master_data)
 #> Auto-detecting source classification for 'cd_commune'...

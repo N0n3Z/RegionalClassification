@@ -14,32 +14,28 @@ Canonical identifiers follow the pattern `SYSTEM_LEVEL_VERSION`:
 When the level is unambiguous (`POSTAL` has only one level, `NUTS_COUNTRY` has no
 version variants), the extra parts are omitted.
 ## NIS classifications (Statbel)
-| Canonical identifier             | Description                     |
-|———————————-|———————————|
-| `NIS_MUNICIPALITY_BEFORE_2019`        | Communes before 2019 fusions    |
-| `NIS_DISTRICT_BEFORE_2019` | Arrondissements (pre-2019)      |
-| `NIS_PROVINCE_BEFORE_2019`       | Provinces (pre-2019)            |
-| `NIS_REGION_BEFORE_2019`         | Regions (pre-2019)              |
-| `NIS_MUNICIPALITY_2019`               | Communes (2019 version)         |
-| `NIS_DISTRICT_2019`        | Arrondissements (2019)          |
-| `NIS_PROVINCE_2019`              | Provinces (2019)                |
-| `NIS_REGION_2019`                | Regions (2019)                  |
-| `NIS_MUNICIPALITY_2025`               | Communes (2025 version)         |
-| `NIS_DISTRICT_2025`        | Arrondissements (2025)          |
-| `NIS_PROVINCE_2025`              | Provinces (2025)                |
-| `NIS_REGION_2025`                | Regions (2025)                  |
-| `NIS_COUNTRY`                    | Country level (Belgium, NIS code 1000) – version-invariant |
+Organised **by level**. Every level exists in three versions
+(`BEFORE_2019`, `2019`, `2025`) except the version-invariant country level;
+the versions differ only by the 2019/2025 commune-merger waves (province and
+region boundaries are stable across versions).
+| Level        | Identifiers (per version)                                                        | Description |
+|————–|———————————————————————————-|————-|
+| Municipality | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` | Communes; versions reflect the merger waves |
+| District     | `NIS_DISTRICT_BEFORE_2019`, `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025`             | Arrondissements |
+| Province     | `NIS_PROVINCE_BEFORE_2019`, `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025`             | Provinces (Brabant split: `20001` Vlaams-Brabant / `20002` Brabant wallon; Brussels pseudo-province `4000`) |
+| Region       | `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, `NIS_REGION_2025`                   | Regions (Flemish `2000`, Walloon `3000`, Brussels `4000`) |
+| Country      | `NIS_COUNTRY`                                                                    | Belgium (NIS code `1000`) – version-invariant |
 ## NUTS classifications (Eurostat)
-| Canonical identifier | Description                            |
-|———————-|—————————————-|
-| `NUTS_MUNICIPALITY_2021`      | Local Administrative Units (2021) – in Belgium, bijection 1:1 with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
-| `NUTS_DISTRICT_2021`         | NUTS level 3 (2021)                    |
-| `NUTS_PROVINCE_2021`         | NUTS level 2 (2021)                    |
-| `NUTS_REGION_2021`         | NUTS level 1 (2021)                    |
-| `NUTS_COUNTRY`              | Country level (BE) – version-invariant |
-| `NUTS_DISTRICT_2027`         | NUTS level 3 (2027)                    |
-| `NUTS_PROVINCE_2027`         | NUTS level 2 (2027)                    |
-| `NUTS_REGION_2027`         | NUTS level 1 (2027)                    |
+Organised **by level**, mirroring the NIS layout. The NUTS 3/2/1 levels exist
+in two versions (`2021`, `2027`); the LAU and country levels are
+version-invariant in this package.
+| Level              | Identifiers (per version)                  | Description |
+|——————–|——————————————–|————-|
+| LAU / Municipality | `NUTS_MUNICIPALITY_2021`                   | Local Administrative Units; in Belgium a 1:1 bijection with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
+| District (NUTS 3)  | `NUTS_DISTRICT_2021`, `NUTS_DISTRICT_2027` | NUTS level 3 |
+| Province (NUTS 2)  | `NUTS_PROVINCE_2021`, `NUTS_PROVINCE_2027` | NUTS level 2 |
+| Region (NUTS 1)    | `NUTS_REGION_2021`, `NUTS_REGION_2027`     | NUTS level 1 |
+| Country (NUTS 0)   | `NUTS_COUNTRY`                             | Belgium (`BE`) – version-invariant |
 ## Other classifications
 | Canonical identifier     | Description                                          |
 |————————–|——————————————————|
@@ -130,32 +126,28 @@ Canonical identifiers follow the pattern `SYSTEM_LEVEL_VERSION`:
 When the level is unambiguous (`POSTAL` has only one level, `NUTS_COUNTRY` has no
 version variants), the extra parts are omitted.
 ## NIS classifications (Statbel)
-| Canonical identifier             | Description                     |
-|———————————-|———————————|
-| `NIS_MUNICIPALITY_BEFORE_2019`        | Communes before 2019 fusions    |
-| `NIS_DISTRICT_BEFORE_2019` | Arrondissements (pre-2019)      |
-| `NIS_PROVINCE_BEFORE_2019`       | Provinces (pre-2019)            |
-| `NIS_REGION_BEFORE_2019`         | Regions (pre-2019)              |
-| `NIS_MUNICIPALITY_2019`               | Communes (2019 version)         |
-| `NIS_DISTRICT_2019`        | Arrondissements (2019)          |
-| `NIS_PROVINCE_2019`              | Provinces (2019)                |
-| `NIS_REGION_2019`                | Regions (2019)                  |
-| `NIS_MUNICIPALITY_2025`               | Communes (2025 version)         |
-| `NIS_DISTRICT_2025`        | Arrondissements (2025)          |
-| `NIS_PROVINCE_2025`              | Provinces (2025)                |
-| `NIS_REGION_2025`                | Regions (2025)                  |
-| `NIS_COUNTRY`                    | Country level (Belgium, NIS code 1000) – version-invariant |
+Organised **by level**. Every level exists in three versions
+(`BEFORE_2019`, `2019`, `2025`) except the version-invariant country level;
+the versions differ only by the 2019/2025 commune-merger waves (province and
+region boundaries are stable across versions).
+| Level        | Identifiers (per version)                                                        | Description |
+|————–|———————————————————————————-|————-|
+| Municipality | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` | Communes; versions reflect the merger waves |
+| District     | `NIS_DISTRICT_BEFORE_2019`, `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025`             | Arrondissements |
+| Province     | `NIS_PROVINCE_BEFORE_2019`, `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025`             | Provinces (Brabant split: `20001` Vlaams-Brabant / `20002` Brabant wallon; Brussels pseudo-province `4000`) |
+| Region       | `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, `NIS_REGION_2025`                   | Regions (Flemish `2000`, Walloon `3000`, Brussels `4000`) |
+| Country      | `NIS_COUNTRY`                                                                    | Belgium (NIS code `1000`) – version-invariant |
 ## NUTS classifications (Eurostat)
-| Canonical identifier | Description                            |
-|———————-|—————————————-|
-| `NUTS_MUNICIPALITY_2021`      | Local Administrative Units (2021) – in Belgium, bijection 1:1 with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
-| `NUTS_DISTRICT_2021`         | NUTS level 3 (2021)                    |
-| `NUTS_PROVINCE_2021`         | NUTS level 2 (2021)                    |
-| `NUTS_REGION_2021`         | NUTS level 1 (2021)                    |
-| `NUTS_COUNTRY`              | Country level (BE) – version-invariant |
-| `NUTS_DISTRICT_2027`         | NUTS level 3 (2027)                    |
-| `NUTS_PROVINCE_2027`         | NUTS level 2 (2027)                    |
-| `NUTS_REGION_2027`         | NUTS level 1 (2027)                    |
+Organised **by level**, mirroring the NIS layout. The NUTS 3/2/1 levels exist
+in two versions (`2021`, `2027`); the LAU and country levels are
+version-invariant in this package.
+| Level              | Identifiers (per version)                  | Description |
+|——————–|——————————————–|————-|
+| LAU / Municipality | `NUTS_MUNICIPALITY_2021`                   | Local Administrative Units; in Belgium a 1:1 bijection with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
+| District (NUTS 3)  | `NUTS_DISTRICT_2021`, `NUTS_DISTRICT_2027` | NUTS level 3 |
+| Province (NUTS 2)  | `NUTS_PROVINCE_2021`, `NUTS_PROVINCE_2027` | NUTS level 2 |
+| Region (NUTS 1)    | `NUTS_REGION_2021`, `NUTS_REGION_2027`     | NUTS level 1 |
+| Country (NUTS 0)   | `NUTS_COUNTRY`                             | Belgium (`BE`) – version-invariant |
 ## Other classifications
 | Canonical identifier     | Description                                          |
 |————————–|——————————————————|
@@ -285,32 +277,28 @@ raise an error of class `rcl_invalid_classification`.</p>
 <p>When the level is unambiguous (`POSTAL` has only one level, `NUTS_COUNTRY` has no
 version variants), the extra parts are omitted.</p>
 <p>## NIS classifications (Statbel)</p>
-<p>| Canonical identifier             | Description                     |
-|———————————-|———————————|
-| `NIS_MUNICIPALITY_BEFORE_2019`        | Communes before 2019 fusions    |
-| `NIS_DISTRICT_BEFORE_2019` | Arrondissements (pre-2019)      |
-| `NIS_PROVINCE_BEFORE_2019`       | Provinces (pre-2019)            |
-| `NIS_REGION_BEFORE_2019`         | Regions (pre-2019)              |
-| `NIS_MUNICIPALITY_2019`               | Communes (2019 version)         |
-| `NIS_DISTRICT_2019`        | Arrondissements (2019)          |
-| `NIS_PROVINCE_2019`              | Provinces (2019)                |
-| `NIS_REGION_2019`                | Regions (2019)                  |
-| `NIS_MUNICIPALITY_2025`               | Communes (2025 version)         |
-| `NIS_DISTRICT_2025`        | Arrondissements (2025)          |
-| `NIS_PROVINCE_2025`              | Provinces (2025)                |
-| `NIS_REGION_2025`                | Regions (2025)                  |
-| `NIS_COUNTRY`                    | Country level (Belgium, NIS code 1000) – version-invariant |</p>
+<p>Organised **by level**. Every level exists in three versions
+(`BEFORE_2019`, `2019`, `2025`) except the version-invariant country level;
+the versions differ only by the 2019/2025 commune-merger waves (province and
+region boundaries are stable across versions).</p>
+<p>| Level        | Identifiers (per version)                                                        | Description |
+|————–|———————————————————————————-|————-|
+| Municipality | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` | Communes; versions reflect the merger waves |
+| District     | `NIS_DISTRICT_BEFORE_2019`, `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025`             | Arrondissements |
+| Province     | `NIS_PROVINCE_BEFORE_2019`, `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025`             | Provinces (Brabant split: `20001` Vlaams-Brabant / `20002` Brabant wallon; Brussels pseudo-province `4000`) |
+| Region       | `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, `NIS_REGION_2025`                   | Regions (Flemish `2000`, Walloon `3000`, Brussels `4000`) |
+| Country      | `NIS_COUNTRY`                                                                    | Belgium (NIS code `1000`) – version-invariant |</p>
 <p>## NUTS classifications (Eurostat)</p>
-<p>| Canonical identifier | Description                            |
-|———————-|—————————————-|
-| `NUTS_MUNICIPALITY_2021`      | Local Administrative Units (2021) – in Belgium, bijection 1:1 with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
-| `NUTS_DISTRICT_2021`         | NUTS level 3 (2021)                    |
-| `NUTS_PROVINCE_2021`         | NUTS level 2 (2021)                    |
-| `NUTS_REGION_2021`         | NUTS level 1 (2021)                    |
-| `NUTS_COUNTRY`              | Country level (BE) – version-invariant |
-| `NUTS_DISTRICT_2027`         | NUTS level 3 (2027)                    |
-| `NUTS_PROVINCE_2027`         | NUTS level 2 (2027)                    |
-| `NUTS_REGION_2027`         | NUTS level 1 (2027)                    |</p>
+<p>Organised **by level**, mirroring the NIS layout. The NUTS 3/2/1 levels exist
+in two versions (`2021`, `2027`); the LAU and country levels are
+version-invariant in this package.</p>
+<p>| Level              | Identifiers (per version)                  | Description |
+|——————–|——————————————–|————-|
+| LAU / Municipality | `NUTS_MUNICIPALITY_2021`                   | Local Administrative Units; in Belgium a 1:1 bijection with `NIS_MUNICIPALITY_2019` (same territory, Eurostat coding) |
+| District (NUTS 3)  | `NUTS_DISTRICT_2021`, `NUTS_DISTRICT_2027` | NUTS level 3 |
+| Province (NUTS 2)  | `NUTS_PROVINCE_2021`, `NUTS_PROVINCE_2027` | NUTS level 2 |
+| Region (NUTS 1)    | `NUTS_REGION_2021`, `NUTS_REGION_2027`     | NUTS level 1 |
+| Country (NUTS 0)   | `NUTS_COUNTRY`                             | Belgium (`BE`) – version-invariant |</p>
 <p>## Other classifications</p>
 <p>| Canonical identifier     | Description                                          |
 |————————–|——————————————————|

@@ -28,9 +28,9 @@ version variants), the extra parts are omitted.
 ## NIS classifications (Statbel)
 
 Organised **by level**. Every level exists in three versions
-(`BEFORE_2019`, `2019`, `2025`) except the version-invariant country level; the
-versions differ only by the 2019/2025 commune-merger waves (province and region
-boundaries are stable across versions).
+(`BEFORE_2019`, `2019`, `2025`) except the version-invariant country level;
+the versions differ only by the 2019/2025 commune-merger waves (province and
+region boundaries are stable across versions).
 
 | Level        | Identifiers (per version)                                                        | Description |
 |--------------|----------------------------------------------------------------------------------|-------------|
