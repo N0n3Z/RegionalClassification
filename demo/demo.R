@@ -54,7 +54,7 @@ is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")  # TRU
 la <- list_available_conversions()
 # Colonnes : from, to, relation, perimeter_relation, notes
 la[perimeter_relation == "temporal"]   # conversions entre versions NIS
-la[perimeter_relation == "overlap"]    # 1:N ou M:N (enjambement)
+la[perimeter_relation == "overlap"]    # 1:N (enjambement ; aucune arete M:N actuellement)
 la[perimeter_relation == "nesting"]    # agregations N:1 pures
 la[perimeter_relation == "identity"]   # correspondances 1:1
 
@@ -97,6 +97,20 @@ convert_codes(commune, "NIS_MUNICIPALITY_2019", "NUTS_PROVINCE_2021",           
 convert_codes(commune, "NIS_MUNICIPALITY_2019", "NUTS_REGION_2021",              master_data)
 convert_codes(commune, "NIS_MUNICIPALITY_2019", "NUTS_COUNTRY",                   master_data)
 convert_codes(commune, "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", master_data)
+
+# --- 2c-bis. Province -> region : emboitement N:1 (scission du Brabant) ---------
+# Depuis la scission de 1995, chaque province appartient a exactement une region :
+# pas d'ambiguite, pas besoin de allow_ambiguous. L'ancienne province unifiee du
+# Brabant (20000) n'existe plus -> Brabant flamand (20001) / Brabant wallon (20002).
+# Bruxelles-Capitale n'a pas de province statutaire : on lui attribue une
+# pseudo-province egale a son code de region (4000).
+convert_codes(c(10000L, 20001L, 20002L, 4000L),
+              "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data)
+#    code_from  code_to  nature
+# 1:    10000     2000   RECODE  (Anvers          -> Flamande)
+# 2:    20001     2000   RECODE  (Brabant flamand -> Flamande)
+# 3:    20002     3000   RECODE  (Brabant wallon  -> Wallonne)
+# 4:     4000     4000   RECODE  (Bruxelles       -> Bruxelles, pseudo-province)
 
 # --- 2d. Conversions entre versions NIS (colonne nature) -----------------------
 #
