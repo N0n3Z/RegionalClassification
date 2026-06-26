@@ -163,12 +163,24 @@ convert_codes(
 # 11002 -> BE261  (Anvers : BE211 -> BE261)
 # 44021 -> BE274  (Gand   : BE234 -> BE274)
 
-# NUTS 2021 <-> NUTS 2027 aller-retour
-nuts2027 <- convert_codes(
-  c("BE211", "BE223", "BE231", "BE335"),
-  "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027", master_data
+# NUTS3 2021 -> NUTS3 2027 : arete directe 1:N (allow_ambiguous requis).
+# La plupart des codes -> 1 cible ; BE211 -> {BE261, BE276} car la commune 11056
+# a change de province entre 2019 et 2025.
+convert_codes(c("BE100", "BE211"), "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027",
+              master_data, allow_ambiguous = TRUE)
+#    code_from  code_to  nature
+# 1:     BE100    BE100   RECODE
+# 2:     BE211    BE261   OVERLAP
+# 3:     BE211    BE276   OVERLAP
+# -> Pour repartir une valeur agregee sur les cibles ambigues, utiliser des poids :
+#    register_split_weights("NUTS_DISTRICT_2021","NUTS_DISTRICT_2027", tpl) + split_ambiguous(...).
+# -> Si tu as les communes, convertis-les directement vers 2027 (exact, sans poids).
+
+# Sens inverse 2027 -> 2021 : pas d'arete directe (erreur attendue)
+tryCatch(
+  convert_codes("BE261", "NUTS_DISTRICT_2027", "NUTS_DISTRICT_2021", master_data),
+  error = function(e) message("Sens inverse non direct : ", conditionMessage(e))
 )
-convert_codes(nuts2027$code_to, "NUTS_DISTRICT_2027", "NUTS_DISTRICT_2021", master_data)
 
 # --- 2f. Conversion ambigue -- arrondissement Verviers (M:N) --------------------
 # Par defaut, une erreur est levee pour les conversions ambigues

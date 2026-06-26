@@ -367,15 +367,28 @@ CONVERSION_GRAPH_EDGES <- list(
          "All other arrondissements are 1:1.  Reverse INTERNAL->arr is N:1."
        )),
 
+  # --- NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (derived, 1:N) ---
+  # Derived at commune level (NUTS 2021 is keyed to the 2019 commune perimeter):
+  #   2019 commune -> cd_nuts3 (2021)  AND  -> NIS 2025 commune -> cd_nuts3_2027.
+  # 3 cross-province fusions (46029/46030/71072) make some 2021 NUTS3 codes map
+  # to >1 2027 NUTS3 (1:N) -- e.g. commune 11056: BE211 -> {BE261, BE276}.
+  # Intended for AGGREGATE NUTS3 2021 data only; if you still have the underlying
+  # communes, convert those directly to NUTS3 2027 (exact, no weights).
+  list(from = CLS_NUTS_DISTRICT_2021, to = CLS_NUTS_DISTRICT_2027,
+       relation = "1:N", via = "derived",
+       no_reverse = TRUE,
+       ambiguous_codes = c("BE211"),   # PLACEHOLDER -- fix from the anti-drift test after rebuild
+       coverage = "NN/44",             # PLACEHOLDER -- fix after rebuild
+       notes = paste0(
+         "Derived at commune level (2019 -> cd_nuts3 2021 AND -> NIS 2025 -> cd_nuts3_2027). ",
+         "3 cross-province fusions (46029/46030/71072) make some 2021 NUTS3 map to >1 2027 NUTS3 ",
+         "(1:N, e.g. BE211 -> {BE261, BE276}). Use allow_ambiguous = TRUE; register weights via ",
+         "register_split_weights(). no_reverse = TRUE: the reverse 2027 -> 2021 is also 1:N and ",
+         "would create a declared-but-unexecutable path (the executor never inverts edges). ",
+         "For commune-level data, convert the communes directly to NUTS3 2027 instead (exact)."
+       )),
+
   # --- NUTS 2027 hierarchy (within-2027 only) ---
-  # NOTE: there is NO direct NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027 edge.
-  # The two NUTS3 systems cover DIFFERENT geographic areas: 3 communes changed
-  # province/arrondissement between 2019 and 2025, shifting their NUTS3 region
-  # (e.g. commune 11056: BE211 in 2021 -> BE276 in 2027).  A pure code-rename
-  # approach is therefore incorrect for these communes.
-  # The correct path for any 2019-based data is:
-  #   NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027
-  # using the authoritative REFNIS_2025-NUTS_2027.xlsx file.
   list(from = CLS_NUTS_DISTRICT_2027, to = CLS_NUTS_PROVINCE_2027,
        relation = "N:1", via = "derived",
        notes = "Hierarchical (first 4 chars of NUTS3 2027 code)"),

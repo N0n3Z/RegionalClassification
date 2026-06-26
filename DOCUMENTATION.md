@@ -144,9 +144,13 @@ que pour les aretes primitives).
 
 ### 3.5 Conversions notables
 
-- **`NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027`** : **pas de lien direct**. Trois communes ont change
-  de province entre 2019 et 2025, deplaceant leur NUTS3. La conversion doit passer par NIS :
-  `NUTS_DISTRICT_2021 -> NIS_COMMUNE -> NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027`.
+- **`NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027`** : **lien direct `1:N`** (sens 2021->2027 uniquement),
+  derive au build en chainant par les communes. La plupart des NUTS3 2021 -> 1 seul NUTS3 2027 ;
+  quelques-uns (ceux contenant les 3 communes ayant change de province entre 2019 et 2025, ex.
+  `BE211 -> {BE261, BE276}`) -> 2 cibles, d'ou `allow_ambiguous = TRUE` + splitting pondere
+  (`register_split_weights()`). Pour des donnees **au niveau commune**, convertir les communes
+  directement vers `NUTS_DISTRICT_2027` (exact, sans poids). Le sens inverse 2027->2021 n'a pas
+  d'arete directe (passer par NIS).
 - **`province -> region`** est `N:1` (emboitement). Depuis la scission du Brabant
   en 1995, la province unifiee 20000 n'existe plus : Vlaams-Brabant (20001) est en
   Flandre, le Brabant wallon (20002) en Wallonie, et Bruxelles-Capitale utilise une

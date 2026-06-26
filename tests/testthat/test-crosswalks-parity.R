@@ -68,4 +68,19 @@ if (is.null(md$crosswalks)) {
     expect_setequal(e$ambiguous_codes, real_ambig)
   })
 
+  # Same anti-drift guard for the derived NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 edge.
+  # The hard-coded ambiguous_codes (character NUTS3) must equal the real >1-target
+  # codes in the rebuilt crosswalk.  On first run, read `real_ambig` from the failure
+  # and set ambiguous_codes/coverage in 00_config.R accordingly.
+  test_that("graph edge ambiguous_codes matches NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 crosswalk", {
+    e <- Find(function(x) x$from == CLS_NUTS_DISTRICT_2021 && x$to == CLS_NUTS_DISTRICT_2027,
+              CONVERSION_GRAPH_EDGES)
+    skip_if(is.null(e), "NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 edge not found in graph")
+
+    xw <- md$crosswalks[from_id == CLS_NUTS_DISTRICT_2021 & to_id == CLS_NUTS_DISTRICT_2027]
+    real_ambig <- xw[, .N, by = code_from][N > 1L, sort(code_from)]   # character NUTS3 codes
+
+    expect_setequal(e$ambiguous_codes, real_ambig)
+  })
+
 }
