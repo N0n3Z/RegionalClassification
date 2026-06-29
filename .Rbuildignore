@@ -17,3 +17,9 @@
 ^CLAUDE\.md$
 ^\.claude$
 ^diag_p2\.R$
+^DOCUMENTATION\.log$
+^PLAN_NUTS2021_TO_NUTS2027\.md$
+^_pkgdown\.yml$
+^data-raw$
+^docs$
+^DO\.md$

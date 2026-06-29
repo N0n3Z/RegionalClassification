@@ -377,8 +377,8 @@ CONVERSION_GRAPH_EDGES <- list(
   list(from = CLS_NUTS_DISTRICT_2021, to = CLS_NUTS_DISTRICT_2027,
        relation = "1:N", via = "derived",
        no_reverse = TRUE,
-       ambiguous_codes = c("BE211"),   # PLACEHOLDER -- fix from the anti-drift test after rebuild
-       coverage = "NN/44",             # PLACEHOLDER -- fix after rebuild
+       ambiguous_codes = c("BE211", "BE223", "BE234"),
+       coverage = "44/44",
        notes = paste0(
          "Derived at commune level (2019 -> cd_nuts3 2021 AND -> NIS 2025 -> cd_nuts3_2027). ",
          "3 cross-province fusions (46029/46030/71072) make some 2021 NUTS3 map to >1 2027 NUTS3 ",

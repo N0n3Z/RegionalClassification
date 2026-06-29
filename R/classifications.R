@@ -110,7 +110,7 @@
 #' **Note on NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027:** a **direct `1:N` edge** exists
 #' (forward only), derived at build time by chaining through communes. Most NUTS3 2021
 #' codes map 1:1 to a single 2027 code; a few (those containing the 3 communes that
-#' changed province between 2019 and 2025, e.g. `BE211 -> {BE261, BE276}`) map to two,
+#' changed province between 2019 and 2025, e.g. `BE211 -> \{BE261, BE276\}`) map to two,
 #' so the conversion requires `allow_ambiguous = TRUE` and supports weighted splitting
 #' via `register_split_weights()`. This edge is for **aggregate** NUTS3 2021 data; if you
 #' still hold the underlying communes, convert those directly to `NUTS_DISTRICT_2027`

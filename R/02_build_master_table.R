@@ -750,6 +750,17 @@ build_crosswalks <- function(communes, postal, nis_changes) {
     "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027",
     pairs_21_27$cd_nuts3, pairs_21_27$cd_nuts3_2027)
 
+  # NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2027 (derived, N:1 for most; 1:N for the
+  # 3 cross-province fusion zones whose NIS2019 constituents straddle NUTS2027 borders).
+  # Reuses the same chain built above: cd_commune (NIS2019) -> cd_nuts3_2027 (via NIS2025).
+  # Storing this as a direct crosswalk hop prevents the BFS from routing through
+  # NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (which would introduce spurious ambiguity
+  # for communes that are in a 1:N NUTS2021 zone but have a unique NUTS2027 target).
+  pairs_19_27 <- unique(chain[!is.na(cd_nuts3_2027), .(cd_commune, cd_nuts3_2027)])
+  xw[["NIS_MUNICIPALITY_2019__NUTS_DISTRICT_2027"]] <- .xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027",
+    as.character(pairs_19_27$cd_commune), pairs_19_27$cd_nuts3_2027)
+
   # ---- NIS_REGION -> NIS_COUNTRY ----------------------------------------------
   xw[["NIS_REGION_2019__NIS_COUNTRY"]] <- .pairs_xw(
     "NIS_REGION_2019", "NIS_COUNTRY", m19, "cd_region", "cd_nis_country")
