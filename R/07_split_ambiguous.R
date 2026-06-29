@@ -349,10 +349,14 @@ clear_split_weights <- function() {
 #'   # 1:     63000   BE335    0.5
 #'   # 2:     63000   BE336    0.5
 #'
-#'   # 1-bis. Standard population weights (shipped), or a custom variable you supply
-#'   tpl_pop <- split_weights_template(
-#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
-#'   )
+#'   # 1-bis. Standard population weights (requires standard_weight_values.rds;
+#'   #         see data-raw/build_standard_weights.R):
+#'   if (FALSE) {
+#'     tpl_pop <- split_weights_template(
+#'       "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
+#'     )
+#'   }
+#'   # Custom commune-level values (no standard file needed):
 #'   my_vals <- data.table::data.table(code = c(63012, 63023), value = c(8000, 2000))
 #'   tpl_cus <- split_weights_template(
 #'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, commune_values = my_vals

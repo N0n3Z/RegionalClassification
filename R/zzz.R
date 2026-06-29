@@ -13,5 +13,7 @@ utils::globalVariables(c(
   # get_label / build_crosswalk_table helpers (09_query.R)
   "label", "weight", "w",
   # .normalize_conversion_result row-count helper (03_convert.R)
-  ".n_to"
+  ".n_to",
+  # split_weights_template helpers (07_split_ambiguous.R)
+  "value", "mass"
 ))
