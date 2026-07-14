@@ -41,6 +41,22 @@
 #' version sub-tables are stacked. See MASTER_COMMUNE_CORE_COLS /
 #' MASTER_COMMUNE_KNOWN_COLS in 00_config.R.
 #'
+# Assert that `keys` uniquely identify rows of `dt`; abort otherwise (audit M7).
+# Run after unique() has collapsed fully-identical rows, so any remaining
+# duplicate key signals conflicting attributes for the same entity -- a source
+# data problem that must fail the build rather than silently multiply downstream.
+#' @noRd
+.assert_unique_keys <- function(dt, keys, label) {
+  n_dup <- nrow(dt[, .N, by = keys][N > 1L])
+  if (n_dup > 0L)
+    abort(
+      sprintf("Duplicate keys in %s: %d key(s) appear more than once. Check the source data.",
+              label, n_dup),
+      class = "rcl_duplicate_keys", label = label, n_duplicates = n_dup
+    )
+  invisible(dt)
+}
+
 #' @param tbl   A per-version communes data.table
 #' @param label Human-readable version label used in error messages
 #' @return Invisibly TRUE; aborts with class \code{rcl_schema_error} otherwise
@@ -217,13 +233,19 @@ build_master_table <- function(raw_data) {
   communes_list <- list(master_2019)
   if (!is.null(master_before2019)) communes_list <- c(communes_list, list(master_before2019))
   communes_list <- c(communes_list, list(master_2025))
-  communes_unified <- rbindlist(communes_list, use.names = TRUE, fill = TRUE)
+  # unique() collapses fully-identical duplicate rows; the assertion then catches
+  # genuine key conflicts (same commune+version carrying different attributes),
+  # so a duplicated source refresh fails loudly instead of multiplying through
+  # merges downstream (audit M7).
+  communes_unified <- unique(rbindlist(communes_list, use.names = TRUE, fill = TRUE))
+  .assert_unique_keys(communes_unified, c("cd_commune", "nis_version"),
+                      "communes (cd_commune, nis_version)")
 
   # postal: NIS 2019 + NIS 2025
   postal_unified <- rbindlist(list(postal_map_2019, postal_map_2025), use.names = TRUE)
 
   # nis_changes: 2019->2025 + BEFORE_2019->2019
-  nis_changes_unified <- copy(nis_change_map)
+  nis_changes_unified <- unique(copy(nis_change_map))
   if (!is.null(nis_change_before2019)) {
     before2019_std <- data.table(
       cd_refnis_old = nis_change_before2019$cd_refnis_before2019,
@@ -231,9 +253,11 @@ build_master_table <- function(raw_data) {
       nature        = nis_change_before2019$nature,   # from source NATURE, not hardcoded
       from_version  = VER_BEFORE_2019
     )
-    nis_changes_unified <- rbindlist(list(nis_changes_unified, before2019_std),
-                                     use.names = TRUE)
+    nis_changes_unified <- unique(rbindlist(list(nis_changes_unified, before2019_std),
+                                     use.names = TRUE))
   }
+  .assert_unique_keys(nis_changes_unified, c("from_version", "cd_refnis_old"),
+                      "nis_changes (from_version, cd_refnis_old)")
 
   # --- 9b. Build normalised entities + crosswalks tables (ADDITIVE) ---
   message("  Building entities table...")
