@@ -197,6 +197,50 @@ parse_refnis_hierarchy <- function(refnis_dt,
   return(result)
 }
 
+# Filter one CD_LVL slice of the NUTS conversion table to the entries valid at a
+# reference date.  Extracted from parse_nuts_nis_conversion() so it can be unit
+# tested directly (audit C3).
+#
+# ref_date = NULL  -> keep the "current" entries: those at the latest stop date.
+#   Open-ended validity is encoded either as a far-future sentinel (9999-12-31)
+#   or, in some source refreshes, as NA.  Both are treated as open (kept):
+#   max() uses na.rm so an NA can never wipe the whole level, and NA rows are
+#   kept explicitly.  This is the single selector of the "current" NUTS table for
+#   the entire 2019 master, so silently emptying a level here would corrupt every
+#   downstream conversion.
+# ref_date = Date   -> keep entries with DT_VLDT_STRT <= ref_date < DT_VLDT_STOP.
+#
+# Guards against silently returning zero rows for a non-empty level (would signal
+# an unexpected DT_VLDT_STOP encoding rather than a genuine empty slice).
+#' @noRd
+.filter_nuts_at_date <- function(sub_dt, ref_date) {
+  if (nrow(sub_dt) == 0L) return(sub_dt)
+
+  if (is.null(ref_date)) {
+    stops <- sub_dt$DT_VLDT_STOP
+    if (all(is.na(stops))) {
+      out <- sub_dt                                   # every row open-ended
+    } else {
+      max_stop <- max(stops, na.rm = TRUE)
+      out <- sub_dt[is.na(DT_VLDT_STOP) | DT_VLDT_STOP == max_stop]
+    }
+  } else {
+    ref_posix <- as.POSIXct(as.character(ref_date), tz = "UTC")
+    out <- sub_dt[DT_VLDT_STRT <= ref_posix & DT_VLDT_STOP > ref_posix]
+  }
+
+  if (nrow(out) == 0L)
+    abort(
+      sprintf(paste0(
+        "filter_at_date emptied a level that had %d input row(s) (ref_date = %s).\n",
+        "This usually means DT_VLDT_STOP uses an unexpected encoding. ",
+        "Check the NUTS conversion source file."),
+        nrow(sub_dt), if (is.null(ref_date)) "current" else as.character(ref_date)),
+      class = "rcl_empty_level"
+    )
+  out
+}
+
 #' Parse the NUTS-NIS conversion file
 #'
 #' @param conv_dt data.table from CONVERSION_NIS2019_NUTS2021.xlsx
@@ -208,19 +252,7 @@ parse_nuts_nis_conversion <- function(conv_dt, reference_date = NULL) {
 
   dt <- copy(conv_dt)
 
-  # Filter to entries valid at a given reference date.
-  # When reference_date is NULL, keep only the most recent entries (current).
-  # When reference_date is provided, keep entries where:
-  #   DT_VLDT_STRT <= reference_date < DT_VLDT_STOP
-  filter_at_date <- function(sub_dt, ref_date) {
-    if (is.null(ref_date)) {
-      max_stop <- max(sub_dt$DT_VLDT_STOP)
-      sub_dt[DT_VLDT_STOP == max_stop]
-    } else {
-      ref_posix <- as.POSIXct(as.character(ref_date), tz = "UTC")
-      sub_dt[DT_VLDT_STRT <= ref_posix & DT_VLDT_STOP > ref_posix]
-    }
-  }
+  filter_at_date <- function(sub_dt, ref_date) .filter_nuts_at_date(sub_dt, ref_date)
 
   # Split by level (filtering each to entries valid at reference_date)
   nuts_hierarchy <- list(
