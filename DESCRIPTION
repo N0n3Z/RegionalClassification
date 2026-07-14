@@ -16,7 +16,10 @@ URL: https://github.com/n0n3z/regionalclassification
 BugReports: https://github.com/n0n3z/regionalclassification/issues
 Imports:
     data.table,
-    rlang (>= 1.0.0)
+    rlang (>= 1.0.0),
+    stats,
+    tools,
+    utils
 Suggests:
     here,
     readxl,
