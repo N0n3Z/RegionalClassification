@@ -31,6 +31,61 @@ test_that("every simple conversion in the matrix is executable (graph <-> execut
   )
 })
 
+# -- C1: the gate must never advertise a non-executable route as usable --------
+# The declared graph auto-inverts every edge, so it is reachable-superset of what
+# the executor materialises. convert_codes() now gates on real executability:
+# a declared-but-non-executable pair must fail with a clear rcl_no_route dead-end
+# BEFORE any "use allow_ambiguous = TRUE" advice, which would be contradictory
+# (the executor would then die with rcl_no_route anyway).
+test_that("get_conversion_matrix(md) exposes executability and simple => executable", {
+  mtx <- get_conversion_matrix(master_data)
+  expect_true("executable" %in% names(mtx))
+
+  # Historical invariant: every simple route is executable.
+  expect_equal(nrow(mtx[is_simple == TRUE & from != to & executable == FALSE]), 0L)
+
+  # Such declared-but-non-executable pairs genuinely exist (auto-inverted
+  # de-aggregation edges); the matrix must surface them, not hide them.
+  expect_true(nrow(mtx[from != to & executable == FALSE]) > 0L)
+})
+
+test_that("declared-but-non-executable routes fail as rcl_no_route, not contradictory advice", {
+  mtx      <- get_conversion_matrix(master_data)
+  non_exec <- mtx[from != to & executable == FALSE]
+
+  # Sample one target per source family to keep the test fast while covering the
+  # different origin node types.
+  probe <- non_exec[, .SD[1L], by = from]
+
+  for (i in seq_len(nrow(probe))) {
+    f <- probe$from[i]; t <- probe$to[i]
+    src <- nbbbenuts:::.list_codes_for(f, master_data)
+    if (length(src) == 0L) next
+    # Even with allow_ambiguous = TRUE the route is a dead-end: it must raise
+    # rcl_no_route (never rcl_ambiguous_conversion, and never reach execution).
+    expect_error(
+      convert_codes(src[1L], f, t, master_data, allow_ambiguous = TRUE),
+      class = "rcl_no_route",
+      info = sprintf("%s -> %s must be a clean rcl_no_route dead-end", f, t)
+    )
+  }
+})
+
+# -- C2: .xw_path is simple-first (deterministic, perimeter-preserving) --------
+test_that(".xw_path prefers a fully-simple route over one crossing an overlap edge", {
+  # POSTAL -> NUTS_DISTRICT_2021 must route through NIS_MUNICIPALITY_2019 (all
+  # N:1) rather than NIS_MUNICIPALITY_2025 (whose 1:N fused-commune edge would
+  # fan out / drop the 3 cross-NUTS3 communes). Previously this was correct only
+  # by crosswalk insertion order; now it is guaranteed by construction.
+  p <- nbbbenuts:::.xw_path("POSTAL", "NUTS_DISTRICT_2021", master_data)
+  expect_false(is.null(p))
+  expect_false("NIS_MUNICIPALITY_2025" %in% p)
+
+  # And the conversion itself stays exact (no NA) for a fused-commune postal code.
+  r <- convert_codes(c(1000L, 2000L), CLS_POSTAL, CLS_NUTS_DISTRICT_2021, master_data)
+  expect_true(all(!is.na(r$code_to)))
+})
+
 # -- Multi-hop NUTS aggregation: previously raised rcl_no_route ----------------
 test_that("NUTS_DISTRICT_2021 -> NUTS_REGION_2021 is executable and matches manual chaining", {
   r_multi <- convert_codes("BE211", CLS_NUTS_DISTRICT_2021, CLS_NUTS_REGION_2021, master_data)

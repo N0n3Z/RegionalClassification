@@ -4,10 +4,20 @@
 \alias{get_conversion_matrix}
 \title{Generate a full conversion feasibility matrix}
 \usage{
-get_conversion_matrix()
+get_conversion_matrix(md = NULL)
+}
+\arguments{
+\item{md}{Optional master data (from \code{load_master_data()}).  When
+supplied, an \code{executable} logical column is added reporting whether the
+conversion engine can actually run each route.  The declared graph is a
+superset of what the executor materialises (it auto-inverts edges), so
+\code{is_simple} being \code{TRUE} guarantees executability but an ambiguous
+(non-simple) route may or may not be executable -- use \code{executable} to
+tell the genuinely usable ambiguous routes from the declared-only ones.}
 }
 \value{
-data.table with from, to, is_simple, relation_chain
+data.table with columns \code{from}, \code{to}, \code{is_simple},
+  \code{relation_chain}, and (when \code{md} is supplied) \code{executable}.
 }
 \description{
 Generate a full conversion feasibility matrix

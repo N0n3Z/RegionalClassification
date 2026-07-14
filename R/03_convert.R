@@ -46,29 +46,46 @@
 convert_codes <- function(codes, from, to, master_data,
                           allow_ambiguous = FALSE) {
 
-  # Validate inputs
-  path_info <- check_conversion_path(from, to)
+  .validate_master_data(master_data)
 
-  if (is.null(path_info$path) && !isTRUE(path_info$is_simple)) {
+  from_norm <- normalize_classification_id(from)
+  to_norm   <- normalize_classification_id(to)
+
+  # C1: gate on REAL executability (the crosswalk graph the engine runs on), not
+  # merely on declared-graph reachability.  build_conversion_graph() auto-inverts
+  # every edge, so check_conversion_path() advertises coarse->fine de-aggregation
+  # routes (e.g. NUTS_DISTRICT_2027 -> NIS_MUNICIPALITY_2025) that the executor
+  # never materialises.  Without this gate the old code first told the user to set
+  # allow_ambiguous = TRUE and then died with rcl_no_route at execution --
+  # contradictory advice.  Fail early, once, with a clear dead-end message.
+  if (!.route_is_executable(from_norm, to_norm, master_data)) {
     abort(
-      sprintf("No conversion route from '%s' to '%s'. Use list_available_conversions() to see all supported paths.",
-              from, to),
-      class = "rcl_no_route", from = from, to = to
+      sprintf(paste0(
+        "No executable conversion route from '%s' to '%s'.\n",
+        "This pair is reachable in the declared conversion graph but the engine does ",
+        "not materialise it: the executor never inverts edges, so a coarse-to-fine ",
+        "de-aggregation (an aggregate back to its constituents) has no crosswalk.\n",
+        "Convert in the opposite direction, or start from the underlying units. ",
+        "See list_available_conversions()."),
+        from_norm, to_norm),
+      class = "rcl_no_route", from = from_norm, to = to_norm
     )
   }
+
+  path_info <- check_conversion_path(from_norm, to_norm)
 
   if (!path_info$is_simple && !allow_ambiguous) {
     abort(
       sprintf(paste0("Conversion from '%s' to '%s' is NOT a simple (direct) conversion.\n",
                      "Use allow_ambiguous = TRUE to force conversion with all possible mappings."),
-              from, to),
+              from_norm, to_norm),
       class = "rcl_ambiguous_conversion",
-      from = from, to = to, explanation = path_info$explanation
+      from = from_norm, to = to_norm, explanation = path_info$explanation
     )
   }
 
   # Perform conversion
-  result <- execute_conversion(codes, from, to, master_data)
+  result <- execute_conversion(codes, from_norm, to_norm, master_data)
 
   return(result)
 }
@@ -261,36 +278,50 @@ route_conversion <- function(input_dt, from, to, md) {
   !is.null(.xw_path(from, to, md))
 }
 
-# Adjacency list built exclusively from md$crosswalks unique (from_id, to_id)
-# pairs.  Every edge in this graph is directly executable via .crosswalk_hop().
+# Adjacency built exclusively from md$crosswalks unique (from_id, to_id) pairs.
+# Every edge in this graph is directly executable via .crosswalk_hop().
 # Used by .compose_via_handlers() to find valid multi-hop execution paths.
-# Cached per crosswalk row-count (invalidated when crosswalks are rebuilt).
+#
+# Returns TWO adjacency lists (cached per crosswalk row-count):
+#   $all    -- every materialised edge
+#   $simple -- only NON-fan-out edges (1:1 / N:1): edges where no source code
+#              maps to more than one distinct target in the crosswalk data.
+# The split lets .xw_path() prefer perimeter-preserving routes (C2): the
+# cardinality is measured from the DATA itself, not the declared graph, so the
+# preference is robust to any graph/executor drift.
 .xw_graph <- function(md) {
   n   <- nrow(md$crosswalks)
   key <- paste0("xwg_", n)
   if (exists(key, envir = .route_cache, inherits = FALSE))
     return(get(key, envir = .route_cache))
-  g    <- list()
-  keys <- md$crosswalks[, unique(paste0(from_id, "__", to_id))]
-  for (k in keys) {
-    parts          <- strsplit(k, "__", fixed = TRUE)[[1]]
-    g[[parts[1L]]] <- unique(c(g[[parts[1L]]], parts[2L]))
+  g_all    <- list()
+  g_simple <- list()
+  pairs    <- unique(md$crosswalks[, .(from_id, to_id)])
+  for (i in seq_len(nrow(pairs))) {
+    a <- pairs$from_id[i]; b <- pairs$to_id[i]
+    g_all[[a]] <- unique(c(g_all[[a]], b))
+    # An edge is "simple" when it does not fan out: every source code maps to at
+    # most one distinct (non-NA) target.  Overlap edges (Verviers 1:N, the 3
+    # cross-NUTS3 fusions, the NUTS3 2021->2027 aggregate) fan out and are
+    # excluded from the simple graph.
+    sub      <- unique(md$crosswalks[from_id == a & to_id == b, .(code_from, code_to)])
+    fans_out <- sub[!is.na(code_to), .N, by = code_from][, any(N > 1L)]
+    if (!isTRUE(fans_out))
+      g_simple[[a]] <- unique(c(g_simple[[a]], b))
   }
-  assign(key, g, envir = .route_cache)
-  g
+  res <- list(all = g_all, simple = g_simple)
+  assign(key, res, envir = .route_cache)
+  res
 }
 
-# Shortest path from `from` to `to` using only edges present in md$crosswalks
-# (BFS).  Returns a character vector of nodes, or NULL if no path exists.
-# Every hop in the returned path is guaranteed to have crosswalk rows.
-.xw_path <- function(from, to, md) {
-  g <- .xw_graph(md)
-  if (is.null(g[[from]])) return(NULL)
+# BFS over one adjacency list.  Returns a character vector of nodes, or NULL.
+.xw_bfs <- function(from, to, adj) {
+  if (is.null(adj[[from]])) return(NULL)
   queue   <- list(list(node = from, path = from))
   visited <- from
   while (length(queue) > 0L) {
     cur   <- queue[[1L]]; queue <- queue[-1L]
-    for (nb in g[[cur$node]]) {
+    for (nb in adj[[cur$node]]) {
       if (nb == to) return(c(cur$path, nb))
       if (!nb %in% visited) {
         visited <- c(visited, nb)
@@ -299,6 +330,21 @@ route_conversion <- function(input_dt, from, to, md) {
     }
   }
   NULL
+}
+
+# Path from `from` to `to` using only edges present in md$crosswalks, preferring
+# perimeter-preserving routes (C2).  Two-pass BFS mirroring the declared-graph
+# gate (find_conversion_path): pass 1 uses only simple (non-fan-out) edges, and
+# only if that fails does pass 2 fall back to all edges.  This makes path choice
+# deterministic and semantically correct instead of dependent on crosswalk row
+# insertion order.  Every hop in the returned path has crosswalk rows.
+.xw_path <- function(from, to, md) {
+  g <- .xw_graph(md)
+  # Pass 1: simple (non-fan-out) edges only.
+  p <- .xw_bfs(from, to, g$simple)
+  if (!is.null(p)) return(p)
+  # Pass 2: all edges (accepts overlap hops when no simple route exists).
+  .xw_bfs(from, to, g$all)
 }
 
 # Compose single-hop crosswalk lookups along the crosswalk-graph path from
