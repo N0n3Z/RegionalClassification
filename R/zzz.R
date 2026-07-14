@@ -14,6 +14,8 @@ utils::globalVariables(c(
   "label", "weight", "w",
   # .normalize_conversion_result row-count helper (03_convert.R)
   ".n_to",
+  # .diagnose_detect ranking helpers (07_diagnose.R)
+  "match_pct", "unknown_pct", ".prio", "classification",
   # split_weights_template helpers (07_split_ambiguous.R)
   "value", "mass"
 ))

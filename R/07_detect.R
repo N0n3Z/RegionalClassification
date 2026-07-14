@@ -2,6 +2,24 @@
 # 07_detect.R - Auto-detection of geographic classifications
 # ==============================================================================
 
+# Shared classification preference order for breaking ties when several
+# classifications match a dataset equally well. Used by BOTH detect_classification()
+# and .diagnose_detect() (07_diagnose.R) so the two ranking paths never disagree
+# on a tie (audit M6). Lower index = preferred.
+.CLASSIFICATION_TIE_PRIORITY <- c(
+  "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_BEFORE_2019",
+  "NIS_DISTRICT_2019", "NIS_PROVINCE_2019", "NIS_REGION_2019",
+  "POSTAL", "NBB_DISTRICT_2021"
+)
+
+# Tie-break priority index for a classification (unlisted -> large, so listed
+# ones win; callers add an alphabetical final key for full determinism).
+#' @noRd
+.classification_tie_index <- function(cls) {
+  idx <- match(cls, .CLASSIFICATION_TIE_PRIORITY)
+  ifelse(is.na(idx), length(.CLASSIFICATION_TIE_PRIORITY) + 1L, idx)
+}
+
 #' Auto-detect geographic classification from a vector of codes
 #'
 #' Matches the supplied codes against known reference sets from master_data
@@ -134,13 +152,10 @@ detect_classification <- function(codes, master_data) {
     else                          return("NIS_MUNICIPALITY_2019")
   }
 
-  # Fallback priority for other ties
+  # Fallback priority for other ties (shared with .diagnose_detect, audit M6)
   close <- rates_dt[rate >= best$rate * 0.95]
   if (nrow(close) > 1) {
-    priority <- c("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_BEFORE_2019",
-                  "NIS_DISTRICT_2019", "NIS_PROVINCE_2019", "NIS_REGION_2019",
-                  "POSTAL", "NBB_DISTRICT_2021")
-    for (p in priority) {
+    for (p in .CLASSIFICATION_TIE_PRIORITY) {
       if (p %in% close$classification) return(p)
     }
   }

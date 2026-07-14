@@ -112,3 +112,19 @@ test_that("diagnose_classification works for NIS_DISTRICT_BEFORE_2019", {
   expect_equal(result$mode, "check")
   expect_equal(result$n_in_dataset, 5L)
 })
+
+# -- M6: detect and diagnose(detect mode) agree on ties, shared ranking --------
+test_that("diagnose(detect mode) recommendation matches detect_classification on a tie", {
+  # Stable communes present in both 2019 and 2025 tie at match_pct = 100 for
+  # several classifications. Both ranking paths must resolve the tie the same way
+  # (via the shared classification priority), not diverge.
+  codes <- c(21004L, 21001L, 21015L)
+  dt    <- data.table(cd = codes)
+
+  det <- suppressWarnings(detect_classification(codes, master_data))
+  dg  <- suppressMessages(
+    diagnose_classification(dt, "cd", master_data, verbose = FALSE)
+  )
+  expect_equal(dg$recommendation, det)
+  expect_equal(dg$recommendation, CLS_NIS_MUNICIPALITY_2019)
+})
