@@ -107,18 +107,32 @@ test_that("all 2019->2025 temporal nature values are in {UNCHANGED,FUSION,CHANGE
                info = paste("Unexpected nature values:", paste(bad, collapse = ", ")))
 })
 
-test_that("all BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION} or NA", {
-  # BEFORE_2019->2019 transitions are pure fusions/unchanged; no CHANGE_DSTR/PROV.
-  # 15 orphaned BEFORE_2019 communes (absent from nis_changes and NIS 2019) produce
-  # code_to = NA with rcl_unmatched_codes -- suppress that advisory warning.
+test_that("BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION, CHANGE_DSTR} or NA", {
+  # BEFORE_2019->2019 now carries the source NATURE column (not a hardcoded FUSION).
+  # The current change file holds 11 CHANGE_DSTR recodes (2019 Walloon arrondissement
+  # reform); UNCHANGED is the pass-through backbone. Orphaned BEFORE_2019 communes
+  # (absent from nis_changes and NIS 2019 -- the 2019 fusion constituents, pending the
+  # data completion tracked in FUSIONS_BEFORE_2019_TODO.md) produce code_to = NA with
+  # rcl_unmatched_codes -- suppress that advisory warning.
   all_b19 <- unique(master_data$communes[nis_version == VER_BEFORE_2019, cd_commune])
   r       <- suppressWarnings(
     convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
   )
-  valid   <- c("UNCHANGED", "FUSION", NA_character_)
+  valid   <- c("UNCHANGED", "FUSION", "CHANGE_DSTR", NA_character_)
   bad     <- setdiff(unique(r$nature), valid)
   expect_equal(length(bad), 0L,
                info = paste("Unexpected nature values:", paste(bad, collapse = ", ")))
+})
+
+test_that("BEFORE_2019->2019 preserves the source NATURE (11 CHANGE_DSTR recodes)", {
+  # Regression guard for the hardcoded-FUSION bug: the 2019 arrondissement reform
+  # recodes must surface as CHANGE_DSTR, not FUSION. Requires a rebuild to take
+  # effect (nature is baked into the crosswalk snapshot).
+  all_b19 <- unique(master_data$communes[nis_version == VER_BEFORE_2019, cd_commune])
+  r       <- suppressWarnings(
+    convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
+  )
+  expect_equal(sum(r$nature == "CHANGE_DSTR", na.rm = TRUE), 11L)
 })
 
 # -- TN7: Nature counts match known totals ------------------------------------

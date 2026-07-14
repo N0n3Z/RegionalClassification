@@ -228,7 +228,7 @@ build_master_table <- function(raw_data) {
     before2019_std <- data.table(
       cd_refnis_old = nis_change_before2019$cd_refnis_before2019,
       cd_refnis_new = nis_change_before2019$cd_refnis_2019,
-      nature        = "FUSION",
+      nature        = nis_change_before2019$nature,   # from source NATURE, not hardcoded
       from_version  = VER_BEFORE_2019
     )
     nis_changes_unified <- rbindlist(list(nis_changes_unified, before2019_std),
