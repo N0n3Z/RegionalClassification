@@ -139,18 +139,20 @@ parse_refnis_hierarchy <- function(refnis_dt,
   # Derive parent codes
   dt[level == "commune", cd_arr := (cd_refnis %/% 1000L) * 1000L]
 
-  # Build result
+  # Build result. unique() guards against duplicated source rows (e.g. repeated
+  # bilingual "overview" lines) that would otherwise multiply through the
+  # downstream all.x merges and corrupt the LAU .N == 1L logic (audit M7).
   result <- list(
-    communes = dt[level == "commune",
-                  .(cd_refnis, tx_descr_fr, tx_descr_nl, cd_arr)],
-    arrondissements = dt[level == "arrondissement",
-                         .(cd_refnis, tx_descr_fr, tx_descr_nl)],
-    provinces = dt[level == "province",
-                   .(cd_refnis, tx_descr_fr, tx_descr_nl)],
-    regions = dt[level == "region",
-                 .(cd_refnis, tx_descr_fr, tx_descr_nl)],
-    pays = dt[level == "pays",
-              .(cd_refnis, tx_descr_fr, tx_descr_nl)],
+    communes = unique(dt[level == "commune",
+                  .(cd_refnis, tx_descr_fr, tx_descr_nl, cd_arr)]),
+    arrondissements = unique(dt[level == "arrondissement",
+                         .(cd_refnis, tx_descr_fr, tx_descr_nl)]),
+    provinces = unique(dt[level == "province",
+                   .(cd_refnis, tx_descr_fr, tx_descr_nl)]),
+    regions = unique(dt[level == "region",
+                 .(cd_refnis, tx_descr_fr, tx_descr_nl)]),
+    pays = unique(dt[level == "pays",
+              .(cd_refnis, tx_descr_fr, tx_descr_nl)]),
     all = dt
   )
 
