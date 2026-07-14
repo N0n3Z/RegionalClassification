@@ -65,7 +65,7 @@ version-invariant in this package.
 
 The table below lists all supported conversion paths. **Simple** ((y)) means a
 deterministic N:1 or 1:1 mapping; **Ambiguous** ((!)) means a M:N mapping that
-requires weighted splitting (use [split_ambiguous_weights()]).
+requires weighted splitting (use [split_ambiguous()]).
 
 | From                          | To                               | Type   |
 |-------------------------------|----------------------------------|--------|
