@@ -331,12 +331,16 @@ parse_nis2025_nuts2027 <- function(conv_dt,
 #' @param change_dt data.table from REFNIS_CHANGE_BEFORE2019.xlsx
 #' @param col_old Name of old NIS code column
 #' @param col_new Name of new NIS code column
-#' @return data.table with cd_refnis_before2019 (integer) and cd_refnis_2019 (integer)
+#' @param col_nature Name of the change-nature column (e.g. FUSION, CHANGE_DSTR).
+#'   Optional: if the column is absent, `nature` is set to NA.
+#' @return data.table with cd_refnis_before2019 (integer), cd_refnis_2019
+#'   (integer) and nature (character; NA when the source column is absent)
 #' @keywords internal
 parse_refnis_change_before2019 <- function(
     change_dt,
-    col_old = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_old,
-    col_new = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_new) {
+    col_old    = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_old,
+    col_new    = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_new,
+    col_nature = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nature) {
 
   dt <- copy(change_dt)
 
@@ -352,10 +356,15 @@ parse_refnis_change_before2019 <- function(
     }
   }
 
+  # NATURE is authoritative in the source file (FUSION / CHANGE_DSTR / ...).
+  # Keep it instead of assuming every BEFORE_2019->2019 change is a fusion.
+  has_nature <- !is.null(col_nature) && col_nature %in% names(dt)
   result <- dt[, .(cd_refnis_before2019 = as.integer(get(col_old)),
-                   cd_refnis_2019       = as.integer(get(col_new)))]
+                   cd_refnis_2019       = as.integer(get(col_new)),
+                   nature = if (has_nature) as.character(get(col_nature)) else NA_character_)]
   result <- unique(result[!is.na(cd_refnis_before2019) & !is.na(cd_refnis_2019)])
-  message(sprintf("  -> NIS BEFORE_2019->2019 changes: %d entries", nrow(result)))
+  message(sprintf("  -> NIS BEFORE_2019->2019 changes: %d entries%s", nrow(result),
+                  if (has_nature) "" else " (no NATURE column; nature = NA)"))
   return(result)
 }
 
