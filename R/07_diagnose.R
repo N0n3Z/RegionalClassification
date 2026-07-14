@@ -187,8 +187,14 @@ diagnose_classification <- function(
     )
   }))
 
-  # Rank: primary = match_pct (desc), secondary = unknown_pct (asc)
-  setorder(rows, -match_pct, unknown_pct)
+  # Rank: primary = match_pct (desc). The old secondary key unknown_pct was
+  # mathematically redundant (unknown_pct = 100 - match_pct for distinct codes),
+  # so it never broke a tie. Use the shared classification priority instead, so
+  # ties resolve consistently with detect_classification() (audit M6); a final
+  # alphabetical key makes the order fully deterministic.
+  rows[, .prio := .classification_tie_index(classification)]
+  setorder(rows, -match_pct, .prio, classification)
+  rows[, .prio := NULL]
 
   best        <- rows[1, classification]
   best_parsed <- .parse_classification_id(best)
