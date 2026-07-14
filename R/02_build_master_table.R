@@ -631,6 +631,28 @@ build_crosswalks <- function(communes, postal, nis_changes) {
                cd_refnis_new = unchanged_19,
                nature        = "UNCHANGED")
   ), use.names = TRUE)
+
+  # Orphaned 2025 communes (audit C4): a 2025 commune that is neither a change
+  # TARGET nor an unchanged-2019 code has no 2019 lineage in REFNIS_CHANGE_2025.
+  # The 2019->2025 forward domain is m19 (complete by construction), but the
+  # REVERSE 2025->2019 crosswalk is keyed on the 2025 side, so such a commune
+  # would silently vanish from it (no row -> engine returns nothing). Mirror the
+  # BEFORE_2019 orphan handling: emit an explicit code_to = NA row (matching the
+  # runtime engine) and warn, instead of dropping it silently.
+  orphaned_25 <- setdiff(unique(m25$cd_commune),
+                         union(ch19$cd_refnis_new, unchanged_19))
+  if (length(orphaned_25) > 0L) {
+    warn(
+      sprintf(
+        paste0("%d NIS 2025 commune(s) have no 2019 lineage in REFNIS_CHANGE_2025 ",
+               "(absent from both change targets and the unchanged-2019 set); ",
+               "reverse 2025->2019 code_to set to NA for: %s"),
+        length(orphaned_25), paste(sort(orphaned_25), collapse = ", ")
+      ),
+      class = "rcl_orphaned_codes"
+    )
+  }
+
   xw[["NIS_MUNICIPALITY_2019__NIS_MUNICIPALITY_2025"]] <- .xw(
     "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025",
     full_19_25$cd_refnis_old, full_19_25$cd_refnis_new, full_19_25$nature)
@@ -664,10 +686,15 @@ build_crosswalks <- function(communes, postal, nis_changes) {
     "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021",
     full_25_n3$cd_commune, full_25_n3$cd_nuts3)
 
-  # NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019 (reverse temporal, 1:N for fused communes)
+  # NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019 (reverse temporal, 1:N for fused
+  # communes). Orphaned 2025 communes (no 2019 lineage, audit C4) get an explicit
+  # code_to = NA row so they are not silently missing from the reverse crosswalk.
+  rev_from   <- c(full_19_25$cd_refnis_new, orphaned_25)
+  rev_to     <- c(full_19_25$cd_refnis_old, rep(NA_integer_,   length(orphaned_25)))
+  rev_nature <- c(full_19_25$nature,        rep(NA_character_, length(orphaned_25)))
   xw[["NIS_MUNICIPALITY_2025__NIS_MUNICIPALITY_2019"]] <- .xw(
     "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019",
-    full_19_25$cd_refnis_new, full_19_25$cd_refnis_old, full_19_25$nature)
+    rev_from, rev_to, rev_nature)
 
   # NIS_MUNICIPALITY_2025 -> NUTS 2027
   xw[["NIS_MUNICIPALITY_2025__NUTS_DISTRICT_2027"]] <- .pairs_xw(

@@ -163,6 +163,34 @@ test_that("composed BEFORE_2019 -> 2025 conversion has no orphaned (NA) codes", 
   expect_false(anyNA(r$code_to))
 })
 
+test_that("every NIS 2025 commune is covered by the reverse 2025->2019 crosswalk (audit C4)", {
+  # The reverse temporal crosswalk is keyed on the 2025 side. A 2025 commune with
+  # no 2019 lineage (absent from REFNIS_CHANGE_2025 targets and the unchanged set)
+  # must NOT silently vanish from it: the build now emits an explicit code_to = NA
+  # row (and an rcl_orphaned_codes warning) instead. This guards that every 2025
+  # commune appears as a source, so a future data refresh introducing an orphan is
+  # caught rather than dropped.
+  m25       <- unique(master_data$communes[nis_version == VER_2025, cd_commune])
+  rev_src   <- master_data$crosswalks[from_id == CLS_NIS_MUNICIPALITY_2025 &
+                                      to_id   == CLS_NIS_MUNICIPALITY_2019, unique(code_from)]
+  missing   <- setdiff(as.character(m25), as.character(rev_src))
+  expect_equal(length(missing), 0L,
+               info = paste("2025 communes missing from reverse crosswalk:",
+                            paste(missing, collapse = ", ")))
+
+  # Round-trip: converting every 2025 commune back to 2019 leaves none without a
+  # target row (current data has zero orphans).
+  r <- suppressWarnings(
+    convert_codes(m25, CLS_NIS_MUNICIPALITY_2025, CLS_NIS_MUNICIPALITY_2019,
+                  master_data, allow_ambiguous = TRUE)
+  )
+  no_target <- setdiff(as.character(m25),
+                       as.character(r[!is.na(code_to), unique(code_from)]))
+  expect_equal(length(no_target), 0L,
+               info = paste("2025 communes with no 2019 target:",
+                            paste(no_target, collapse = ", ")))
+})
+
 # -- TN7: Nature counts match known totals ------------------------------------
 
 test_that("CHANGE_DSTR count == 2 and CHANGE_PROV count == 1 in 2019->2025 crosswalk", {
