@@ -162,3 +162,35 @@ test_that("split_ambiguous falls back to equal weights when no registry entry ex
 
   clear_split_weights()
 })
+
+# -- split_weights_template: variable / commune_values (single-variable) -------
+
+test_that("split_weights_template default (no variable) returns equal weights", {
+  tpl <- split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, master_data)
+  v <- tpl[code_from == "63000"]
+  expect_setequal(v$code_to, c("BE335", "BE336"))
+  expect_equal(v$weight, c(0.5, 0.5), tolerance = 1e-9)
+})
+
+test_that("split_weights_template computes weighted (non-equal) shares from commune_values", {
+  # Verviers arr 63000 -> {BE335, BE336}. Weights = share of the supplied
+  # commune-level variable, normalised per code_from. Uniform values -> the share
+  # reflects the commune partition (not necessarily 0.5/0.5), and must sum to 1.
+  comm19 <- as.character(master_data$communes[nis_version == VER_2019, cd_commune])
+  cv  <- data.table(code = comm19, value = 1)
+  tpl <- split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                                master_data, commune_values = cv)
+  v <- tpl[code_from == "63000"]
+  expect_equal(nrow(v), 2L)
+  expect_setequal(v$code_to, c("BE335", "BE336"))
+  expect_lt(abs(sum(v$weight) - 1), 1e-9)        # normalised per code_from
+  expect_true(all(v$weight > 0 & v$weight < 1))  # genuinely split, both targets > 0
+})
+
+test_that("split_weights_template errors for an unshipped standard variable", {
+  expect_error(
+    split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                           master_data, variable = "does_not_exist_xyz"),
+    class = "rcl_data_missing"
+  )
+})

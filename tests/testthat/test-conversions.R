@@ -91,23 +91,57 @@ test_that("NIS_MUNICIPALITY_2019 converts to NUTS_DISTRICT_2027 with correct rem
   expect_equal(result[code_from == 44021L]$code_to, "BE274")   # BE234 -> BE274
 })
 
-# -- Test 11: NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027 direct conversion is NOT supported -----
-test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 is not directly convertible (different perimeters)", {
-  # NUTS_DISTRICT_2021 and NUTS_DISTRICT_2027 cover different geographic areas: 3 communes
-  # changed province between 2019 and 2025, which shifted their NUTS3 region.
-  # A pure code-rename table gives wrong results for those communes.
-  # There is therefore no direct NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027 conversion edge.
+# -- Test 11: NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 direct 1:N edge (forward only) -----
+test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 is a direct 1:N edge requiring allow_ambiguous", {
+  # A direct derived edge exists (forward only), built by chaining through communes.
+  # Most 2021 NUTS3 -> 1 2027 code; the 3 cross-province fusions make a few 2021 codes
+  # map to 2 (e.g. BE211 -> {BE261, BE276}), so the conversion is 1:N (not simple).
+  # NOTE: BE211/BE261/BE276 are the documented example; confirm against the rebuilt
+  # crosswalk (the anti-drift test in test-crosswalks-parity.R pins the real set).
   r <- check_conversion_path(CLS_NUTS_DISTRICT_2021, CLS_NUTS_DISTRICT_2027)
   expect_false(r[["is_simple"]])
 
+  # Without allow_ambiguous: blocked by the 1:N gate.
   expect_error(
     convert_codes("BE211", CLS_NUTS_DISTRICT_2021, CLS_NUTS_DISTRICT_2027, master_data),
     class = "rcl_ambiguous_conversion"
   )
+
+  # With allow_ambiguous: forward succeeds. Unchanged code -> 1 row; BE211 -> 2 rows.
+  res <- convert_codes(c("BE100", "BE211"), CLS_NUTS_DISTRICT_2021, CLS_NUTS_DISTRICT_2027,
+                       master_data, allow_ambiguous = TRUE)
+  expect_equal(nrow(res[code_from == "BE100"]), 1L)
+  expect_equal(nrow(res[code_from == "BE211"]), 2L)
+  expect_setequal(res[code_from == "BE211"]$code_to, c("BE261", "BE276"))
+  expect_true(all(!is.na(res$code_to)))
+
+  # Reverse 2027 -> 2021 has no direct edge: blocked without allow_ambiguous.
   expect_error(
     convert_codes("BE261", CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021, master_data),
     class = "rcl_ambiguous_conversion"
   )
+})
+
+test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 supports weighted splitting", {
+  library(data.table)
+  emp_data <- data.table(nuts3 = c("BE100", "BE211"),
+                         emp   = c(1000, 500))
+  wts <- data.table(code_from = c("BE211", "BE211"),
+                    code_to   = c("BE261", "BE276"),
+                    weight    = c(0.8, 0.2))
+  r <- split_ambiguous(emp_data, "nuts3",
+                       value_cols  = "emp",
+                       from        = CLS_NUTS_DISTRICT_2021,
+                       to          = CLS_NUTS_DISTRICT_2027,
+                       master_data = master_data,
+                       weights     = wts,
+                       value_type  = "additive",
+                       verbose     = FALSE)
+  # BE100 -> 1 row (unchanged); BE211 -> 2 rows split 0.8 / 0.2; total preserved.
+  expect_equal(nrow(r), 3L)
+  expect_lt(abs(sum(r$emp) - 1500), 1e-6)
+  expect_lt(abs(r[cd_nuts3_2027 == "BE261", emp] - 400), 1e-6)
+  expect_lt(abs(r[cd_nuts3_2027 == "BE276", emp] - 100), 1e-6)
 })
 
 # -- Test 12: diagnose_classification() -- check mode --------------------------

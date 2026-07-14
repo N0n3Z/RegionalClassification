@@ -725,6 +725,42 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   xw[["NUTS_REGION_2027__NUTS_COUNTRY"]] <- .pairs_xw(
     "NUTS_REGION_2027", "NUTS_COUNTRY",      m25, "cd_nuts1_2027", "cd_nuts0_2027")
 
+  # ---- NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (derived, 1:N) --------------
+  # Chain at commune level over NIS 2019 (NUTS 2021 is keyed to the 2019 commune
+  # perimeter): 2019 commune -> cd_nuts3 (2021)  AND  -> 2025 commune -> cd_nuts3_2027.
+  # The 3 cross-province fusion communes (46029, 46030, 71072) merge constituents
+  # sitting in different 2021 NUTS3 regions, so a few 2021 NUTS3 codes acquire >1
+  # 2027 target -> 1:N (e.g. BE211 -> {BE261, BE276}).
+  # NB: build from m19 (NOT m25 alone) -- m25's backfilled cd_nuts3 is NA for the
+  # ambiguous communes, which would silently drop precisely the ambiguous pairs.
+  ch19_n27 <- nis_changes[from_version == VER_2019, .(cd_refnis_old, cd_refnis_new)]
+  link2025 <- merge(data.table(cd_commune = unique(m19$cd_commune)),
+                    ch19_n27, by.x = "cd_commune", by.y = "cd_refnis_old", all.x = TRUE)
+  link2025[is.na(cd_refnis_new), cd_refnis_new := cd_commune]   # unchanged keep their code
+
+  n3_2021 <- unique(m19[!is.na(cd_nuts3),      .(cd_commune, cd_nuts3)])
+  n3_2027 <- unique(m25[!is.na(cd_nuts3_2027), .(cd_commune, cd_nuts3_2027)])
+
+  chain <- merge(link2025, n3_2021, by = "cd_commune", all.x = FALSE)
+  chain <- merge(chain, n3_2027, by.x = "cd_refnis_new", by.y = "cd_commune", all.x = FALSE)
+  pairs_21_27 <- unique(chain[!is.na(cd_nuts3) & !is.na(cd_nuts3_2027),
+                              .(cd_nuts3, cd_nuts3_2027)])
+
+  xw[["NUTS_DISTRICT_2021__NUTS_DISTRICT_2027"]] <- .xw(
+    "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027",
+    pairs_21_27$cd_nuts3, pairs_21_27$cd_nuts3_2027)
+
+  # NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2027 (derived, N:1 for most; 1:N for the
+  # 3 cross-province fusion zones whose NIS2019 constituents straddle NUTS2027 borders).
+  # Reuses the same chain built above: cd_commune (NIS2019) -> cd_nuts3_2027 (via NIS2025).
+  # Storing this as a direct crosswalk hop prevents the BFS from routing through
+  # NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (which would introduce spurious ambiguity
+  # for communes that are in a 1:N NUTS2021 zone but have a unique NUTS2027 target).
+  pairs_19_27 <- unique(chain[!is.na(cd_nuts3_2027), .(cd_commune, cd_nuts3_2027)])
+  xw[["NIS_MUNICIPALITY_2019__NUTS_DISTRICT_2027"]] <- .xw(
+    "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027",
+    as.character(pairs_19_27$cd_commune), pairs_19_27$cd_nuts3_2027)
+
   # ---- NIS_REGION -> NIS_COUNTRY ----------------------------------------------
   xw[["NIS_REGION_2019__NIS_COUNTRY"]] <- .pairs_xw(
     "NIS_REGION_2019", "NIS_COUNTRY", m19, "cd_region", "cd_nis_country")

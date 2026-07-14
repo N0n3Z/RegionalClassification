@@ -4,7 +4,14 @@
 \alias{split_weights_template}
 \title{Build a split weights template for an ambiguous conversion pair}
 \usage{
-split_weights_template(from, to, master_data)
+split_weights_template(
+  from,
+  to,
+  master_data,
+  variable = NULL,
+  commune_values = NULL,
+  weight_vintage = CLS_NIS_MUNICIPALITY_2019
+)
 }
 \arguments{
 \item{from}{Source classification identifier (see [classification_reference]).}
@@ -12,20 +19,45 @@ split_weights_template(from, to, master_data)
 \item{to}{Target classification identifier.}
 
 \item{master_data}{Output from [load_master_data()].}
+
+\item{variable}{Optional weighting-variable name (single). `NULL` (default)
+returns equal weights. `"population"` (or any other shipped standard) fills
+weights from the package's standard values. Any other name requires
+`commune_values`.}
+
+\item{commune_values}{Optional `data.table` giving the variable at the
+`weight_vintage` commune level: columns `code` and `value` (or the first two
+columns are used). Supplying it computes **custom** weights and overrides the
+`variable` lookup.}
+
+\item{weight_vintage}{Commune classification used as the weighting refinement
+(default `CLS_NIS_MUNICIPALITY_2019`). Both `from` and `to` must be reachable
+from it via a simple (N:1) path; the 2019 commune level covers every current
+ambiguous edge.}
 }
 \value{
 A `data.table` with columns `code_from` (character), `code_to`
-  (character), and `weight` (numeric, equal weights summing to 1 per
-  `code_from`). Returns an empty table (with a message) when no ambiguous
-  codes exist for the pair.
+  (character), and `weight` (numeric, summing to 1 per `code_from`). Returns an
+  empty table (with a message) when no ambiguous codes exist for the pair.
 }
 \description{
-Returns a `data.table(code_from, code_to, weight)` pre-filled with equal
-weights for every ambiguous (1:N) code in the `from -> to` conversion.
-Edit the `weight` column and pass the result to [register_split_weights()]
-or directly to the `split` argument of [rebase_series()].
+Returns a `data.table(code_from, code_to, weight)` for every ambiguous (1:N)
+code in the `from -> to` conversion, ready to pass to [register_split_weights()]
+or to the `split` argument of [rebase_series()] / `weights` of [split_ambiguous()].
 }
 \details{
+The template carries a **single** weighting variable at a time:
+\itemize{
+  \item `variable = NULL`, `commune_values = NULL` (default): **equal** weights (1/N).
+  \item `variable = "population"` (a shipped standard): weights filled from the
+    package's standard commune-level values.
+  \item `commune_values = <table>`: weights computed from a **custom**
+    commune-level variable you supply (any other named variable).
+}
+Variable-based weights are computed at the `weight_vintage` commune level (the
+finest common refinement): each commune's value is attributed to the
+`(from, to)` pair it falls under, then normalised to sum to 1 per `code_from`.
+
 Only codes that actually produce multiple target codes appear in the template;
 unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
 }
@@ -40,6 +72,19 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
   #    code_from code_to weight
   # 1:     63000   BE335    0.5
   # 2:     63000   BE336    0.5
+
+  # 1-bis. Standard population weights (requires standard_weight_values.rds;
+  #         see data-raw/build_standard_weights.R):
+  if (FALSE) {
+    tpl_pop <- split_weights_template(
+      "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
+    )
+  }
+  # Custom commune-level values (no standard file needed):
+  my_vals <- data.table::data.table(code = c(63012, 63023), value = c(8000, 2000))
+  tpl_cus <- split_weights_template(
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, commune_values = my_vals
+  )
 
   # 2. Replace equal weights with population-based values
   #    (Verviers: ~85.7 \% francophone / ~14.3 \% germanophone)

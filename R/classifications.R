@@ -101,16 +101,21 @@
 #' | `NUTS_DISTRICT_2027`                  | `NUTS_PROVINCE_2027`                     | (y) N:1  |
 #' | `NUTS_PROVINCE_2027`                  | `NUTS_REGION_2027`                     | (y) N:1  |
 #' | `NUTS_REGION_2027`                  | `NUTS_COUNTRY`                          | (y) N:1  |
+#' | `NUTS_DISTRICT_2021`                  | `NUTS_DISTRICT_2027`                     | (!) 1:N  |
 #' | `NUTS_DISTRICT_2021`                  | `NBB_DISTRICT_2021`        | (y) 1:1  |
 #' | `POSTAL`                      | `NIS_MUNICIPALITY_2019`               | (y) N:1  |
 #' | `POSTAL`                      | `NIS_MUNICIPALITY_2025`               | (y) N:1  |
 #' | `POSTAL`                      | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 #'
-#' **Note on NUTS_DISTRICT_2021 <-> NUTS_DISTRICT_2027:** there is **no direct conversion** between
-#' these two NUTS3 versions. Three Belgian communes changed province between 2019
-#' and 2025, shifting their NUTS3 region. The correct path is always via NIS
-#' municipalities: `NUTS_DISTRICT_2021` -> `NIS_MUNICIPALITY_2025` -> `NUTS_DISTRICT_2027`
-#' (ambiguous, requires `allow_ambiguous = TRUE`).
+#' **Note on NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027:** a **direct `1:N` edge** exists
+#' (forward only), derived at build time by chaining through communes. Most NUTS3 2021
+#' codes map 1:1 to a single 2027 code; a few (those containing the 3 communes that
+#' changed province between 2019 and 2025, e.g. `BE211 -> \{BE261, BE276\}`) map to two,
+#' so the conversion requires `allow_ambiguous = TRUE` and supports weighted splitting
+#' via `register_split_weights()`. This edge is for **aggregate** NUTS3 2021 data; if you
+#' still hold the underlying communes, convert those directly to `NUTS_DISTRICT_2027`
+#' (exact, no weights). The reverse `NUTS_DISTRICT_2027 -> NUTS_DISTRICT_2021` has no
+#' direct edge (go via NIS municipalities).
 #'
 #' **Note on province -> region:** province -> region is a clean N:1 nesting.
 #' The former unified province of Brabant (legacy code 20000) was split in 1995

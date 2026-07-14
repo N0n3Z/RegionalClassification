@@ -299,10 +299,21 @@ clear_split_weights <- function() {
 
 #' Build a split weights template for an ambiguous conversion pair
 #'
-#' Returns a `data.table(code_from, code_to, weight)` pre-filled with equal
-#' weights for every ambiguous (1:N) code in the `from -> to` conversion.
-#' Edit the `weight` column and pass the result to [register_split_weights()]
-#' or directly to the `split` argument of [rebase_series()].
+#' Returns a `data.table(code_from, code_to, weight)` for every ambiguous (1:N)
+#' code in the `from -> to` conversion, ready to pass to [register_split_weights()]
+#' or to the `split` argument of [rebase_series()] / `weights` of [split_ambiguous()].
+#'
+#' The template carries a **single** weighting variable at a time:
+#' \itemize{
+#'   \item `variable = NULL`, `commune_values = NULL` (default): **equal** weights (1/N).
+#'   \item `variable = "population"` (a shipped standard): weights filled from the
+#'     package's standard commune-level values.
+#'   \item `commune_values = <table>`: weights computed from a **custom**
+#'     commune-level variable you supply (any other named variable).
+#' }
+#' Variable-based weights are computed at the `weight_vintage` commune level (the
+#' finest common refinement): each commune's value is attributed to the
+#' `(from, to)` pair it falls under, then normalised to sum to 1 per `code_from`.
 #'
 #' Only codes that actually produce multiple target codes appear in the template;
 #' unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
@@ -310,10 +321,21 @@ clear_split_weights <- function() {
 #' @param from Source classification identifier (see [classification_reference]).
 #' @param to   Target classification identifier.
 #' @param master_data Output from [load_master_data()].
+#' @param variable Optional weighting-variable name (single). `NULL` (default)
+#'   returns equal weights. `"population"` (or any other shipped standard) fills
+#'   weights from the package's standard values. Any other name requires
+#'   `commune_values`.
+#' @param commune_values Optional `data.table` giving the variable at the
+#'   `weight_vintage` commune level: columns `code` and `value` (or the first two
+#'   columns are used). Supplying it computes **custom** weights and overrides the
+#'   `variable` lookup.
+#' @param weight_vintage Commune classification used as the weighting refinement
+#'   (default `CLS_NIS_MUNICIPALITY_2019`). Both `from` and `to` must be reachable
+#'   from it via a simple (N:1) path; the 2019 commune level covers every current
+#'   ambiguous edge.
 #' @return A `data.table` with columns `code_from` (character), `code_to`
-#'   (character), and `weight` (numeric, equal weights summing to 1 per
-#'   `code_from`). Returns an empty table (with a message) when no ambiguous
-#'   codes exist for the pair.
+#'   (character), and `weight` (numeric, summing to 1 per `code_from`). Returns an
+#'   empty table (with a message) when no ambiguous codes exist for the pair.
 #'
 #' @examples
 #' \donttest{
@@ -326,6 +348,19 @@ clear_split_weights <- function() {
 #'   #    code_from code_to weight
 #'   # 1:     63000   BE335    0.5
 #'   # 2:     63000   BE336    0.5
+#'
+#'   # 1-bis. Standard population weights (requires standard_weight_values.rds;
+#'   #         see data-raw/build_standard_weights.R):
+#'   if (FALSE) {
+#'     tpl_pop <- split_weights_template(
+#'       "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
+#'     )
+#'   }
+#'   # Custom commune-level values (no standard file needed):
+#'   my_vals <- data.table::data.table(code = c(63012, 63023), value = c(8000, 2000))
+#'   tpl_cus <- split_weights_template(
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, commune_values = my_vals
+#'   )
 #'
 #'   # 2. Replace equal weights with population-based values
 #'   #    (Verviers: ~85.7 % francophone / ~14.3 % germanophone)
@@ -347,7 +382,10 @@ clear_split_weights <- function() {
 #' }
 #' @seealso [register_split_weights()], [rebase_series()], [split_ambiguous()]
 #' @export
-split_weights_template <- function(from, to, master_data) {
+split_weights_template <- function(from, to, master_data,
+                                   variable       = NULL,
+                                   commune_values = NULL,
+                                   weight_vintage = CLS_NIS_MUNICIPALITY_2019) {
   from_norm <- normalize_classification_id(from)
   to_norm   <- normalize_classification_id(to)
   .validate_master_data(master_data)
@@ -370,9 +408,86 @@ split_weights_template <- function(from, to, master_data) {
     ))
   }
 
-  template <- mapping_dt[code_from %in% ambig_codes & !is.na(code_to)]
-  template[, weight := 1 / .N, by = code_from]
-  template[, .(code_from, code_to, weight)]
+  template <- mapping_dt[code_from %in% ambig_codes & !is.na(code_to),
+                         .(code_from, code_to)]
+
+  # --- Equal-weight template (default) ---
+  if (is.null(variable) && is.null(commune_values)) {
+    template[, weight := 1 / .N, by = code_from]
+    return(template[, .(code_from, code_to, weight)])
+  }
+
+  # --- Variable-based weights (standard or custom) ---
+  # Resolve commune-level values (code, value) at weight_vintage.
+  vintage <- normalize_classification_id(weight_vintage)
+  vals    <- .resolve_weight_values(variable, commune_values, vintage, master_data)
+
+  # Map each weighting commune to its `from` and `to` code. Both legs must be
+  # simple (N:1) from a commune, so convert without allow_ambiguous (1 row each).
+  comm <- vals$code
+  leg_from <- convert_codes(comm, vintage, from_norm, master_data)
+  leg_to   <- convert_codes(comm, vintage, to_norm,   master_data)
+
+  link <- data.table(code = as.character(comm))
+  link[, code_from := as.character(
+    leg_from$code_to[match(code, as.character(leg_from$code_from))])]
+  link[, code_to := as.character(
+    leg_to$code_to[match(code, as.character(leg_to$code_from))])]
+  link <- merge(link, vals, by = "code", all.x = TRUE)
+
+  agg <- link[!is.na(code_from) & !is.na(code_to) & !is.na(value),
+              .(mass = sum(value)), by = .(code_from, code_to)]
+
+  # Attribute masses to the ambiguous skeleton; missing pairs -> 0; renormalise.
+  out <- merge(template, agg, by = c("code_from", "code_to"), all.x = TRUE)
+  out[is.na(mass), mass := 0]
+  out[, weight := if (sum(mass) > 0) mass / sum(mass) else 1 / .N, by = code_from]
+  out[, .(code_from, code_to, weight)]
+}
+
+# Resolve a single weighting variable to commune-level (code, value) at `vintage`.
+# Priority: explicit commune_values > shipped standard for `variable`.
+#' @noRd
+.resolve_weight_values <- function(variable, commune_values, vintage, master_data) {
+  if (!is.null(commune_values)) {
+    cv <- as.data.table(commune_values)
+    if (ncol(cv) < 2L)
+      abort("commune_values must have at least 2 columns (code, value).",
+            class = "rcl_invalid_input")
+    if (!all(c("code", "value") %in% names(cv)))
+      setnames(cv, names(cv)[1:2], c("code", "value"))
+    return(cv[, .(code = as.character(code), value = as.numeric(value))])
+  }
+  if (is.null(variable))
+    abort("Provide either `variable` (a shipped standard) or `commune_values`.",
+          class = "rcl_invalid_input")
+
+  std <- .standard_weight_values(variable, master_data)
+  if (is.null(std))
+    abort(sprintf(paste0("No shipped standard weights for variable '%s'. Supply ",
+                         "commune_values=, or build the standard table via ",
+                         "data-raw/build_standard_weights.R."), variable),
+          class = "rcl_data_missing")
+  std
+}
+
+# Look up shipped standard commune-level values for `variable` -> (code, value),
+# or NULL if unavailable.  Source: master_data$standard_weights (variable, code,
+# value) if present, else inst/extdata/standard_weight_values.rds.
+#' @noRd
+.standard_weight_values <- function(variable, master_data) {
+  var_name <- variable
+  sw <- master_data$standard_weights
+  if (is.null(sw)) {
+    f <- system.file("extdata", "standard_weight_values.rds", package = "nbbbenuts")
+    if (nzchar(f) && file.exists(f)) sw <- readRDS(f)
+  }
+  if (is.null(sw)) return(NULL)
+  sw <- as.data.table(sw)
+  if (!all(c("variable", "code", "value") %in% names(sw))) return(NULL)
+  hit <- sw[sw$variable == var_name]          # base-style index: avoids NSE on `variable`
+  if (nrow(hit) == 0L) return(NULL)
+  hit[, .(code = as.character(code), value = as.numeric(value))]
 }
 
 
