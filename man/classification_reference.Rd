@@ -95,6 +95,8 @@ requires weighted splitting (use [split_ambiguous()]).
 | `NIS_MUNICIPALITY_2025`            | `NUTS_DISTRICT_2027`                     | (y) N:1  |
 | `NIS_MUNICIPALITY_2025`            | `NUTS_PROVINCE_2027`                     | (y) N:1  |
 | `NIS_MUNICIPALITY_2025`            | `NUTS_REGION_2027`                     | (y) N:1  |
+| `NIS_MUNICIPALITY_2025`            | `NUTS_DISTRICT_2021`                     | (!) 1:N  |
+| `NIS_MUNICIPALITY_2025`            | `NBB_DISTRICT_2021`        | (y) N:1  |
 | `NUTS_MUNICIPALITY_2021`               | `NUTS_DISTRICT_2021`                     | (y) N:1  |
 | `NUTS_DISTRICT_2021`                  | `NUTS_PROVINCE_2021`                     | (y) N:1  |
 | `NUTS_PROVINCE_2021`                  | `NUTS_REGION_2021`                     | (y) N:1  |

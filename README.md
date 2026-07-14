@@ -145,7 +145,7 @@ NUTS 2027 codes implement EU Regulation 2026/195 (applicable from 1 January 2027
 | BE22x (partial) → **BE22x / BE26x** | Vlaams-Brabant |
 | BE23x → **BE27x** | Oost-Vlaanderen |
 
-> **Note:** There is no direct `NUTS_DISTRICT_2021 ↔ NUTS_DISTRICT_2027` conversion. Three communes changed province between 2019 and 2025, shifting their NUTS3 region. Always route via NIS communes: `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
+> **Note:** A direct **forward** `NUTS_DISTRICT_2021 → NUTS_DISTRICT_2027` edge exists (`1:N`), derived at build time, for **aggregate** NUTS3 2021 data — most codes map 1:1, but a few map to two 2027 codes (three communes changed province between 2019 and 2025), so it needs `allow_ambiguous = TRUE` and weighted splitting. There is **no reverse** `2027 → 2021` conversion. If you still have the underlying communes, convert them directly (exact, no weights): `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`, or route `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
 
 ## Dataset-Level Conversion
 
