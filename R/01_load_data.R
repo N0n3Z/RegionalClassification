@@ -66,17 +66,28 @@ load_single_file <- function(filepath, sheet = NULL, filter_spec = NULL) {
           class = "rcl_invalid_input")
   )
 
-  # Apply filter if specified
+  # Apply filter if specified. This is fail-CLOSED (audit M8): the only filter in
+  # use is KEEP_UNIQUE on the postal->NIS files, and it is essential -- skipping
+  # it (column absent) would leave postal->NIS ambiguous, and a value mismatch
+  # (e.g. a localised TRUE such as "WAAR"/"VRAI") would drop every row. Both now
+  # abort loudly instead of silently keeping everything or nothing.
   if (!is.null(filter_spec)) {
     col <- filter_spec$column
     val <- filter_spec$value
-    if (col %in% names(dt)) {
-      dt <- dt[get(col) == val]
-      message(sprintf("  -> Filtered on %s == %s: %d rows remaining", col, val, nrow(dt)))
-    } else {
-      warn(sprintf("Filter column '%s' not found in data", col),
-           class = "rcl_invalid_input")
+    if (!col %in% names(dt)) {
+      abort(sprintf("Required filter column '%s' not found in data. Available: %s",
+                    col, paste(names(dt), collapse = ", ")),
+            class = "rcl_invalid_input")
     }
+    n_before <- nrow(dt)
+    dt <- dt[get(col) == val]
+    if (n_before > 0L && nrow(dt) == 0L) {
+      abort(sprintf(
+        "Filter '%s == %s' removed all %d rows -- the value likely does not match the column encoding.",
+        col, val, n_before),
+        class = "rcl_invalid_input")
+    }
+    message(sprintf("  -> Filtered on %s == %s: %d rows remaining", col, val, nrow(dt)))
   }
 
   return(dt)

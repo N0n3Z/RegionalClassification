@@ -13,15 +13,25 @@
 #' @return data.table(cd_postal, cd_commune_nis, tx_postal_name_fr, tx_postal_name_nl)
 .extract_postal_map <- function(dt, label = "postal file") {
   .find_col <- function(pattern, role) {
-    col <- grep(pattern, names(dt), value = TRUE, ignore.case = TRUE)[1]
-    if (is.na(col)) {
+    cols <- grep(pattern, names(dt), value = TRUE, ignore.case = TRUE)
+    if (length(cols) == 0L) {
       abort(
         sprintf("%s: cannot find column for '%s' (pattern: %s). Available columns: %s",
                 label, role, pattern, paste(names(dt), collapse = ", ")),
         class = "rcl_invalid_input"
       )
     }
-    col
+    # Require a UNIQUE match: taking the first grep hit could silently bind the
+    # wrong column (e.g. SHORT_NAME_FR before NAME_FR) on a future file layout
+    # (audit M8). Fail loudly instead.
+    if (length(cols) > 1L) {
+      abort(
+        sprintf("%s: ambiguous column for '%s' (pattern: %s) matched %d columns: %s. Tighten the pattern.",
+                label, role, pattern, length(cols), paste(cols, collapse = ", ")),
+        class = "rcl_invalid_input"
+      )
+    }
+    cols
   }
   col_postal  <- .find_col("TERRITORIAL_CODE_POSTAL",        "postal code")
   col_nis     <- .find_col("TERRITORIAL_CODE_NIS|TERRITORIAL_CODE_INS", "NIS commune code")
@@ -53,6 +63,21 @@
       sprintf("Duplicate keys in %s: %d key(s) appear more than once. Check the source data.",
               label, n_dup),
       class = "rcl_duplicate_keys", label = label, n_duplicates = n_dup
+    )
+  invisible(dt)
+}
+
+# Assert a built table carries its required columns (RDS-contract guard, audit
+# M8). .validate_commune_schema() covered only `communes`; the other saved tables
+# (postal, nis_changes, crosswalks) were unchecked.
+#' @noRd
+.assert_cols <- function(dt, required, label) {
+  missing <- setdiff(required, names(dt))
+  if (length(missing) > 0L)
+    abort(
+      sprintf("%s is missing required column(s): %s. Available: %s",
+              label, paste(missing, collapse = ", "), paste(names(dt), collapse = ", ")),
+      class = "rcl_schema_error", label = label, missing = missing
     )
   invisible(dt)
 }
@@ -259,11 +284,19 @@ build_master_table <- function(raw_data) {
   .assert_unique_keys(nis_changes_unified, c("from_version", "cd_refnis_old"),
                       "nis_changes (from_version, cd_refnis_old)")
 
+  # RDS-contract column guards for the saved tables beyond communes (audit M8).
+  .assert_cols(postal_unified,
+               c("cd_postal", "cd_commune_nis", "nis_version"), "postal")
+  .assert_cols(nis_changes_unified,
+               c("cd_refnis_old", "cd_refnis_new", "nature", "from_version"), "nis_changes")
+
   # --- 9b. Build normalised entities + crosswalks tables (ADDITIVE) ---
   message("  Building entities table...")
   entities   <- build_entities_table(communes_unified, postal_unified)
   message("  Building crosswalks table...")
   crosswalks <- build_crosswalks(communes_unified, postal_unified, nis_changes_unified)
+  .assert_cols(crosswalks,
+               c("from_id", "to_id", "code_from", "code_to", "nature"), "crosswalks")
 
   # --- 10. Assemble result ---
   result <- list(
@@ -619,6 +652,16 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   # introduced in the 2025 mapping).  Left-join so codes in p19 but absent
   # from p25 appear with code_to = NA, matching engine behaviour.
   p25_map  <- unique(p25[, .(cd_postal, cd_commune_nis)])
+  # The POSTAL universe is p19's postal codes. Assert p25 introduces no NEW postal
+  # code, otherwise it would be silently dropped from POSTAL -> NIS_2025 (audit M8).
+  new_p25 <- setdiff(unique(p25_map$cd_postal), unique(p19$cd_postal))
+  if (length(new_p25) > 0L)
+    abort(sprintf(
+      paste0("%d postal code(s) exist in the 2025 mapping but not in 2019 and would be ",
+             "dropped from POSTAL -> NIS_MUNICIPALITY_2025: %s%s. Union the postal universes."),
+      length(new_p25), paste(head(sort(new_p25), 5L), collapse = ", "),
+      if (length(new_p25) > 5L) ", ..." else ""),
+      class = "rcl_incomplete_universe")
   p25_full <- merge(data.table(cd_postal = unique(p19$cd_postal)),
                     p25_map, by = "cd_postal", all.x = TRUE)
   xw[["POSTAL__NIS_MUNICIPALITY_2025"]] <- .xw("POSTAL", "NIS_MUNICIPALITY_2025",
