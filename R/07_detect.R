@@ -32,11 +32,53 @@ detect_classification <- function(codes, master_data) {
   all_int  <- all(grepl("^[0-9]+$",  codes_chr))
 
   if (all_char) {
-    # NUTS codes: "BE" + 2/3/5 chars
-    if      (all(nchar(codes_chr) == 5)) return("NUTS_DISTRICT_2021")
-    else if (all(nchar(codes_chr) == 4)) return("NUTS_PROVINCE_2021")
-    else if (all(nchar(codes_chr) <= 3)) return("NUTS_REGION_2021")
-    return(NULL)
+    # NUTS codes ("BE..."): match against the REAL reference sets rather than
+    # guessing by nchar (audit C5). The old nchar rule always returned the 2021
+    # vintage, so a NUTS3 2027 code (e.g. "BE261", which exists only in 2027) was
+    # mislabelled NUTS_DISTRICT_2021 and "BE" (country) became NUTS_REGION_2021.
+    # LAU codes (NUTS_MUNICIPALITY_2021) are numeric strings and never reach this
+    # branch, so only the "BE"-prefixed nodes are candidates here.
+    nuts_ids <- c("NUTS_COUNTRY",
+                  "NUTS_REGION_2021", "NUTS_PROVINCE_2021", "NUTS_DISTRICT_2021",
+                  "NUTS_REGION_2027", "NUTS_PROVINCE_2027", "NUTS_DISTRICT_2027")
+    nrefs <- lapply(stats::setNames(nuts_ids, nuts_ids), function(id) {
+      ref <- .node_reference_codes(id, master_data)
+      if (is.null(ref)) NULL else as.character(ref$code)
+    })
+    nrefs <- Filter(Negate(is.null), nrefs)
+    if (length(nrefs) == 0L) return(NULL)
+
+    nrates   <- vapply(nrefs, function(ref) mean(codes_chr %in% ref), numeric(1))
+    nrates_dt <- data.table(classification = names(nrates), rate = nrates)[order(-rate)]
+    best      <- nrates_dt[1]
+
+    if (best$rate < 0.8) {
+      warn(
+        sprintf("Cannot auto-detect classification with confidence (best match: %s at %.0f%%).",
+                best$classification, best$rate * 100),
+        class = "rcl_detection_failed",
+        best_match = best$classification, best_rate = best$rate
+      )
+      return(NULL)
+    }
+
+    # Disambiguate ties -- chiefly the same-level 2021 vs 2027 pair. Prefer the
+    # vintage that holds codes UNIQUE to it (2021 and 2027 NUTS3 codes are largely
+    # disjoint for changed regions); on a pure tie (all codes shared) fall back to
+    # a stable priority favouring the 2021 vintage.
+    close <- nrates_dt[rate >= best$rate * 0.95, classification]
+    if (length(close) > 1L) {
+      excl <- vapply(close, function(id) {
+        others <- unlist(nrefs[setdiff(close, id)], use.names = FALSE)
+        sum(codes_chr %in% nrefs[[id]] & !(codes_chr %in% others))
+      }, integer(1))
+      if (max(excl) > 0L) return(close[which.max(excl)])
+      priority <- c("NUTS_COUNTRY",
+                    "NUTS_DISTRICT_2021", "NUTS_PROVINCE_2021", "NUTS_REGION_2021",
+                    "NUTS_DISTRICT_2027", "NUTS_PROVINCE_2027", "NUTS_REGION_2027")
+      for (p in priority) if (p %in% close) return(p)
+    }
+    return(best$classification)
   }
 
   if (!all_int) return(NULL)   # mixed or unknown
