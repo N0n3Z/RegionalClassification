@@ -582,7 +582,11 @@ split_weights_template <- function(from, to, master_data,
     }
 
   if (normalize) {
-    resolved[, weight := weight / sum(weight), by = code_from]
+    # Guard against a zero weight sum (all weights for a code_from explicitly 0),
+    # which would divide to NaN. Fall back to equal weights, mirroring
+    # split_weights_template() and .merge_weights(). (audit M3)
+    resolved[, weight := if (sum(weight) > 0) weight / sum(weight) else 1 / .N,
+             by = code_from]
   }
 
   resolved

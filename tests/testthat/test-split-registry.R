@@ -194,3 +194,24 @@ test_that("split_weights_template errors for an unshipped standard variable", {
     class = "rcl_data_missing"
   )
 })
+
+# -- M3: zero weight sum must not produce NaN ---------------------------------
+test_that("split_ambiguous falls back to equal weights when weights sum to zero", {
+  # All-zero weights for a code_from would divide to NaN during normalisation.
+  # It must instead fall back to equal weights (audit M3).
+  dat <- data.table(arr = 63000L, value = 100)
+  wts_zero <- data.table(code_from = c("63000", "63000"),
+                         code_to   = c("BE335", "BE336"),
+                         weight    = c(0, 0))
+  r <- suppressWarnings(
+    split_ambiguous(dat, "arr", value_cols = "value",
+                    from = CLS_NIS_DISTRICT_2019, to = CLS_NUTS_DISTRICT_2021,
+                    master_data = master_data, weights = wts_zero,
+                    value_type = "additive")
+  )
+  expect_false(any(is.nan(r$value)))
+  expect_false(anyNA(r$value))
+  expect_equal(sum(r$value), 100)
+  expect_equal(nrow(r), 2L)
+  expect_equal(r$value, c(50, 50))  # equal split
+})
