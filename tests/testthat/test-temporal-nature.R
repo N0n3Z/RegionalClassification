@@ -107,32 +107,60 @@ test_that("all 2019->2025 temporal nature values are in {UNCHANGED,FUSION,CHANGE
                info = paste("Unexpected nature values:", paste(bad, collapse = ", ")))
 })
 
-test_that("BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION, CHANGE_DSTR} or NA", {
-  # BEFORE_2019->2019 now carries the source NATURE column (not a hardcoded FUSION).
-  # The current change file holds 11 CHANGE_DSTR recodes (2019 Walloon arrondissement
-  # reform); UNCHANGED is the pass-through backbone. Orphaned BEFORE_2019 communes
-  # (absent from nis_changes and NIS 2019 -- the 2019 fusion constituents, pending the
-  # data completion tracked in FUSIONS_BEFORE_2019_TODO.md) produce code_to = NA with
-  # rcl_unmatched_codes -- suppress that advisory warning.
+test_that("BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION, CHANGE_DSTR}", {
+  # BEFORE_2019->2019 carries the source NATURE column (not a hardcoded FUSION).
+  # The change file holds 11 CHANGE_DSTR recodes (2019 Walloon arrondissement reform)
+  # and 15 FUSION recodes (2019 Flemish municipal mergers); UNCHANGED is the
+  # pass-through backbone. All 15 former "orphaned" fusion constituents (tracked in
+  # FUSIONS_BEFORE_2019_TODO.md) are now mapped, so no NA is expected here.
   all_b19 <- unique(master_data$communes[nis_version == VER_BEFORE_2019, cd_commune])
-  r       <- suppressWarnings(
-    convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
-  )
-  valid   <- c("UNCHANGED", "FUSION", "CHANGE_DSTR", NA_character_)
+  r       <- convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
+  valid   <- c("UNCHANGED", "FUSION", "CHANGE_DSTR")
   bad     <- setdiff(unique(r$nature), valid)
   expect_equal(length(bad), 0L,
                info = paste("Unexpected nature values:", paste(bad, collapse = ", ")))
+  expect_false(anyNA(r$code_to))
 })
 
-test_that("BEFORE_2019->2019 preserves the source NATURE (11 CHANGE_DSTR recodes)", {
+test_that("BEFORE_2019->2019 preserves the source NATURE (11 CHANGE_DSTR + 15 FUSION recodes)", {
   # Regression guard for the hardcoded-FUSION bug: the 2019 arrondissement reform
   # recodes must surface as CHANGE_DSTR, not FUSION. Requires a rebuild to take
   # effect (nature is baked into the crosswalk snapshot).
   all_b19 <- unique(master_data$communes[nis_version == VER_BEFORE_2019, cd_commune])
-  r       <- suppressWarnings(
-    convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
-  )
+  r       <- convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
   expect_equal(sum(r$nature == "CHANGE_DSTR", na.rm = TRUE), 11L)
+  expect_equal(sum(r$nature == "FUSION",      na.rm = TRUE), 15L)
+})
+
+test_that("no commune is orphaned across any adjacent NIS_VERSION pair", {
+  # Regression guard for FUSIONS_BEFORE_2019_TODO.md: a commune present in
+  # nis_version == from_ver must be either UNCHANGED (present in to_ver) or
+  # covered by a nis_changes row -- never silently dropped (code_to = NA).
+  # Generalized over every consecutive (from_ver, to_ver) pair so a future
+  # NIS version (e.g. a 2031 refresh) is covered without a new hand-written test.
+  version_pairs <- list(
+    c(VER_BEFORE_2019, VER_2019),
+    c(VER_2019,        VER_2025)
+  )
+  for (pair in version_pairs) {
+    from_ver <- pair[1L]
+    to_ver   <- pair[2L]
+    m_from   <- unique(master_data$communes[nis_version == from_ver, cd_commune])
+    m_to     <- unique(master_data$communes[nis_version == to_ver,   cd_commune])
+    ch       <- master_data$nis_changes[from_version == from_ver, cd_refnis_old]
+    orphaned <- setdiff(m_from, union(ch, m_to))
+    expect_equal(length(orphaned), 0L,
+                 label = sprintf("orphaned %s->%s codes", from_ver, to_ver),
+                 info = paste("Orphaned codes:", paste(orphaned, collapse = ", ")))
+  }
+})
+
+test_that("composed BEFORE_2019 -> 2025 conversion has no orphaned (NA) codes", {
+  # The two hops above are each orphan-free, but composition (.compose_via_handlers)
+  # is a separate code path -- guard it explicitly rather than assuming transitivity.
+  all_b19 <- unique(master_data$communes[nis_version == VER_BEFORE_2019, cd_commune])
+  r       <- convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
+  expect_false(anyNA(r$code_to))
 })
 
 # -- TN7: Nature counts match known totals ------------------------------------
