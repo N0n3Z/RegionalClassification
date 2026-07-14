@@ -7,7 +7,8 @@
 parse_refnis_change_before2019(
   change_dt,
   col_old = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_old,
-  col_new = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_new
+  col_new = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nis_new,
+  col_nature = FILE_MAPPING$REFNIS_CHANGE_BEFORE2019$col_nature
 )
 }
 \arguments{
@@ -16,9 +17,13 @@ parse_refnis_change_before2019(
 \item{col_old}{Name of old NIS code column}
 
 \item{col_new}{Name of new NIS code column}
+
+\item{col_nature}{Name of the change-nature column (e.g. FUSION, CHANGE_DSTR).
+Optional: if the column is absent, `nature` is set to NA.}
 }
 \value{
-data.table with cd_refnis_before2019 (integer) and cd_refnis_2019 (integer)
+data.table with cd_refnis_before2019 (integer), cd_refnis_2019
+  (integer) and nature (character; NA when the source column is absent)
 }
 \description{
 Parse NIS BEFORE_2019 -> NIS 2019 change table (optional file)

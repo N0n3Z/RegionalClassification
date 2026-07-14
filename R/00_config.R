@@ -165,7 +165,8 @@ FILE_MAPPING <- list(
     provides = c("NIS_BEFORE_2019", "NIS_2019"),
     filter = NULL,
     col_nis_old = "CD_REFNIS_OLD",
-    col_nis_new = "CD_REFNIS_NEW"
+    col_nis_new = "CD_REFNIS_NEW",
+    col_nature  = "NATURE"
   ),
   REFNIS_CHANGE = list(
     filename = "REFNIS_CHANGE_2025.xlsx",
