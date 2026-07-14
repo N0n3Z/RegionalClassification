@@ -4,12 +4,21 @@
 \alias{check_conversion_path}
 \title{Check if a simple (direct, unambiguous) conversion is possible}
 \usage{
-check_conversion_path(from, to)
+check_conversion_path(from, to, md = NULL)
 }
 \arguments{
 \item{from}{Source classification identifier.}
 
 \item{to}{Target classification identifier.}
+
+\item{md}{Optional master data (from \code{load_master_data()}).  When
+supplied, the result gains an \code{executable} field reporting whether the
+conversion engine can actually run this route (a lookup / composition over
+\code{md$crosswalks}).  This matters because the declared graph auto-inverts
+edges and therefore advertises some coarse-to-fine de-aggregation routes the
+executor never materialises; \code{executable} tells them apart.  When
+\code{md} is \code{NULL} (default) the result describes the declared graph
+only and \code{executable} is absent.}
 }
 \value{
 A named list with the following fields:

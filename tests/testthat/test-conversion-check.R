@@ -72,12 +72,22 @@ test_that("convert_codes raises rcl_ambiguous_conversion with allow_ambiguous=FA
   )
 })
 
-# -- Test CC10: rcl_ambiguous_conversion pour paire M:N -----------------------
-test_that("convert_codes raises rcl_ambiguous_conversion for M:N pair", {
-  # NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_BEFORE_2019 exists in the graph but is M:N (ambiguous)
+# -- Test CC10: rcl_no_route for a declared-but-non-executable reverse edge ----
+test_that("convert_codes raises rcl_no_route for a non-executable de-aggregation", {
+  # NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_BEFORE_2019 is reachable in the
+  # declared graph (auto-inverted N:1 -> 1:N) but the executor never materialises
+  # this reverse temporal de-aggregation (no crosswalk rows). convert_codes() now
+  # fails early with a clear rcl_no_route dead-end instead of the old contradictory
+  # "use allow_ambiguous" advice that would then die at execution anyway (C1).
   expect_error(
     convert_codes(21004L, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_BEFORE_2019, master_data),
-    class = "rcl_ambiguous_conversion"
+    class = "rcl_no_route"
+  )
+  # Even forcing allow_ambiguous cannot resolve it -- still a dead-end.
+  expect_error(
+    convert_codes(21004L, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_BEFORE_2019,
+                  master_data, allow_ambiguous = TRUE),
+    class = "rcl_no_route"
   )
 })
 

@@ -68,6 +68,14 @@
 #'   \item{straddle_free}{Logical.  \code{TRUE} when \code{perimeter_status}
 #'     is \code{"preserving"}.}
 #' }
+#' @param md Optional master data (from \code{load_master_data()}).  When
+#'   supplied, the result gains an \code{executable} field reporting whether the
+#'   conversion engine can actually run this route (a lookup / composition over
+#'   \code{md$crosswalks}).  This matters because the declared graph auto-inverts
+#'   edges and therefore advertises some coarse-to-fine de-aggregation routes the
+#'   executor never materialises; \code{executable} tells them apart.  When
+#'   \code{md} is \code{NULL} (default) the result describes the declared graph
+#'   only and \code{executable} is absent.
 #' @seealso \code{\link{is_perimeter_preserving}} for a simple logical wrapper,
 #'   \code{\link{print_conversion_check}} for a human-readable summary.
 #' @examples
@@ -80,13 +88,19 @@
 #' # Multi-hop path via intermediate classification
 #' check_conversion_path("POSTAL", "NUTS_DISTRICT_2027")
 #' @export
-check_conversion_path <- function(from, to) {
+check_conversion_path <- function(from, to, md = NULL) {
 
   from_norm <- normalize_classification_id(from)
   to_norm <- normalize_classification_id(to)
 
+  # Optionally report whether the executor can actually run this route.
+  add_exec <- function(res) {
+    if (!is.null(md)) res$executable <- .route_is_executable(from_norm, to_norm, md)
+    res
+  }
+
   if (from_norm == to_norm) {
-    return(list(
+    return(add_exec(list(
       is_simple           = TRUE,
       path                = from_norm,
       relations           = character(0),
@@ -95,7 +109,7 @@ check_conversion_path <- function(from, to) {
       perimeter_relations = character(0),
       perimeter_status    = "preserving",
       straddle_free       = TRUE
-    ))
+    )))
   }
 
   # Build adjacency list from CONVERSION_GRAPH_EDGES
@@ -105,7 +119,7 @@ check_conversion_path <- function(from, to) {
   path_result <- find_conversion_path(from_norm, to_norm, graph)
 
   if (is.null(path_result)) {
-    return(list(
+    return(add_exec(list(
       is_simple           = FALSE,
       path                = NULL,
       relations           = NULL,
@@ -117,7 +131,7 @@ check_conversion_path <- function(from, to) {
       perimeter_relations = NULL,
       perimeter_status    = NA_character_,
       straddle_free       = NA
-    ))
+    )))
   }
 
   # If a direct declared edge exists between from and to, its cardinality takes
@@ -192,7 +206,7 @@ check_conversion_path <- function(from, to) {
                            "preserving" else "crossing"
   straddle_free       <- perimeter_status == "preserving"
 
-  return(list(
+  return(add_exec(list(
     is_simple           = is_simple,
     path                = path_result$path,
     relations           = path_result$relations,
@@ -203,7 +217,7 @@ check_conversion_path <- function(from, to) {
     perimeter_relations = perimeter_relations,
     perimeter_status    = perimeter_status,
     straddle_free       = straddle_free
-  ))
+  )))
 }
 
 #' Test whether a conversion path is perimeter-preserving
@@ -408,9 +422,17 @@ get_all_classification_nodes <- function() {
 
 #' Generate a full conversion feasibility matrix
 #'
-#' @return data.table with from, to, is_simple, relation_chain
+#' @param md Optional master data (from \code{load_master_data()}).  When
+#'   supplied, an \code{executable} logical column is added reporting whether the
+#'   conversion engine can actually run each route.  The declared graph is a
+#'   superset of what the executor materialises (it auto-inverts edges), so
+#'   \code{is_simple} being \code{TRUE} guarantees executability but an ambiguous
+#'   (non-simple) route may or may not be executable -- use \code{executable} to
+#'   tell the genuinely usable ambiguous routes from the declared-only ones.
+#' @return data.table with columns \code{from}, \code{to}, \code{is_simple},
+#'   \code{relation_chain}, and (when \code{md} is supplied) \code{executable}.
 #' @export
-get_conversion_matrix <- function() {
+get_conversion_matrix <- function(md = NULL) {
 
   nodes <- get_all_classification_nodes()
 
@@ -430,6 +452,11 @@ get_conversion_matrix <- function() {
       )
     }))
   }))
+
+  if (!is.null(md)) {
+    results[, executable := from == to |
+              mapply(.route_is_executable, from, to, MoreArgs = list(md = md))]
+  }
 
   return(results)
 }

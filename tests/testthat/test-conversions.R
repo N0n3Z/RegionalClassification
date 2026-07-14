@@ -115,10 +115,18 @@ test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 is a direct 1:N edge requiri
   expect_setequal(res[code_from == "BE211"]$code_to, c("BE261", "BE276"))
   expect_true(all(!is.na(res$code_to)))
 
-  # Reverse 2027 -> 2021 has no direct edge: blocked without allow_ambiguous.
+  # Reverse 2027 -> 2021 is a non-executable de-aggregation (no crosswalk, and the
+  # forward aggregate edge is no_reverse): convert_codes() now fails with a clear
+  # rcl_no_route dead-end rather than the old contradictory rcl_ambiguous advice
+  # that would die at execution anyway (C1). allow_ambiguous cannot rescue it.
   expect_error(
     convert_codes("BE261", CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021, master_data),
-    class = "rcl_ambiguous_conversion"
+    class = "rcl_no_route"
+  )
+  expect_error(
+    convert_codes("BE261", CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021,
+                  master_data, allow_ambiguous = TRUE),
+    class = "rcl_no_route"
   )
 })
 
