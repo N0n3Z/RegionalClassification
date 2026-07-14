@@ -373,3 +373,37 @@ test_that("rebase_series warns when value_type='ratio' combined with fun=sum", {
     class = "rcl_invalid_input"
   )
 })
+
+# -- M5: overlapping version_map periods must abort (silent inflation guard) ---
+test_that("rebase_series aborts when a period is mapped to more than one classification", {
+  # 2022 assigned to BOTH the 2019 and 2025 vintages -> the period would be
+  # processed in two chunks and summed, silently inflating its values.
+  expect_error(
+    rebase_series(
+      make_panel(),
+      period_col  = "year",
+      code_col    = "commune",
+      value_cols  = "population",
+      version_map = setNames(list(c(2022L, 2025L), c(2022L, 2025L)),
+                             c(CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025)),
+      to          = CLS_NIS_MUNICIPALITY_2025,
+      master_data = master_data
+    ),
+    class = "rcl_invalid_input"
+  )
+})
+
+test_that("rebase_series still accepts a valid disjoint version_map", {
+  # Same panel, but periods partitioned cleanly -> no error, values summed once.
+  result <- rebase_series(
+    make_panel(),
+    period_col  = "year",
+    code_col    = "commune",
+    value_cols  = "population",
+    version_map = setNames(list(2022L, 2025L),
+                           c(CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025)),
+    to          = CLS_NIS_MUNICIPALITY_2025,
+    master_data = master_data
+  )
+  expect_equal(result[year == 2022L & commune == "11002", population], 26500)
+})
