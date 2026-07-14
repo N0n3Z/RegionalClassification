@@ -101,9 +101,21 @@ convert_dataset <- function(
   }
 
   # --- Run conversion ---
+  # Coerce the source key to the node's canonical type (integer for NIS/POSTAL,
+  # character for NUTS) so both the 1:1 match() and the M:N merge join reliably
+  # against convert_codes()'s already-coerced code_from, regardless of how the
+  # user typed the column (audit M4). A no-op when the column is already correct.
+  dt[, (code_col) := .node_coerce(get(code_col), from_norm)]
   codes  <- dt[[code_col]]
-  result <- convert_codes(codes, from_norm, to_norm, master_data,
-                          allow_ambiguous = allow_ambiguous)[, .(code_from, code_to)]
+  # Muffle convert_codes()'s low-level unmatched warning: convert_dataset does its
+  # own na_action-driven reporting below (with the column name), so the two would
+  # otherwise double-warn. na_action is now the single authority for both the 1:1
+  # and M:N branches. (audit M4)
+  result <- withCallingHandlers(
+    convert_codes(codes, from_norm, to_norm, master_data,
+                  allow_ambiguous = allow_ambiguous),
+    rcl_unmatched_codes = function(w) invokeRestart("muffleWarning")
+  )[, .(code_from, code_to)]
 
   # --- M:N case: result has more rows than input ---
   if (nrow(result) > length(codes)) {
@@ -116,6 +128,15 @@ convert_dataset <- function(
     result_merged <- merge(dt, result, by.x = code_col, by.y = "code_from",
                            all.x = TRUE, allow.cartesian = TRUE)
     setnames(result_merged, "code_to", target_col)
+
+    # Report unmatched codes, honouring na_action, exactly like the 1:1 branch
+    # (previously the M:N branch silently ignored na_action = "warn"). (audit M4)
+    n_unmatched <- result_merged[is.na(get(target_col)) & !is.na(get(code_col)), .N]
+    if (n_unmatched > 0L && na_action == "warn") {
+      warn(sprintf("%d code(s) in '%s' could not be converted to '%s' (no match).",
+                   n_unmatched, code_col, to_norm),
+           class = "rcl_unmatched_codes")
+    }
     if (na_action == "drop") result_merged <- result_merged[!is.na(get(target_col))]
     if (!keep_code) result_merged[, (code_col) := NULL]
     return(result_merged)
