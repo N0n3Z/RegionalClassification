@@ -167,6 +167,26 @@ rebase_series <- function(data, period_col, code_col, value_cols,
     vapply(names(version_map), normalize_classification_id, character(1L))
   )
 
+  # --- Validate period sets are disjoint across classifications (audit M5) ---
+  # Each period belongs to exactly one classification vintage. If a period were
+  # listed under two entries it would be processed in both chunks and then summed
+  # at the aggregation step, silently inflating (often doubling) its values.
+  # Only uncovered periods were checked before; overlapping ones slipped through.
+  per_entry   <- lapply(norm_map, function(p) unique(as.character(p)))
+  all_periods_map <- unlist(per_entry, use.names = FALSE)
+  dup_periods <- unique(all_periods_map[duplicated(all_periods_map)])
+  if (length(dup_periods) > 0L)
+    abort(
+      sprintf(
+        paste0("version_map periods must be disjoint across classifications; ",
+               "%d period(s) appear in more than one entry: %s%s"),
+        length(dup_periods),
+        paste(head(sort(dup_periods), 5L), collapse = ", "),
+        if (length(dup_periods) > 5L) ", ..." else ""
+      ),
+      class = "rcl_invalid_input"
+    )
+
   # --- Validate columns ---
   missing_cols <- setdiff(c(period_col, code_col, value_cols), names(data))
   if (length(missing_cols) > 0L)
