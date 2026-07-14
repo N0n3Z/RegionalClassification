@@ -50,3 +50,39 @@ test_that("convert_dataset preserves all original columns", {
   result <- convert_dataset(dt, "cd_commune", to = CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(all(c("pop", "income") %in% names(result)))
 })
+
+# -- CD7: M:N branch honours na_action and a type-robust join (audit M4) ------
+test_that("convert_dataset M:N join is robust to the user column type", {
+  # arr codes supplied as character must still join against the integer canonical
+  # code_from produced by convert_codes().
+  dt <- data.table(arr = c("63000", "62000"), val = c(10, 20))
+  r  <- suppressWarnings(
+    convert_dataset(dt, "arr", from = CLS_NIS_DISTRICT_2019,
+                    to = CLS_NUTS_DISTRICT_2021, master_data,
+                    allow_ambiguous = TRUE, verbose = FALSE)
+  )
+  # Verviers (63000) fans out to BE335 + BE336; 62000 stays 1 row.
+  expect_equal(nrow(r[arr == 63000L]), 2L)
+  expect_true(all(!is.na(r$cd_nuts3_2021)))
+})
+
+test_that("convert_dataset M:N branch warns rcl_unmatched_codes for unmatched codes", {
+  dt <- data.table(arr = c(63000L, 99999L), val = c(10, 20))
+  expect_warning(
+    convert_dataset(dt, "arr", from = CLS_NIS_DISTRICT_2019,
+                    to = CLS_NUTS_DISTRICT_2021, master_data,
+                    allow_ambiguous = TRUE, na_action = "warn", verbose = FALSE),
+    class = "rcl_unmatched_codes"
+  )
+})
+
+test_that("convert_dataset M:N branch drops unmatched codes with na_action = drop", {
+  dt <- data.table(arr = c(63000L, 99999L), val = c(10, 20))
+  r  <- suppressWarnings(
+    convert_dataset(dt, "arr", from = CLS_NIS_DISTRICT_2019,
+                    to = CLS_NUTS_DISTRICT_2021, master_data,
+                    allow_ambiguous = TRUE, na_action = "drop", verbose = FALSE)
+  )
+  expect_equal(sum(is.na(r$cd_nuts3_2021)), 0L)
+  expect_false(99999L %in% r$arr)
+})
