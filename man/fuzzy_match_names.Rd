@@ -22,15 +22,23 @@ One of: "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "POSTAL",
 
 \item{master_data}{Output from build_master_table()}
 
-\item{max_dist}{Maximum string distance for fuzzy matching (default 0.1 = 10\%)}
+\item{max_dist}{Maximum \emph{relative} string distance for a confident match,
+in \code{[0, 1]} (default 0.1 = 10\%).  The distance is normalised for every
+method (see \code{method}), so this threshold means the same thing whether
+you use a normalised method (\code{jw}) or an edit-count method (\code{osa}).}
 
-\item{method}{Matching method: "osa" (default), "lv", "dl", "hamming",
-"lcs", "qgram", "cosine", "jaccard", "jw", "soundex"}
+\item{method}{Matching method: "jw" (default), "osa", "lv", "dl", "hamming",
+"lcs", "qgram", "cosine", "jaccard", "soundex".  Edit-count methods
+(osa/lv/dl/hamming/lcs/qgram) return an absolute number of edits; this
+function normalises every method to a relative distance in \code{[0, 1]}
+(via \code{stringdist::stringsim}) so \code{max_dist} is comparable across
+methods.}
 
 \item{language}{Preferred language for matching: "fr", "nl", or "both" (default)}
 }
 \value{
-data.table with input_name, matched_name, matched_code, distance, language
+data.table with input_name, matched_name, matched_code, distance
+  (relative, in \code{[0, 1]}), language, is_confident
 }
 \description{
 Supports matching commune names, postal code names, and arrondissement names.

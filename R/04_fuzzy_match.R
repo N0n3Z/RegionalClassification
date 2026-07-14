@@ -12,11 +12,19 @@
 #'   One of: "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "POSTAL",
 #'   "NIS_DISTRICT_2019", "NIS_DISTRICT_2025", "NUTS_DISTRICT_2021"
 #' @param master_data Output from build_master_table()
-#' @param max_dist Maximum string distance for fuzzy matching (default 0.1 = 10\%)
-#' @param method Matching method: "osa" (default), "lv", "dl", "hamming",
-#'   "lcs", "qgram", "cosine", "jaccard", "jw", "soundex"
+#' @param max_dist Maximum \emph{relative} string distance for a confident match,
+#'   in \code{[0, 1]} (default 0.1 = 10\%).  The distance is normalised for every
+#'   method (see \code{method}), so this threshold means the same thing whether
+#'   you use a normalised method (\code{jw}) or an edit-count method (\code{osa}).
+#' @param method Matching method: "jw" (default), "osa", "lv", "dl", "hamming",
+#'   "lcs", "qgram", "cosine", "jaccard", "soundex".  Edit-count methods
+#'   (osa/lv/dl/hamming/lcs/qgram) return an absolute number of edits; this
+#'   function normalises every method to a relative distance in \code{[0, 1]}
+#'   (via \code{stringdist::stringsim}) so \code{max_dist} is comparable across
+#'   methods.
 #' @param language Preferred language for matching: "fr", "nl", or "both" (default)
-#' @return data.table with input_name, matched_name, matched_code, distance, language
+#' @return data.table with input_name, matched_name, matched_code, distance
+#'   (relative, in \code{[0, 1]}), language, is_confident
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
@@ -35,6 +43,16 @@ fuzzy_match_names <- function(names, target_classification, master_data,
                               language = "both") {
 
   target <- normalize_classification_id(target_classification)
+
+  valid_methods <- c("jw", "osa", "lv", "dl", "hamming", "lcs", "qgram",
+                     "cosine", "jaccard", "soundex")
+  if (length(method) != 1L || !method %in% valid_methods) {
+    abort(
+      sprintf("Invalid fuzzy method '%s'. Valid methods: %s.",
+              paste(method, collapse = ", "), paste(valid_methods, collapse = ", ")),
+      class = "rcl_invalid_input", method = method
+    )
+  }
 
   if (!requireNamespace("stringdist", quietly = TRUE)) {
     abort(
@@ -131,7 +149,7 @@ build_name_reference <- function(target, md, language = "both") {
 #'
 #' @param name Input name to match
 #' @param ref Reference data.table from build_name_reference()
-#' @param max_dist Maximum relative distance
+#' @param max_dist Maximum relative distance in [0, 1]
 #' @param method String distance method
 #' @return data.table with match results
 #' @keywords internal
@@ -139,8 +157,13 @@ match_single_name <- function(name, ref, max_dist = 0.1, method = "jw") {
 
   name_norm <- normalize_name(name)
 
-  # Calculate string distances
-  distances <- stringdist::stringdist(name_norm, ref$ref_name_norm, method = method)
+  # Relative distance in [0, 1] for EVERY method (audit C6). stringsim() returns
+  # a normalised similarity (edit-count methods are divided by the longer string,
+  # so a 1-edit slip on a short name is a small relative distance, not an absolute
+  # 1 that always exceeds a 0.1 threshold). distance = 1 - similarity keeps the
+  # exact-match = 0 convention and, for the "jw" default, is identical to the old
+  # raw jw distance.
+  distances <- 1 - stringdist::stringsim(name_norm, ref$ref_name_norm, method = method)
 
   # Find best match(es)
   min_dist <- min(distances)

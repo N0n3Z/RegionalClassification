@@ -11,7 +11,7 @@ match_single_name(name, ref, max_dist = 0.1, method = "jw")
 
 \item{ref}{Reference data.table from build_name_reference()}
 
-\item{max_dist}{Maximum relative distance}
+\item{max_dist}{Maximum relative distance in [0, 1]}
 
 \item{method}{String distance method}
 }

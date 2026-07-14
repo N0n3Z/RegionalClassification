@@ -62,3 +62,35 @@ test_that("identify_from_names warns rcl_unmatched_codes when no match in any cl
     class = "rcl_unmatched_codes"
   )
 })
+
+# -- Test F8: relative distance is consistent across methods (audit C6) --------
+test_that("edit-count methods use a relative distance, not raw edit counts", {
+  skip_if_not_installed("stringdist")
+  # "Bruxeles" -> "Bruxelles" is a single-character insertion. With the old raw
+  # osa distance (= 1) this exceeded max_dist = 0.2 and was silently marked
+  # non-confident. As a relative distance (1 edit / 9 chars ~ 0.11) it is a
+  # confident match.
+  r <- fuzzy_match_names("Bruxeles", CLS_NIS_MUNICIPALITY_2019, master_data,
+                         max_dist = 0.2, method = "osa", language = "fr")
+  expect_equal(r$matched_code, "21004")
+  expect_true(r$is_confident)
+  expect_lt(r$distance, 0.2)
+  expect_gt(r$distance, 0)
+})
+
+test_that("exact match returns distance 0 for an edit-count method too", {
+  skip_if_not_installed("stringdist")
+  r <- fuzzy_match_names("Anderlecht", CLS_NIS_MUNICIPALITY_2019, master_data,
+                         method = "lv", language = "fr")
+  expect_equal(r$distance, 0)
+  expect_true(r$is_confident)
+})
+
+# -- Test F9: invalid method fails loudly --------------------------------------
+test_that("fuzzy_match_names rejects an unknown method with a typed error", {
+  expect_error(
+    fuzzy_match_names("Bruxelles", CLS_NIS_MUNICIPALITY_2019, master_data,
+                      method = "not_a_method"),
+    class = "rcl_invalid_input"
+  )
+})
