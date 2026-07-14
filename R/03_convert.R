@@ -356,6 +356,15 @@ route_conversion <- function(input_dt, from, to, md) {
 # is restored at the end.
 # Returns data.table(code_from, code_to) -- nature is not propagated across
 # multi-hop paths; .normalize_conversion_result() will set it to NA.
+#
+# Duplicate (code_from, code_to) rows within a single input occurrence are
+# collapsed (audit M1): a fan-out hop followed by a re-merging hop can map one
+# source to the SAME target via several intermediates (e.g. Verviers 63000 ->
+# {BE335, BE336} -> BE33, BE33). Those are one mapping counted twice; left in,
+# split_ambiguous() would treat the non-ambiguous target as ambiguous and halve
+# the value across identical rows. Dedup is keyed on the input row (.ord) so a
+# genuinely repeated input code still yields one row per occurrence, and distinct
+# targets of a true M:N fan-out (BE335 vs BE336) are preserved.
 .compose_via_handlers <- function(input_dt, from, to, md) {
   path <- .xw_path(from, to, md)
   if (is.null(path) || length(path) < 2L) return(NULL)
@@ -378,7 +387,7 @@ route_conversion <- function(input_dt, from, to, md) {
   }
 
   setorder(mapping, .ord)
-  mapping[, .(code_from, code_to = cur)]
+  unique(mapping[, .(.ord, code_from, code_to = cur)])[, .(code_from, code_to)]
 }
 
 #' List all available conversion paths
