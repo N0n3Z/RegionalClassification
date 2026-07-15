@@ -9,6 +9,7 @@
 #' source("main.R") workflow.
 #'
 #' @return Character path to the extdata directory
+#' @noRd
 .get_prebuilt_dir <- function() {
   pkg_dir <- tryCatch(
     system.file("extdata", package = "nbbbenuts", mustWork = FALSE),

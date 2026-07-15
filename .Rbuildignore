@@ -3,8 +3,6 @@
 ^main\.R$
 ^data/raw
 ^data/processed
-^tests/test_conversions\.R$
-^tests/test_template\.R$
 ^\.Rproj\.user$
 ^.*\.Rproj$
 ^README\.md$

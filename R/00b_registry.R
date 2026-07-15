@@ -174,7 +174,7 @@ CLASSIFICATION_NODES <- list(
   # ---- NUTS 2021 -------------------------------------------------------------
   # version_filter = VER_2019: NIS 2019 communes carry the 2021 NUTS columns.
   #
-  # NUTS_MUNICIPALITY_2021 (Eurostat LAU — Local Administrative Units): in Belgium,
+  # NUTS_MUNICIPALITY_2021 (Eurostat LAU -- Local Administrative Units): in Belgium,
   # LAU 2021 codes are in bijection with NIS 2019 commune codes -- same geographic
   # entities, same perimeter, with cd_nuts_lau == as.character(cd_commune) for all
   # mapped communes; 2 communes are absent from the Eurostat LAU file (cd_nuts_lau NA).
