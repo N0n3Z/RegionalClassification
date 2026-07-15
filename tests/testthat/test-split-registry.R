@@ -215,3 +215,48 @@ test_that("split_ambiguous falls back to equal weights when weights sum to zero"
   expect_equal(nrow(r), 2L)
   expect_equal(r$value, c(50, 50))  # equal split
 })
+
+# -- Coverage: weight NORMALISATION is actually exercised (audit blind spot) ---
+# Previous tests all supplied weights that already summed to 1, so the
+# normalisation step was a no-op everywhere. These use non-unit weights.
+test_that("normalize = TRUE rescales non-unit weights and preserves the total", {
+  dat <- data.table(arr = 63000L, val = 1000)
+  wts <- data.table(code_from = c("63000", "63000"),
+                    code_to   = c("BE335", "BE336"),
+                    weight    = c(2, 3))          # sum = 5, not 1
+  r <- suppressWarnings(
+    split_ambiguous(dat, "arr", value_cols = "val", from = CLS_NIS_DISTRICT_2019,
+                    to = CLS_NUTS_DISTRICT_2021, master_data = master_data,
+                    weights = wts, value_type = "additive")   # normalize = TRUE default
+  )
+  setkey(r, cd_nuts3_2021)
+  expect_equal(r[cd_nuts3_2021 == "BE335", val], 400)   # 2/5
+  expect_equal(r[cd_nuts3_2021 == "BE336", val], 600)   # 3/5
+  expect_equal(sum(r$val), 1000)                        # additive total preserved
+})
+
+test_that("normalize = FALSE applies raw weights (no rescaling)", {
+  dat <- data.table(arr = 63000L, val = 1000)
+  wts <- data.table(code_from = c("63000", "63000"),
+                    code_to   = c("BE335", "BE336"),
+                    weight    = c(2, 3))
+  r <- suppressWarnings(
+    split_ambiguous(dat, "arr", value_cols = "val", from = CLS_NIS_DISTRICT_2019,
+                    to = CLS_NUTS_DISTRICT_2021, master_data = master_data,
+                    weights = wts, value_type = "additive", normalize = FALSE)
+  )
+  setkey(r, cd_nuts3_2021)
+  expect_equal(r[cd_nuts3_2021 == "BE335", val], 2000)  # 1000 * 2
+  expect_equal(r[cd_nuts3_2021 == "BE336", val], 3000)  # 1000 * 3
+})
+
+test_that("additive split is sum-invariant with equal weights", {
+  # No weights -> equal weights; the additive total must be conserved exactly.
+  dat <- data.table(arr = c(63000L, 11000L), val = c(1000, 500))
+  r <- suppressWarnings(
+    split_ambiguous(dat, "arr", value_cols = "val", from = CLS_NIS_DISTRICT_2019,
+                    to = CLS_NUTS_DISTRICT_2021, master_data = master_data,
+                    value_type = "additive")
+  )
+  expect_equal(sum(r$val), 1500)   # 1000 (split across BE335/BE336) + 500
+})
