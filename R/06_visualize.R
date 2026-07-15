@@ -81,7 +81,9 @@ visualize_classification_graph <- function(highlight_from = NULL,
   })
   edges <- do.call(rbind, edges_list)
 
-  # Highlight specific path if requested
+  # Highlight if requested. Both endpoints -> highlight the path between them;
+  # a single endpoint -> highlight just that node (audit low: the documented
+  # single-argument example previously highlighted nothing, silently).
   if (!is.null(highlight_from) && !is.null(highlight_to)) {
     from_norm <- normalize_classification_id(highlight_from)
     to_norm <- normalize_classification_id(highlight_to)
@@ -106,6 +108,11 @@ visualize_classification_graph <- function(highlight_from = NULL,
         }
       }
     }
+  } else if (!is.null(highlight_from) || !is.null(highlight_to)) {
+    single <- normalize_classification_id(
+      if (!is.null(highlight_from)) highlight_from else highlight_to)
+    nodes$color[nodes$id == single]     <- "#F1C40F"
+    nodes$font.size[nodes$id == single] <- 18
   }
 
   # Create network
