@@ -12,6 +12,12 @@ NULL
 utils::globalVariables(c(
   # data.table special symbols
   ".", "N",
+  # md$crosswalks / md$entities column names (03_convert.R, 09_query.R)
+  "from_id", "to_id", "classification_id",
+  # list_available_conversions / get_conversion_matrix result columns
+  "perimeter_relation", "executable", "effectively_simple",
+  # data.table working columns (03_convert.R, 07_diagnose.R, 07_split_ambiguous.R)
+  ".n_to", ".prio", "value", "mass",
   # raw source column names (uppercase, from Statbel/Eurostat files)
   "CD_LAU", "CD_LVL", "CD_LVL_SUP", "CD_MUNTY_REFNIS",
   "C_BASE_CODE_ARCA", "C_OVER_CLIST_ARCA", "C_OVER_CODE_ARCA",
