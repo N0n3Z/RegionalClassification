@@ -125,3 +125,40 @@ test_that("POSTAL -> NUTS_DISTRICT_2027 still works after removing the POSTAL sp
   expect_equal(nrow(r), 2L)
   expect_true(all(!is.na(r$code_to)))
 })
+
+# -- M2: data-aware gate -- re-merging aggregations don't need allow_ambiguous --
+test_that("aggregations that re-merge through an overlap edge are effectively simple", {
+  # arrondissement -> NUTS province/region/country: the path crosses the Verviers
+  # 1:N edge, but both NUTS3 (BE335/BE336) nest in one NUTS2 (BE33), so every
+  # source yields exactly one target. These must convert WITHOUT allow_ambiguous.
+  r1 <- convert_codes(63000L, CLS_NIS_DISTRICT_2019, CLS_NUTS_PROVINCE_2021, master_data)
+  expect_equal(nrow(r1), 1L)
+  expect_equal(r1$code_to, "BE33")
+
+  r2 <- convert_codes(63000L, CLS_NIS_DISTRICT_2019, CLS_NUTS_COUNTRY, master_data)
+  expect_equal(r2$code_to, "BE")
+
+  # check_conversion_path(md) reports effectively_simple TRUE though is_simple FALSE.
+  pc <- check_conversion_path(CLS_NIS_DISTRICT_2019, CLS_NUTS_PROVINCE_2021, master_data)
+  expect_false(pc$is_simple)              # topological: path crosses an overlap edge
+  expect_true(pc$effectively_simple)      # data-aware: re-merges to one target
+})
+
+test_that("genuine 1:N routes stay blocked without allow_ambiguous (data-aware)", {
+  # Verviers -> NUTS3 genuinely fans out (BE335 != BE336): still ambiguous.
+  expect_error(
+    convert_codes(63000L, CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, master_data),
+    class = "rcl_ambiguous_conversion"
+  )
+  pc <- check_conversion_path(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, master_data)
+  expect_false(pc$effectively_simple)
+})
+
+test_that("get_conversion_matrix(md) exposes effectively_simple", {
+  mtx <- get_conversion_matrix(master_data)
+  expect_true("effectively_simple" %in% names(mtx))
+  # Every topologically simple route is also effectively simple.
+  expect_equal(nrow(mtx[is_simple == TRUE & effectively_simple == FALSE]), 0L)
+  # At least one route is effectively-but-not-topologically simple (the M2 wins).
+  expect_true(nrow(mtx[is_simple == FALSE & effectively_simple == TRUE & from != to]) > 0L)
+})

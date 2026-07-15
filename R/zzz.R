@@ -9,7 +9,7 @@ utils::globalVariables(c(
   # list_available_conversions result column (03_convert.R)
   "perimeter_relation",
   # get_conversion_matrix / visualize helpers
-  "is_simple", "status", "executable",
+  "is_simple", "status", "executable", "effectively_simple",
   # get_label / build_crosswalk_table helpers (09_query.R)
   "label", "weight", "w",
   # .normalize_conversion_result row-count helper (03_convert.R)
