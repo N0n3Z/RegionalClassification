@@ -5,7 +5,7 @@
 \alias{rc_full_municipalities_2025}
 \title{Complete communes dataset -- NIS 2025}
 \format{
-A `data.table` with 567 rows and 5 columns:
+A `data.table` with 565 rows and 5 columns:
 \describe{
   \item{cd_commune}{Integer. NIS 2025 commune code.}
   \item{population}{Integer. Resident population (fictional, 200--180 000).}
@@ -18,7 +18,7 @@ A `data.table` with 567 rows and 5 columns:
 rc_full_municipalities_2025
 }
 \description{
-One row per Belgian commune in the NIS 2025 classification (567 communes),
+One row per Belgian commune in the NIS 2025 classification (565 communes),
 with fictional but realistically-scaled socio-economic indicators.
 }
 \examples{
