@@ -196,10 +196,12 @@ normalize_classification_id <- function(class_id) {
         } else if (isTRUE(pc$straddle_free)) {
           dt[is.na(nature), nature := "RECODE"]
         } else {
-          # Crossing path (at least one overlap edge): classify per row based
-          # on whether this code_from produces multiple targets in the result.
-          # Rows with code_to = NA (unmatched codes) are left as NA.
-          dt[, .n_to := .N, by = code_from]
+          # Crossing path (at least one overlap edge): classify per row based on
+          # whether this code_from produces multiple DISTINCT targets in the
+          # result. uniqueN(code_to) (not .N) so a code passed twice -- or a path
+          # that yields the same target via several intermediates -- is not
+          # mislabelled OVERLAP. Rows with code_to = NA are left as NA.
+          dt[, .n_to := uniqueN(code_to), by = code_from]
           dt[is.na(nature) & !is.na(code_to) & .n_to >  1L, nature := "OVERLAP"]
           dt[is.na(nature) & !is.na(code_to) & .n_to <= 1L, nature := "RECODE"]
           dt[, .n_to := NULL]

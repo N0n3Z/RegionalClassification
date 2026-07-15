@@ -485,6 +485,22 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
     )
   }
 
+  # Warn for the mirror case: a changed commune whose constituents ALL lack a
+  # known NUTS_DISTRICT_2021 (n_distinct == 0). cd_nuts3 is NA here too, but for a
+  # different reason (no source, not conflict) -- surface it rather than dropping
+  # it silently (audit, low-severity).
+  missing_all <- agg[n_nuts3_distinct == 0L]
+  if (nrow(missing_all) > 0L) {
+    warn(
+      sprintf(
+        paste0("%d NIS 2025 commune(s) have no constituent 2019 commune with a known ",
+               "NUTS_DISTRICT_2021; cd_nuts3 set to NA for: %s"),
+        nrow(missing_all), paste(sort(missing_all$cd_commune_2025), collapse = ", ")
+      ),
+      class = "rcl_ambiguous_backfill"
+    )
+  }
+
   # --- Assemble full lookup: 2025 commune -> NUTS 2021 columns ---
   changed_lkp <- agg[, c("cd_commune_2025", nuts_cols), with = FALSE]
   setnames(changed_lkp, "cd_commune_2025", "cd_commune")

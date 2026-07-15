@@ -227,3 +227,15 @@ test_that("convert_codes multi-hop keeps nature = NA", {
   r <- convert_codes("BE211", CLS_NUTS_DISTRICT_2021, CLS_NUTS_REGION_2021, master_data)
   expect_true(is.na(r$nature))
 })
+
+# -- Low-severity: OVERLAP uses distinct targets, not row count ----------------
+test_that("a non-overlap code passed twice is RECODE, not mislabelled OVERLAP", {
+  # 11000 (Antwerp arr) maps to a single NUTS3. Passing it twice must not make
+  # .N > 1 flip it to OVERLAP: the classifier counts DISTINCT targets.
+  r <- suppressWarnings(
+    convert_codes(c(11000L, 11000L), CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                  master_data, allow_ambiguous = TRUE)
+  )
+  expect_equal(nrow(r), 2L)
+  expect_true(all(r$nature == "RECODE"))
+})
