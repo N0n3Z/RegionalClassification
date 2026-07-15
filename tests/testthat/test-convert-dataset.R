@@ -86,3 +86,16 @@ test_that("convert_dataset M:N branch drops unmatched codes with na_action = dro
   expect_equal(sum(is.na(r$cd_nuts3_2021)), 0L)
   expect_false(99999L %in% r$arr)
 })
+
+# -- default_col_name covers every classification (no verbose fallback) --------
+test_that("default_col_name returns a short valid name for every classification", {
+  for (cls in VALID_CLASSIFICATIONS) {
+    nm <- nbbbenuts:::default_col_name(cls)
+    expect_true(is.character(nm) && length(nm) == 1L && nzchar(nm))
+    # No node should fall through to the VERBOSE fallback that echoes the whole
+    # multi-word identifier (e.g. cd_nis_district_before_2019). Country/postal
+    # nodes have short names that coincide with the fallback formula -- allowed.
+    expect_false(grepl("_(district|province|region|municipality)_", nm),
+                 info = sprintf("%s -> verbose fallback name '%s'", cls, nm))
+  }
+})
