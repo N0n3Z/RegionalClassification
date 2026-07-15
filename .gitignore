@@ -16,3 +16,6 @@ docs_build/site/
 # Raw data (large, not versioned)
 data/raw/
 Rplots.pdf
+
+# LaTeX build artifact from DOCUMENTATION.pdf
+DOCUMENTATION.log
