@@ -19,7 +19,7 @@ rc_full_municipalities_2025
 }
 \description{
 One row per Belgian commune in the NIS 2025 classification (565 communes),
-with fictional but realistically-scaled socio-economic indicators.
+with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 }
 \examples{
 data(rc_full_municipalities_2025)

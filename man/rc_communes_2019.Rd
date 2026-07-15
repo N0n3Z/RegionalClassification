@@ -21,7 +21,7 @@ rc_communes_2019
 }
 \description{
 A small representative dataset of 12 Belgian communes using NIS 2019 codes,
-with fictional but realistic socio-economic indicators. Useful for testing
+with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics. Useful for testing
 and demonstrating `convert_codes()`, `convert_dataset()`, and
 `diagnose_classification()`.
 }

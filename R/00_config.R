@@ -434,7 +434,7 @@ CONVERSION_GRAPH_EDGES <- list(
        relation = "1:N", via = "derived",
        no_reverse = TRUE,
        ambiguous_codes = c(46029L, 46030L, 71072L),
-       coverage = "564/567 (99.5%)",
+       coverage = "562/565 (99.5%)",
        notes = paste0(
          "3 NIS 2025 communes (46029, 46030, 71072) fuse localities from different ",
          "NUTS_DISTRICT_2021 regions; each maps to N NUTS3 targets (1:N). ",

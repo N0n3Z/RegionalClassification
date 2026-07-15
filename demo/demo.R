@@ -16,7 +16,7 @@ library(data.table)
 
 master_data <- load_master_data()
 # > Master data loaded from '.../inst/extdata':
-# > 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+# > 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
 
 
 # ==============================================================================
@@ -49,6 +49,21 @@ print_conversion_check("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")
 is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")   # TRUE
 is_perimeter_preserving("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # FALSE (fusions 1:N)
 is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")  # TRUE (temporel)
+
+# --- Simplicite TOPOLOGIQUE vs EFFECTIVE (data-aware) --------------------------
+# En passant master_data, check_conversion_path expose deux champs supplementaires :
+#   executable          -- le moteur sait-il reellement executer la route ?
+#   effectively_simple  -- la route est-elle N:1/1:1 SUR LES DONNEES ? (une agregation
+#                          qui traverse une arete overlap mais re-converge vers une
+#                          seule cible par source est "effectivement simple")
+r <- check_conversion_path("NIS_DISTRICT_2019", "NUTS_PROVINCE_2021", master_data)
+r$is_simple            # FALSE : le chemin traverse l'arete 1:N Verviers (topologique)
+r$effectively_simple   # TRUE  : BE335 et BE336 nichent tous deux dans BE33 -> 1 cible
+r$executable           # TRUE
+
+# La matrice complete avec ces deux colonnes data-aware :
+get_conversion_matrix(master_data)[is_simple == FALSE & effectively_simple == TRUE]
+# -> les agregations deterministes que convert_codes() accepte sans allow_ambiguous
 
 # Toutes les conversions disponibles avec leur semantique de perimetre
 la <- list_available_conversions()
@@ -115,8 +130,8 @@ convert_codes(c(10000L, 20001L, 20002L, 4000L),
 # --- 2d. Conversions entre versions NIS (colonne nature) -----------------------
 #
 # Les conversions temporelles portent une colonne 'nature' :
-#   UNCHANGED   -- code inchange dans les deux versions (553 communes)
-#   FUSION      -- une ou plusieurs communes 2019 fusionnees en un code 2025
+#   UNCHANGED   -- code inchange dans les deux versions (551 communes)
+#   FUSION      -- une ou plusieurs communes 2019 fusionnees en un code 2025 (27)
 #   CHANGE_DSTR -- commune deplacee dans un autre arrondissement (2 communes)
 #   CHANGE_PROV -- commune deplacee dans une autre province (1 commune)
 
@@ -182,8 +197,8 @@ tryCatch(
   error = function(e) message("Sens inverse non direct : ", conditionMessage(e))
 )
 
-# --- 2f. Conversion ambigue -- arrondissement Verviers (M:N) --------------------
-# Par defaut, une erreur est levee pour les conversions ambigues
+# --- 2f. Conversion ambigue -- arrondissement Verviers (1:N) --------------------
+# Verviers -> NUTS3 est un VRAI eclatement (BE335 != BE336) : bloque par defaut.
 tryCatch(
   convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data),
   error = function(e) message("Erreur attendue : ", conditionMessage(e))
@@ -195,6 +210,18 @@ convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
 #    code_from  code_to  nature
 # 1:     63000   BE335   OVERLAP  (Arr. Verviers francophone)
 # 2:     63000   BE336   OVERLAP  (Arr. Verviers germanophone)
+
+# --- 2g. Agregation deterministe -- PAS besoin de allow_ambiguous ---------------
+# Meme si le chemin traverse l'arete 1:N Verviers, agreger vers un niveau plus
+# grossier ou BE335 et BE336 re-convergent (province BE33, region BE3, pays BE)
+# est deterministe : le gate data-aware l'autorise directement (audit M2).
+convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_PROVINCE_2021", master_data)
+#    code_from  code_to  nature
+# 1:     63000    BE33   RECODE   (une seule cible -> pas d'ambiguite)
+
+convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_COUNTRY", master_data)
+#    code_from  code_to  nature
+# 1:     63000      BE   RECODE
 
 
 # ==============================================================================
@@ -275,16 +302,17 @@ get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = 
 # 63000   BE335   0.5   (poids egaux par defaut)
 # 63000   BE336   0.5
 
-# Avec poids de population enregistres (voir section 8)
+# Avec des poids personnalises enregistres (voir section 8).
+# NB : 0.60/0.40 sont des valeurs FICTIVES d'illustration -- pas des poids officiels.
 register_split_weights(
   "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
   data.table(code_from = c(63000L, 63000L),
              code_to   = c("BE335", "BE336"),
-             weight    = c(0.857, 0.143))
+             weight    = c(0.60, 0.40))
 )
 get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
-# 63000   BE335   0.857
-# 63000   BE336   0.143
+# 63000   BE335   0.60
+# 63000   BE336   0.40
 clear_split_weights()
 
 
@@ -314,10 +342,24 @@ diag$unknown_codes   # data.table des codes non reconnus
 diagnose_classification(nuts3_data, "nuts3", master_data)
 # Classe toutes les classifications par taux de correspondance
 
+# --- 7c. Detection directe -- detect_classification() --------------------------
+# Renvoie le seul identifiant le plus probable (>= 80 % de correspondance).
+detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_MUNICIPALITY_2019"
+detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS_DISTRICT_2021"
+detect_classification(c("BE261", "BE262"),        master_data)  # "NUTS_DISTRICT_2027" (millesime 2027)
+detect_classification("BE",                       master_data)  # "NUTS_COUNTRY"
+detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
+
 
 # ==============================================================================
 # 8. Correspondances ponderees -- split_ambiguous() et registre de poids
 # ==============================================================================
+#
+# /!\ IMPORTANT : le package ne fournit AUCUN poids officiel. Toutes les valeurs
+#     de poids ci-dessous (p. ex. 0.60 / 0.40 pour Verviers) sont des EXEMPLES
+#     PUREMENT FICTIFS, a but d'illustration du mecanisme uniquement. Fournissez
+#     vos propres poids via register_split_weights() ou l'argument commune_values.
+#     Sans poids fournis, split_ambiguous() applique des poids EGAUX par defaut.
 
 # --- 8a. split_ambiguous() directement -----------------------------------------
 arr_data <- data.table(
@@ -357,8 +399,8 @@ tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_
 # 2:     63000    BE336     0.5
 
 # Remplacer par des poids de population
-tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
-tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
+tpl[code_from == "63000" & code_to == "BE335", weight := 0.60]
+tpl[code_from == "63000" & code_to == "BE336", weight := 0.40]
 
 # --- 8c. Registre de poids pour reutilisation ----------------------------------
 register_split_weights(
@@ -427,8 +469,8 @@ result_ratio <- rebase_series(
 # --- 9c. Split 1:N : donnees par arrondissement vers NUTS3 --------------------
 # Etape 1 : preparer les poids
 tpl2 <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
-tpl2[code_from == "63000" & code_to == "BE335", weight := 0.857]
-tpl2[code_from == "63000" & code_to == "BE336", weight := 0.143]
+tpl2[code_from == "63000" & code_to == "BE335", weight := 0.60]
+tpl2[code_from == "63000" & code_to == "BE336", weight := 0.40]
 
 # Etape 2 : enregistrer pour la session
 register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", tpl2,
@@ -451,8 +493,8 @@ result_1n <- rebase_series(
   master_data = master_data
   # split = "population" est la valeur par defaut
 )
-# BE335 : 120000 * 0.857 ~ 102840
-# BE336 : 120000 * 0.143 ~  17160
+# BE335 : 120000 * 0.60 ~ 72000
+# BE336 : 120000 * 0.40 ~  48000
 
 # Passage des poids directement (usage ponctuel sans registre)
 result_direct <- rebase_series(
@@ -491,12 +533,18 @@ withCallingHandlers(
 # 10. Datasets d'exemple complets
 # ==============================================================================
 #
+# /!\ IMPORTANT : ces datasets sont fournis UNIQUEMENT pour la demonstration et
+#     les tests. Les colonnes socio-economiques (population, emplois, masse_sal,
+#     taux_activite, ...) sont des valeurs PUREMENT FICTIVES generees
+#     aleatoirement -- ce ne sont PAS de vraies statistiques. Ne les utilisez
+#     jamais pour une analyse reelle ; chargez vos propres donnees.
+#
 # Le package inclut huit datasets prets a l'emploi :
 #
 #   Datasets propres (une ligne par unite geographique) :
-#     rc_full_municipalities_2019  -- 583 communes NIS 2019
-#     rc_full_municipalities_2025  -- 567 communes NIS 2025
-#     rc_full_districts_2019       -- 44 arrondissements NIS 2019
+#     rc_full_municipalities_2019  -- 581 communes NIS 2019
+#     rc_full_municipalities_2025  -- 565 communes NIS 2025
+#     rc_full_districts_2019       -- 43 arrondissements NIS 2019
 #     rc_full_regions_2019         -- 3 regions NIS 2019
 #     rc_full_nuts3_2021           -- 44 regions NUTS3 2021
 #     rc_full_nuts3_2027           -- 44 regions NUTS3 2027
@@ -595,6 +643,18 @@ check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")
 # $is_simple          FALSE
 # $perimeter_status   "crossing"
 # $straddle_free      FALSE
+
+# En passant master_data, on obtient aussi executable + effectively_simple :
+check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data)
+# $is_simple           FALSE
+# $executable          TRUE
+# $effectively_simple  FALSE   (3 fusions -> vraie ambiguite 1:N)
+
+# Route DECLAREE mais NON executable : le moteur n'inverse pas les aretes.
+tryCatch(
+  convert_codes("BE261", "NUTS_DISTRICT_2027", "NIS_MUNICIPALITY_2025", master_data),
+  rcl_no_route = function(e) message("Route non executable : ", conditionMessage(e))
+)
 
 # Reconstruire le snapshot depuis les fichiers bruts (si data/raw/ est disponible)
 # master_data <- rebuild_master_data()

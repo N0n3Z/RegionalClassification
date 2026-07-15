@@ -35,7 +35,7 @@ get_all_classification_nodes()
 library(nbbbenuts)
 master_data <- load_master_data()
 # Master data loaded from '.../inst/extdata':
-# 583 communes NIS 2019, 567 NIS 2025, 589 NIS BEFORE_2019
+# 581 communes NIS 2019, 565 NIS 2025, 589 NIS BEFORE_2019
 ```
 
 To rebuild the snapshot after updating raw source files in `data/raw/`:
@@ -97,14 +97,14 @@ Belgian communes are periodically reorganized. Three versions are supported:
 
 ```
 BEFORE_2019  -->  2019  -->  2025
-  591 comm.       583         567
+  589 comm.       581         565
 ```
 
 Temporal conversions return a `nature` column describing the type of change:
 
 | `nature`       | Meaning |
 |----------------|---------|
-| `UNCHANGED`    | Code persists unchanged (553 communes in 2019->2025) |
+| `UNCHANGED`    | Code persists unchanged (551 communes in 2019->2025) |
 | `FUSION`       | One or more communes merged into a single code |
 | `CHANGE_DSTR`  | Commune moved to a different arrondissement (2 communes) |
 | `CHANGE_PROV`  | Commune moved to a different province (1 commune) |
@@ -275,8 +275,8 @@ tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_
 #       63000    BE336     0.5
 
 # Step 2: fill in population-based weights
-tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
-tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
+tpl[code_from == "63000" & code_to == "BE335", weight := 0.60]
+tpl[code_from == "63000" & code_to == "BE336", weight := 0.40]
 
 # Step 3a: pass directly (one-off)
 arr_data <- data.table(year = 2022L, arr = 63000L, emploi = 120000)

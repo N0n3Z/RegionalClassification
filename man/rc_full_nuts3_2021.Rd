@@ -19,7 +19,7 @@ rc_full_nuts3_2021
 }
 \description{
 One row per Belgian NUTS3 region in the 2021 classification (44 regions),
-with fictional macroeconomic indicators. Covers all regions including BE335
+with FICTIONAL (randomly generated) macroeconomic indicators -- EXAMPLE/TEST data only, NOT real statistics. Covers all regions including BE335
 and BE336 (the two Verviers sub-regions).
 }
 \examples{

@@ -5,7 +5,7 @@
 #' Sample communes -- NIS 2019
 #'
 #' A small representative dataset of 12 Belgian communes using NIS 2019 codes,
-#' with fictional but realistic socio-economic indicators. Useful for testing
+#' with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics. Useful for testing
 #' and demonstrating `convert_codes()`, `convert_dataset()`, and
 #' `diagnose_classification()`.
 #'
@@ -34,7 +34,7 @@
 #' Sample communes -- NIS 2025
 #'
 #' A small representative dataset of 10 Belgian communes using NIS 2025 codes,
-#' with fictional but realistic socio-economic indicators.
+#' with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 #'
 #' @format A `data.table` with 10 rows and 7 columns:
 #' \describe{
@@ -153,7 +153,7 @@
 #' Complete communes dataset -- NIS 2019
 #'
 #' One row per Belgian commune in the NIS 2019 classification (581 communes),
-#' with fictional but realistically-scaled socio-economic indicators. Designed
+#' with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics. Designed
 #' for full-coverage conversion demonstrations and benchmark testing.
 #'
 #' @format A `data.table` with 581 rows and 5 columns:
@@ -182,7 +182,7 @@
 #' Complete communes dataset -- NIS 2025
 #'
 #' One row per Belgian commune in the NIS 2025 classification (565 communes),
-#' with fictional but realistically-scaled socio-economic indicators.
+#' with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 #'
 #' @format A `data.table` with 565 rows and 5 columns:
 #' \describe{
@@ -209,7 +209,7 @@
 #' Complete districts dataset -- NIS 2019
 #'
 #' One row per Belgian arrondissement (district) in the NIS 2019 classification
-#' (43 arrondissements), with fictional socio-economic indicators. Includes
+#' (43 arrondissements), with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics. Includes
 #' arrondissement 63000 (Verviers), the canonical ambiguous case that spans two
 #' NUTS3 regions (BE335 and BE336).
 #'
@@ -240,7 +240,7 @@
 #' Complete regions dataset -- NIS 2019
 #'
 #' One row per Belgian region in the NIS 2019 classification (3 regions:
-#' Flemish, Walloon, Brussels-Capital), with fictional socio-economic indicators.
+#' Flemish, Walloon, Brussels-Capital), with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 #'
 #' @format A `data.table` with 3 rows and 5 columns:
 #' \describe{
@@ -259,7 +259,7 @@
 #' Complete NUTS3 dataset -- 2021 classification
 #'
 #' One row per Belgian NUTS3 region in the 2021 classification (44 regions),
-#' with fictional macroeconomic indicators. Covers all regions including BE335
+#' with FICTIONAL (randomly generated) macroeconomic indicators -- EXAMPLE/TEST data only, NOT real statistics. Covers all regions including BE335
 #' and BE336 (the two Verviers sub-regions).
 #'
 #' @format A `data.table` with 44 rows and 5 columns:
@@ -287,7 +287,7 @@
 #' Complete NUTS3 dataset -- 2027 classification
 #'
 #' One row per Belgian NUTS3 region in the 2027 classification (44 regions,
-#' per EU Regulation 2026/195), with fictional macroeconomic indicators.
+#' per EU Regulation 2026/195), with FICTIONAL (randomly generated) macroeconomic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 #'
 #' @format A `data.table` with 44 rows and 5 columns:
 #' \describe{

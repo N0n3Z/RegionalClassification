@@ -56,6 +56,42 @@
 
 ## New features
 
+* **Data-aware conversion gate.** `check_conversion_path(from, to, md)` now
+  returns `executable` and `effectively_simple`, and `convert_codes()` /
+  `convert_dataset()` gate on `effectively_simple`. Aggregations that cross an
+  overlap edge but re-merge to a single target per source (e.g.
+  `NIS_DISTRICT_2019 -> NUTS_PROVINCE_2021`, where Verviers' two NUTS3 nest in one
+  NUTS2) no longer require `allow_ambiguous`. `get_conversion_matrix(md)` gains an
+  `executable`/`effectively_simple` column. `is_simple`/`straddle_free` stay
+  topological and unchanged.
+
+## Reliability & data-integrity fixes
+
+* **Graph <-> executor parity.** `convert_codes()` now gates on real
+  executability, so declared-but-unmaterialised de-aggregation routes fail with a
+  clear `rcl_no_route` instead of first advising `allow_ambiguous`. `.xw_path()`
+  is simple-first (deterministic path choice).
+* **Detection.** Character NUTS codes are matched against real reference sets, so
+  NUTS 2027 codes and the country code `BE` are detected correctly (previously
+  always the 2021 vintage).
+* **Fuzzy matching.** `fuzzy_match_names()` uses a relative distance for every
+  method, so `max_dist` is comparable across `jw`/`osa`/`lv`/... (an edit-count
+  method no longer silently marks near-matches as non-confident); `method` is
+  validated.
+* **Splitting.** Multi-hop composition de-duplicates re-merging rows (no more
+  double-counting); weight normalisation guards a zero sum; `convert_dataset()`
+  honours `na_action` and a type-robust join in the M:N branch.
+* **Longitudinal rebasing.** `rebase_series()` rejects overlapping `version_map`
+  periods (silent inflation guard).
+* **Build hardening.** `filter_at_date()`, orphaned-2025 handling, unique-key and
+  required-column assertions, robust column binding and postal-universe checks now
+  fail loudly instead of corrupting data silently.
+* **Example datasets regenerated** to match the current master (581/565/43),
+  removing spurious province codes; all socio-economic columns remain fictional
+  test data.
+
+## New features (continued)
+
 * **Crosswalks engine** (`get_crosswalk()`, `list_crosswalks()`): generates
   tidy crosswalk tables between any two supported classifications.  The result
   includes source code, target code, and a `nature` column that classifies

@@ -19,7 +19,7 @@ rc_full_nuts3_2027
 }
 \description{
 One row per Belgian NUTS3 region in the 2027 classification (44 regions,
-per EU Regulation 2026/195), with fictional macroeconomic indicators.
+per EU Regulation 2026/195), with FICTIONAL (randomly generated) macroeconomic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 }
 \examples{
 data(rc_full_nuts3_2027)
