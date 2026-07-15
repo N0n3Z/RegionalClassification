@@ -152,11 +152,11 @@
 
 #' Complete communes dataset -- NIS 2019
 #'
-#' One row per Belgian commune in the NIS 2019 classification (583 communes),
+#' One row per Belgian commune in the NIS 2019 classification (581 communes),
 #' with fictional but realistically-scaled socio-economic indicators. Designed
 #' for full-coverage conversion demonstrations and benchmark testing.
 #'
-#' @format A `data.table` with 583 rows and 5 columns:
+#' @format A `data.table` with 581 rows and 5 columns:
 #' \describe{
 #'   \item{cd_commune}{Integer. NIS 2019 commune code.}
 #'   \item{population}{Integer. Resident population (fictional, 200--180 000).}
@@ -181,10 +181,10 @@
 
 #' Complete communes dataset -- NIS 2025
 #'
-#' One row per Belgian commune in the NIS 2025 classification (567 communes),
+#' One row per Belgian commune in the NIS 2025 classification (565 communes),
 #' with fictional but realistically-scaled socio-economic indicators.
 #'
-#' @format A `data.table` with 567 rows and 5 columns:
+#' @format A `data.table` with 565 rows and 5 columns:
 #' \describe{
 #'   \item{cd_commune}{Integer. NIS 2025 commune code.}
 #'   \item{population}{Integer. Resident population (fictional, 200--180 000).}
@@ -209,11 +209,11 @@
 #' Complete districts dataset -- NIS 2019
 #'
 #' One row per Belgian arrondissement (district) in the NIS 2019 classification
-#' (44 arrondissements), with fictional socio-economic indicators. Includes
+#' (43 arrondissements), with fictional socio-economic indicators. Includes
 #' arrondissement 63000 (Verviers), the canonical ambiguous case that spans two
 #' NUTS3 regions (BE335 and BE336).
 #'
-#' @format A `data.table` with 44 rows and 5 columns:
+#' @format A `data.table` with 43 rows and 5 columns:
 #' \describe{
 #'   \item{cd_arr}{Integer. NIS 2019 arrondissement code.}
 #'   \item{population}{Integer. Resident population (fictional, 5 000--600 000).}

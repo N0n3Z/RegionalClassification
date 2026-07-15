@@ -5,7 +5,7 @@
 \alias{rc_full_districts_2019}
 \title{Complete districts dataset -- NIS 2019}
 \format{
-A `data.table` with 44 rows and 5 columns:
+A `data.table` with 43 rows and 5 columns:
 \describe{
   \item{cd_arr}{Integer. NIS 2019 arrondissement code.}
   \item{population}{Integer. Resident population (fictional, 5 000--600 000).}
@@ -19,7 +19,7 @@ rc_full_districts_2019
 }
 \description{
 One row per Belgian arrondissement (district) in the NIS 2019 classification
-(44 arrondissements), with fictional socio-economic indicators. Includes
+(43 arrondissements), with fictional socio-economic indicators. Includes
 arrondissement 63000 (Verviers), the canonical ambiguous case that spans two
 NUTS3 regions (BE335 and BE336).
 }
