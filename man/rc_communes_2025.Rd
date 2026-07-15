@@ -21,7 +21,7 @@ rc_communes_2025
 }
 \description{
 A small representative dataset of 10 Belgian communes using NIS 2025 codes,
-with fictional but realistic socio-economic indicators.
+with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 }
 \examples{
 data(rc_communes_2025)

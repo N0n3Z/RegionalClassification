@@ -19,7 +19,7 @@ rc_full_municipalities_2019
 }
 \description{
 One row per Belgian commune in the NIS 2019 classification (581 communes),
-with fictional but realistically-scaled socio-economic indicators. Designed
+with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics. Designed
 for full-coverage conversion demonstrations and benchmark testing.
 }
 \examples{

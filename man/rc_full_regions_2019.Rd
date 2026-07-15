@@ -19,7 +19,7 @@ rc_full_regions_2019
 }
 \description{
 One row per Belgian region in the NIS 2019 classification (3 regions:
-Flemish, Walloon, Brussels-Capital), with fictional socio-economic indicators.
+Flemish, Walloon, Brussels-Capital), with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics.
 }
 \examples{
 data(rc_full_regions_2019)

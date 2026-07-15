@@ -48,7 +48,7 @@ et a travers le temps. Il couvre quatre systemes :
 | **Interne** | `NBB_DISTRICT_2021` | `"21"` (Bxl), `"65"` (Verviers FR), `"66"` (Verviers DE) |
 
 Deux dimensions temporelles :
-- **NIS** : `BEFORE_2019` (591 communes), `2019` (583), `2025` (567) -- les communes
+- **NIS** : `BEFORE_2019` (589 communes), `2019` (581), `2025` (565) -- les communes
   fusionnent lors des reformes territoriales.
 - **NUTS** : `2021` (en vigueur) et `2027` (Reglement UE 2026/195).
 
@@ -58,7 +58,7 @@ Deux dimensions temporelles :
 - `convert_codes()` renvoie toujours un `data.table(code_from, code_to, nature)`.
 - Les conversions ambigues (1:N, M:N) sont bloquees par defaut ; `allow_ambiguous = TRUE`
   leve cette garde.
-- `devtools::test()` doit passer (FAIL 0 | WARN 0 | SKIP 8 | PASS 949) avant tout commit.
+- `devtools::test()` doit passer sans echec (`FAIL 0`) avant tout commit.
 
 ---
 
@@ -382,7 +382,7 @@ Si `weights = TRUE`, ajoute une colonne `weight` (utilise les poids enregistres 
 
 ```r
 cw <- get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
-# 583 lignes (une par commune 2019), avec code_from, code_to
+# 581 lignes (une par commune 2019), avec code_from, code_to
 
 get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
 # Colonne weight : 0.5/0.5 pour Verviers (63000) par defaut
@@ -435,8 +435,8 @@ tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_
 #     63000    BE335     0.5
 #     63000    BE336     0.5
 
-tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
-tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
+tpl[code_from == "63000" & code_to == "BE335", weight := 0.60]
+tpl[code_from == "63000" & code_to == "BE336", weight := 0.40]
 ```
 
 #### `register_split_weights(from, to, weights_dt, variable = "default")`
@@ -798,12 +798,13 @@ La reconstruction est necessaire uniquement apres modification des fichiers brut
 
 | Fichier | Contenu |
 |---------|---------|
-| `CONVERSION_NIS2019_NUTS2021.xlsx` | NIS 2019 vers NUTS 2021 (Statbel) |
-| `CONVERSION_NIS2025_NUTS2027.xlsx` | NIS 2025 vers NUTS 2027 (Statbel) |
-| `NIS_CHANGES.xlsx` | Transitions de version NIS (BEFORE_2019 -> 2019 -> 2025) avec nature |
-| `POSTAL_NIS.xlsx` | Codes postaux -> communes NIS |
-| `NUTS2021_LABELS.xlsx` | Libelles NUTS 2021 FR/NL |
-| `NUTS2027_LABELS.xlsx` | Libelles NUTS 2027 FR/NL |
+| `CONVERSION_NIS2019_NUTS2021.xlsx` | NIS 2019 vers NUTS 2021 (Statbel/Eurostat) |
+| `REFNIS_2025-NUTS_2027.xlsx` | NIS 2025 vers NUTS 2027 (Statbel) |
+| `REFNIS_2019.xls`, `REFNIS_2025.xlsx`, `REFNIS_BEFORE_2019.xls` | Hierarchies REFNIS par version |
+| `REFNIS_CHANGE_2025.xlsx` | Transitions NIS 2019 -> 2025 (avec nature) |
+| `REFNIS_CHANGE_BEFORE2019.xlsx` | Transitions NIS BEFORE_2019 -> 2019 (avec nature) |
+| `CONVERSION_POSTAL_NIS2019.xlsx`, `CONVERSION_POSTAL_NIS2025.xlsx` | Codes postaux -> communes NIS (filtre `KEEP_UNIQUE`) |
+| `NUTS_ARRONDISSEMENT.csv` | NUTS3 -> arrondissement interne (NBB) |
 
 ### Commandes
 
@@ -828,7 +829,13 @@ ne correspondent pas au registre `CLASSIFICATION_NODES`.
 ## 12. Datasets d'exemple
 
 Le package inclut huit `data.table` prets a l'emploi (charges avec `data()`).
-Toutes les valeurs socio-economiques sont **fictives** (generees par `set.seed(42)`).
+
+> **/!\ Donnees d'EXEMPLE / TEST uniquement.** Toutes les colonnes
+> socio-economiques (`population`, `emplois`, `masse_sal`, `taux_activite`, ...)
+> sont **PUREMENT FICTIVES**, generees aleatoirement (`set.seed(42)` dans
+> `data-raw/generate_example_datasets.R`). Ce ne sont **pas** de vraies
+> statistiques : elles servent uniquement a demontrer et tester l'API. Ne les
+> utilisez jamais pour une analyse reelle.
 
 ### Datasets propres (couverture complete)
 
@@ -837,9 +844,9 @@ la colonne code + `population`, `emplois`, `masse_sal`, `taux_activite`.
 
 | Dataset | Code col | N lignes | Classification |
 |---------|----------|----------|----------------|
-| `rc_full_municipalities_2019` | `cd_commune` | 583 | `NIS_MUNICIPALITY_2019` |
-| `rc_full_municipalities_2025` | `cd_commune` | 567 | `NIS_MUNICIPALITY_2025` |
-| `rc_full_districts_2019`      | `cd_arr`     |  44 | `NIS_DISTRICT_2019` |
+| `rc_full_municipalities_2019` | `cd_commune` | 581 | `NIS_MUNICIPALITY_2019` |
+| `rc_full_municipalities_2025` | `cd_commune` | 565 | `NIS_MUNICIPALITY_2025` |
+| `rc_full_districts_2019`      | `cd_arr`     |  43 | `NIS_DISTRICT_2019` |
 | `rc_full_regions_2019`        | `cd_region`  |   3 | `NIS_REGION_2019` |
 | `rc_full_nuts3_2021`          | `cd_nuts3`   |  44 | `NUTS_DISTRICT_2021` |
 | `rc_full_nuts3_2027`          | `cd_nuts3_2027` | 44 | `NUTS_DISTRICT_2027` |

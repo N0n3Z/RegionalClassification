@@ -19,7 +19,7 @@ rc_full_districts_2019
 }
 \description{
 One row per Belgian arrondissement (district) in the NIS 2019 classification
-(43 arrondissements), with fictional socio-economic indicators. Includes
+(43 arrondissements), with FICTIONAL (randomly generated) socio-economic indicators -- EXAMPLE/TEST data only, NOT real statistics. Includes
 arrondissement 63000 (Verviers), the canonical ambiguous case that spans two
 NUTS3 regions (BE335 and BE336).
 }

@@ -103,7 +103,7 @@ sum(result$masse_sal) == sum(emploi$masse_sal)  # TRUE
 weights_pop <- data.table(
   code_from = c(63000L, 63000L),
   code_to   = c("BE335", "BE336"),
-  weight    = c(0.857,   0.143)    # 85.7% FR, 14.3% DE
+  weight    = c(0.60,   0.40)    # valeurs FICTIVES d.illustration
 )
 
 result_weighted <- split_ambiguous(
@@ -151,15 +151,19 @@ result_ratio <- split_ambiguous(
 
 Pour réutiliser les mêmes poids dans plusieurs appels, enregistrez-les une fois pour la session.
 
+> **Le package ne fournit aucun poids officiel.** Les valeurs `0.60` / `0.40`
+> ci-dessous sont des exemples **fictifs** d'illustration — fournissez vos
+> propres poids. Sans poids, `split_ambiguous()` applique des poids **égaux**.
+
 ```{r register-weights}
-# Enregistrer les poids population pour Verviers
+# Enregistrer des poids personnalises (FICTIFS) pour Verviers
 register_split_weights(
   from     = "NIS_DISTRICT_2019",
   to       = "NUTS_DISTRICT_2021",
   weights_dt = data.table(
     code_from = c(63000L, 63000L),
     code_to   = c("BE335", "BE336"),
-    weight    = c(0.857,   0.143)
+    weight    = c(0.60,   0.40)   # valeurs fictives -- remplacez par les votres
   ),
   variable = "population"
 )

@@ -10,7 +10,7 @@ Belgian administrative data uses multiple overlapping classification systems tha
 
 | System | Identifiers |
 |--------|-------------|
-| **NIS communes** | `NIS_MUNICIPALITY_BEFORE_2019` (589), `NIS_MUNICIPALITY_2019` (583), `NIS_MUNICIPALITY_2025` (567) |
+| **NIS communes** | `NIS_MUNICIPALITY_BEFORE_2019` (589), `NIS_MUNICIPALITY_2019` (581), `NIS_MUNICIPALITY_2025` (565) |
 | **NIS arrondissements** | `NIS_DISTRICT_BEFORE_2019`, `_2019`, `_2025` |
 | **NIS provinces** | `NIS_PROVINCE_BEFORE_2019`, `_2019`, `_2025` |
 | **NIS regions** | `NIS_REGION_BEFORE_2019`, `_2019`, `_2025` |
@@ -91,22 +91,26 @@ convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
 
 # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 is 1:N:
 # 3 communes (46029, 46030, 71072) fuse localities from different NUTS3 regions.
-# check_conversion_path() reports Coverage: 564/567 (99.5%) and the 3 ambiguous codes.
+# check_conversion_path() reports Coverage: 562/565 (99.5%) and the 3 ambiguous codes.
 convert_codes(c(21001L, 46029L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
               allow_ambiguous = TRUE)
 ```
 
 ### Weighted splits for ambiguous conversions
 
+> **The package ships NO official weights.** The values below (`0.60` / `0.40`)
+> are **fictional, illustrative placeholders** for the mechanism only. Supply your
+> own weights via `register_split_weights()` or `split_ambiguous(weights = ...)`.
+> With no weights supplied, `split_ambiguous()` falls back to **equal** weights.
+
 ```r
-# Register population weights for the Verviers split
+# Register CUSTOM (illustrative) weights for the Verviers split
 wts <- data.table(
   code_from = c(63000L, 63000L),
   code_to   = c("BE335", "BE336"),
-  weight    = c(0.857, 0.143)
+  weight    = c(0.60, 0.40)   # FICTIONAL -- replace with your own
 )
-register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
-                       variable = "population", weights = wts)
+register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", wts)
 
 # Apply to a dataset
 split_ambiguous(my_data, "arr_code",
@@ -123,7 +127,7 @@ Belgian communes are reorganised through periodic mergers and administrative tra
 
 ```
 BEFORE_2019 ──[REFNIS_CHANGE_BEFORE2019]──► 2019 ──[REFNIS_CHANGE_2025]──► 2025
-   589 communes                               583                             567
+   589 communes                               581                             565
 ```
 
 The `nature` column in `convert_codes()` output tracks how each commune changed:
@@ -159,9 +163,13 @@ convert_dataset(dt, code_col = "commune", to = "NUTS_DISTRICT_2021", master_data
 # Diagnose coverage of an existing column
 diagnose_classification(dt, "commune", master_data)
 
-# Rebase a time series across NIS versions
-rebase_series(panel, code_col = "nis_code", from_version = "2019",
-              to_version = "2025", master_data = master_data)
+# Rebase a time series across NIS versions onto a single target version.
+# version_map assigns each period to its source classification.
+rebase_series(panel, period_col = "year", code_col = "commune",
+              value_cols = "population",
+              version_map = list("NIS_MUNICIPALITY_2019" = 2022L,
+                                 "NIS_MUNICIPALITY_2025" = 2025L),
+              to = "NIS_MUNICIPALITY_2025", master_data = master_data)
 ```
 
 ## Reference Functions
