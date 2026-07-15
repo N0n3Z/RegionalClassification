@@ -11,6 +11,7 @@
 #' @param dt   data.table from a postal conversion file
 #' @param label File name used in error messages
 #' @return data.table(cd_postal, cd_commune_nis, tx_postal_name_fr, tx_postal_name_nl)
+#' @noRd
 .extract_postal_map <- function(dt, label = "postal file") {
   .find_col <- function(pattern, role) {
     cols <- grep(pattern, names(dt), value = TRUE, ignore.case = TRUE)

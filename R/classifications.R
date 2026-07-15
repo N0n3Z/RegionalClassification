@@ -129,7 +129,7 @@
 #' two targets (1:N). The reverse NUTS_DISTRICT -> NIS_DISTRICT is N:1 (simple).
 #'
 #' **Note on NUTS level naming (Belgium-specific):** In this package NUTS_PROVINCE
-#' corresponds to NUTS2 and NUTS_REGION to NUTS1 — terminology chosen to match the
+#' corresponds to NUTS2 and NUTS_REGION to NUTS1 -- terminology chosen to match the
 #' Belgian administrative vocabulary. These names are not universal NUTS conventions.
 #'
 #' Multi-step paths (e.g. `POSTAL` -> `NIS_REGION_2019`) are resolved
