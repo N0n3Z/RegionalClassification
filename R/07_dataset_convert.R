@@ -87,11 +87,11 @@ convert_dataset <- function(
     target_col <- default_col_name(to_norm)
   }
 
-  # --- Check conversion path ---
-  path_info <- check_conversion_path(from_norm, to_norm)
+  # --- Check conversion path (data-aware gate, audit M2) ---
+  path_info <- check_conversion_path(from_norm, to_norm, master_data)
   if (verbose) print_conversion_check(from_norm, to_norm)
 
-  if (!path_info$is_simple && !allow_ambiguous) {
+  if (!isTRUE(path_info$effectively_simple) && !allow_ambiguous) {
     abort(
       sprintf("Conversion '%s' -> '%s' is NOT simple. Use allow_ambiguous = TRUE or split_ambiguous() for weighted splitting.",
               from_norm, to_norm),

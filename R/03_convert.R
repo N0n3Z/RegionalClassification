@@ -72,9 +72,13 @@ convert_codes <- function(codes, from, to, master_data,
     )
   }
 
-  path_info <- check_conversion_path(from_norm, to_norm)
+  # Gate on DATA-aware simplicity (audit M2), not the topological is_simple: a
+  # route that crosses an overlap edge but re-merges to a single target per source
+  # (e.g. arrondissement -> NUTS province) is deterministic and no longer needs
+  # allow_ambiguous. Genuine 1:N/M:N routes still block.
+  path_info <- check_conversion_path(from_norm, to_norm, master_data)
 
-  if (!path_info$is_simple && !allow_ambiguous) {
+  if (!isTRUE(path_info$effectively_simple) && !allow_ambiguous) {
     abort(
       sprintf(paste0("Conversion from '%s' to '%s' is NOT a simple (direct) conversion.\n",
                      "Use allow_ambiguous = TRUE to force conversion with all possible mappings."),
@@ -278,6 +282,43 @@ route_conversion <- function(input_dt, from, to, md) {
 .route_is_executable <- function(from, to, md) {
   if (from == to) return(TRUE)
   !is.null(.xw_path(from, to, md))
+}
+
+# EFFECTIVE cardinality of a route, measured from the crosswalk DATA (audit M2):
+# the maximum number of DISTINCT non-NA targets any single source code produces
+# once the route is fully composed. 1 means the route is functionally N:1/1:1
+# even if its declared path traverses an overlap edge whose split targets
+# re-merge into one coarser target (e.g. arrondissement Verviers 63000 ->
+# {BE335, BE336} -> province BE33). Cached per crosswalk row-count + pair.
+# Returns NA when the route yields no target at all.
+.route_effective_cardinality <- function(from, to, md) {
+  if (from == to) return(1L)
+  key <- paste0("effcard_", nrow(md$crosswalks), "_", from, "__", to)
+  if (exists(key, envir = .route_cache, inherits = FALSE))
+    return(get(key, envir = .route_cache))
+  src <- tryCatch(.list_codes_for(from, md), error = function(e) NULL)
+  val <- NA_integer_
+  if (!is.null(src) && length(src) > 0L) {
+    r <- tryCatch(
+      suppressWarnings(route_conversion(data.table(code_from = src), from, to, md)),
+      error = function(e) NULL)
+    if (!is.null(r)) {
+      rr <- r[!is.na(code_to)]
+      if (nrow(rr) > 0L)
+        val <- max(rr[, uniqueN(code_to), by = code_from]$V1)
+    }
+  }
+  assign(key, val, envir = .route_cache)
+  val
+}
+
+# TRUE when the route is functionally deterministic (no source fans out) on the
+# actual data -- the gating criterion that lets re-merging aggregations through
+# without allow_ambiguous, while genuine 1:N/M:N routes stay blocked (audit M2).
+.route_is_effectively_simple <- function(from, to, md) {
+  if (from == to) return(TRUE)
+  ec <- .route_effective_cardinality(from, to, md)
+  !is.na(ec) && ec <= 1L
 }
 
 # Adjacency built exclusively from md$crosswalks unique (from_id, to_id) pairs.

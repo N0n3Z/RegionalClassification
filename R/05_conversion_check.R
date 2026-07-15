@@ -69,13 +69,23 @@
 #'     is \code{"preserving"}.}
 #' }
 #' @param md Optional master data (from \code{load_master_data()}).  When
-#'   supplied, the result gains an \code{executable} field reporting whether the
-#'   conversion engine can actually run this route (a lookup / composition over
-#'   \code{md$crosswalks}).  This matters because the declared graph auto-inverts
-#'   edges and therefore advertises some coarse-to-fine de-aggregation routes the
-#'   executor never materialises; \code{executable} tells them apart.  When
-#'   \code{md} is \code{NULL} (default) the result describes the declared graph
-#'   only and \code{executable} is absent.
+#'   supplied, the result gains two data-aware fields:
+#'   \describe{
+#'     \item{executable}{Whether the engine can actually run this route (a lookup
+#'       / composition over \code{md$crosswalks}).  The declared graph auto-inverts
+#'       edges and so advertises some coarse-to-fine de-aggregation routes the
+#'       executor never materialises; this tells them apart.}
+#'     \item{effectively_simple}{Whether the route is functionally \code{N:1}/
+#'       \code{1:1} on the actual data -- \code{TRUE} for topologically simple
+#'       routes and also for routes that cross an overlap edge whose split targets
+#'       re-merge into one coarser target (e.g. arrondissement Verviers ->
+#'       NUTS province, where both NUTS3 nest in the same NUTS2).  This is the
+#'       criterion \code{convert_codes()} gates on, so such aggregations no longer
+#'       require \code{allow_ambiguous}.  \code{is_simple} and \code{straddle_free}
+#'       stay topological and unchanged.}
+#'   }
+#'   When \code{md} is \code{NULL} (default) the result describes the declared
+#'   graph only and both fields are absent.
 #' @seealso \code{\link{is_perimeter_preserving}} for a simple logical wrapper,
 #'   \code{\link{print_conversion_check}} for a human-readable summary.
 #' @examples
@@ -93,9 +103,18 @@ check_conversion_path <- function(from, to, md = NULL) {
   from_norm <- normalize_classification_id(from)
   to_norm <- normalize_classification_id(to)
 
-  # Optionally report whether the executor can actually run this route.
+  # Optionally report executability and DATA-aware simplicity (audit C1, M2).
   add_exec <- function(res) {
-    if (!is.null(md)) res$executable <- .route_is_executable(from_norm, to_norm, md)
+    if (!is.null(md)) {
+      res$executable <- .route_is_executable(from_norm, to_norm, md)
+      # effectively_simple: functionally N:1/1:1 on the actual data. TRUE for any
+      # topologically-simple route (short-circuit, no probe), and also for routes
+      # that traverse an overlap edge whose split targets re-merge into one coarser
+      # target (e.g. arrondissement -> NUTS province). is_simple/straddle_free stay
+      # topological and unchanged.
+      res$effectively_simple <-
+        isTRUE(res$is_simple) || .route_is_effectively_simple(from_norm, to_norm, md)
+    }
     res
   }
 
@@ -456,6 +475,8 @@ get_conversion_matrix <- function(md = NULL) {
   if (!is.null(md)) {
     results[, executable := from == to |
               mapply(.route_is_executable, from, to, MoreArgs = list(md = md))]
+    results[, effectively_simple := is_simple |
+              mapply(.route_is_effectively_simple, from, to, MoreArgs = list(md = md))]
   }
 
   return(results)
