@@ -355,11 +355,12 @@ detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
 # 8. Correspondances ponderees -- split_ambiguous() et registre de poids
 # ==============================================================================
 #
-# /!\ IMPORTANT : le package ne fournit AUCUN poids officiel. Toutes les valeurs
-#     de poids ci-dessous (p. ex. 0.60 / 0.40 pour Verviers) sont des EXEMPLES
-#     PUREMENT FICTIFS, a but d'illustration du mecanisme uniquement. Fournissez
-#     vos propres poids via register_split_weights() ou l'argument commune_values.
-#     Sans poids fournis, split_ambiguous() applique des poids EGAUX par defaut.
+# Le package LIVRE des poids POPULATION standard (communes NIS 2019, 2011-2024) :
+# variable = "population" fonctionne cle-en-main (voir 8b). Sans poids fournis,
+# split_ambiguous() applique des poids EGAUX par defaut.
+# NB : les quelques valeurs de poids ECRITES A LA MAIN plus bas (p. ex. 0.60/0.40
+# pour Verviers) restent des exemples illustratifs -- pour de vrais poids, utilisez
+# variable = "population" ou fournissez les votres via commune_values.
 
 # --- 8a. split_ambiguous() directement -----------------------------------------
 arr_data <- data.table(
@@ -393,28 +394,47 @@ split_ambiguous(
 )
 
 # --- 8b. Template de poids -- split_weights_template() -------------------------
+# Par defaut : poids EGAUX.
 tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
 #    code_from  code_to  weight
 # 1:     63000    BE335     0.5
 # 2:     63000    BE336     0.5
 
-# Remplacer par des poids de population
+# Poids POPULATION livres (cle-en-main) -- annee la plus recente par defaut :
+tpl_pop <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                                  master_data, variable = "population")
+#    code_from  code_to     weight
+# 1:     63000    BE335   ~0.73     (part francophone reelle)
+# 2:     63000    BE336   ~0.27     (part germanophone reelle)
+
+# Choisir une annee de reference (retropolation period-consistent) :
+tpl_2015 <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                                   master_data, variable = "population", weight_year = 2015L)
+
+# split_ambiguous / rebase_series acceptent directement weights = "population" :
+split_ambiguous(arr_data, "arr_code", value_cols = "total_wage",
+                from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
+                master_data, weights = "population", value_type = "additive")
+
+# Ou des valeurs ecrites a la main (ILLUSTRATIF -- non officiel) :
 tpl[code_from == "63000" & code_to == "BE335", weight := 0.60]
 tpl[code_from == "63000" & code_to == "BE336", weight := 0.40]
 
-# --- 8c. Registre de poids pour reutilisation ----------------------------------
+# --- 8c. Registre de poids personnalises pour reutilisation --------------------
+# NB : on enregistre sous un nom DISTINCT ("population_custom") pour ne pas
+# masquer le standard "population" livre.
 register_split_weights(
   from       = "NIS_DISTRICT_2019",
   to         = "NUTS_DISTRICT_2021",
   weights_dt = tpl,
-  variable   = "population"
+  variable   = "population_custom"
 )
 
 list_split_weights()
-#           from            to  variable
-# NIS_DISTRICT_2019  NUTS_DISTRICT_2021  population
+#           from            to           variable
+# NIS_DISTRICT_2019  NUTS_DISTRICT_2021  population_custom
 
-get_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", variable = "population")
+get_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", variable = "population_custom")
 
 clear_split_weights()
 
@@ -467,22 +487,14 @@ result_ratio <- rebase_series(
 # commune 11002 : taux = mean(0.62, 0.58) = 0.60
 
 # --- 9c. Split 1:N : donnees par arrondissement vers NUTS3 --------------------
-# Etape 1 : preparer les poids
-tpl2 <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
-tpl2[code_from == "63000" & code_to == "BE335", weight := 0.60]
-tpl2[code_from == "63000" & code_to == "BE336", weight := 0.40]
-
-# Etape 2 : enregistrer pour la session
-register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", tpl2,
-                       variable = "population")
-
-# Etape 3 : rebase
 arr_panel <- data.table(
   year    = c(2020L, 2021L, 2020L, 2021L),
   arr     = c(63000L, 63000L, 11000L, 11000L),
   emplois = c(120000, 122000, 310000, 315000)
 )
 
+# split = "population" (defaut) utilise le STANDARD POPULATION livre -- aucun
+# enregistrement de poids necessaire.
 result_1n <- rebase_series(
   arr_panel,
   period_col  = "year",
@@ -493,10 +505,13 @@ result_1n <- rebase_series(
   master_data = master_data
   # split = "population" est la valeur par defaut
 )
-# BE335 : 120000 * 0.60 ~ 72000
-# BE336 : 120000 * 0.40 ~  48000
+# Verviers 120000 reparti selon les parts de population reelles :
+# BE335 ~ 120000 * 0.73 ; BE336 ~ 120000 * 0.27
 
-# Passage des poids directement (usage ponctuel sans registre)
+# Passage de poids PERSONNALISES directement (usage ponctuel sans registre) :
+tpl2 <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
+tpl2[code_from == "63000" & code_to == "BE335", weight := 0.60]   # valeurs fictives
+tpl2[code_from == "63000" & code_to == "BE336", weight := 0.40]
 result_direct <- rebase_series(
   arr_panel,
   period_col  = "year",
@@ -507,8 +522,6 @@ result_direct <- rebase_series(
   master_data = master_data,
   split       = tpl2
 )
-
-clear_split_weights()
 
 # --- 9d. Periodes non couvertes -- warning rcl_missing_periods -----------------
 data_mixed <- data.table(year = 2022:2024, commune = 21004L, pop = c(1, 2, 3))

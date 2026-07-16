@@ -98,17 +98,34 @@ convert_codes(c(21001L, 46029L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", 
 
 ### Weighted splits for ambiguous conversions
 
-> **The package ships NO official weights.** The values below (`0.60` / `0.40`)
-> are **fictional, illustrative placeholders** for the mechanism only. Supply your
-> own weights via `register_split_weights()` or `split_ambiguous(weights = ...)`.
-> With no weights supplied, `split_ambiguous()` falls back to **equal** weights.
+The package **ships standard population weights** (NIS 2019 communes, 2011–2024),
+so proportional splits work out of the box — no registration needed:
 
 ```r
-# Register CUSTOM (illustrative) weights for the Verviers split
+# Population-weighted splits (most recent year by default)
+split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
+                       variable = "population")
+#   63000  BE335  ~0.73   (real francophone share)
+#   63000  BE336  ~0.27   (real germanophone share)
+
+# split_ambiguous / rebase_series accept weights = "population" directly;
+# weight_year = 2015L picks a reference year for period-consistent weights.
+split_ambiguous(my_data, "arr_code", value_cols = "total_wage",
+                from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
+                master_data = master_data, weights = "population",
+                value_type = "additive")
+```
+
+For a **custom** variable or your own values, register them (or pass a table).
+With no weights and no shipped standard, `split_ambiguous()` falls back to
+**equal** weights.
+
+```r
+# Custom weights (the 0.60/0.40 here are illustrative placeholders)
 wts <- data.table(
   code_from = c(63000L, 63000L),
   code_to   = c("BE335", "BE336"),
-  weight    = c(0.60, 0.40)   # FICTIONAL -- replace with your own
+  weight    = c(0.60, 0.40)
 )
 register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", wts)
 
