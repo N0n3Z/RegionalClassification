@@ -9,7 +9,7 @@
   assigned a synthetic **pseudo-province `4000`** (equal to its region code, as
   it has no statutory province). Any code keyed on `20000` must be updated.
   Caveat: a bare `4000` cannot be auto-detected as province vs region; pass an
-  explicit classification. See `docs/PROVINCE_REGION_NESTING.md`.
+  explicit classification. See `PROVINCE_REGION_NESTING.md`.
 
 * **`NIS_PROVINCE_* -> NIS_REGION_*` is now `N:1` (nesting), not `M:N`.** Each
   province nests in exactly one region, so the conversion no longer requires
