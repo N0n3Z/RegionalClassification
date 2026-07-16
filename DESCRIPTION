@@ -1,6 +1,6 @@
 Package: nbbbenuts
 Title: Belgian Geographic Classification Converter
-Version: 0.2.0
+Version: 1.1.0
 Authors@R:
     person("N0n3Z", role = c("aut", "cre"),
            email = "n0n3z@users.noreply.github.com")

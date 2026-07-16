@@ -1,3 +1,17 @@
+# nbbbenuts 1.1.0
+
+## Improvements
+
+* `convert_codes()` and `convert_dataset()` now auto-print their result at the
+  top level. Previously a bare `convert_codes(...)` call (result not assigned)
+  echoed nothing the first time, a consequence of data.table's modify-by-
+  reference print-suppression (FAQ 2.23); the returned tables now reset that
+  flag so results display as expected in interactive and demo use.
+
+* The bundled demonstration script (`demo/demo.R`) is now fully in English
+  (comments and messages).
+
+
 # nbbbenuts 0.2.0
 
 ## Breaking changes
