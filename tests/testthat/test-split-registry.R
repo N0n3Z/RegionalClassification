@@ -260,3 +260,52 @@ test_that("additive split is sum-invariant with equal weights", {
   )
   expect_equal(sum(r$val), 1500)   # 1000 (split across BE335/BE336) + 500
 })
+
+# -- Shipped standard population weights (variable = "population") -------------
+test_that("population weights load, are non-equal, and sum to 1 per code_from", {
+  tpl <- split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                                master_data, variable = "population")
+  v <- tpl[code_from == "63000"]
+  expect_equal(nrow(v), 2L)
+  expect_setequal(v$code_to, c("BE335", "BE336"))
+  expect_lt(abs(sum(v$weight) - 1), 1e-9)
+  expect_false(isTRUE(all.equal(v$weight, c(0.5, 0.5))))  # real shares, not equal
+})
+
+test_that("weight_year selects a shipped year (default = most recent)", {
+  latest <- split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                                   master_data, variable = "population")
+  y2011  <- split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                                   master_data, variable = "population", weight_year = 2011L)
+  # Both valid distributions; the years differ so at least the Verviers share moves.
+  w_latest <- latest[code_from == "63000" & code_to == "BE335", weight]
+  w_2011   <- y2011[code_from == "63000" & code_to == "BE335", weight]
+  expect_false(isTRUE(all.equal(w_latest, w_2011)))
+})
+
+test_that("an unshipped year raises rcl_data_missing", {
+  expect_error(
+    split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
+                           master_data, variable = "population", weight_year = 1999L),
+    class = "rcl_data_missing"
+  )
+})
+
+test_that("split_ambiguous(weights = 'population') uses the shipped standard end-to-end", {
+  dat <- data.table(arr = 63000L, emploi = 100000)
+  r <- split_ambiguous(dat, "arr", value_cols = "emploi",
+                       from = CLS_NIS_DISTRICT_2019, to = CLS_NUTS_DISTRICT_2021,
+                       master_data = master_data, weights = "population",
+                       value_type = "additive", verbose = FALSE)
+  expect_equal(nrow(r), 2L)
+  expect_equal(sum(r$emploi), 100000)                 # additive total preserved
+  expect_gt(r[cd_nuts3_2021 == "BE335", emploi],      # francophone share is larger
+            r[cd_nuts3_2021 == "BE336", emploi])
+})
+
+test_that("population weights also cover the NUTS3 2021->2027 aggregate edge", {
+  tpl <- split_weights_template(CLS_NUTS_DISTRICT_2021, CLS_NUTS_DISTRICT_2027,
+                                master_data, variable = "population")
+  expect_gt(nrow(tpl), 0L)
+  expect_true(all(abs(tpl[, sum(weight), by = code_from]$V1 - 1) < 1e-9))
+})
