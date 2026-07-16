@@ -172,7 +172,7 @@ parse_refnis_hierarchy <- function(refnis_dt,
   # 4000 directly), so we add a province row whose code equals the region code
   # (NIS_PROVINCE_BRUSSELS = 4000) and whose label mirrors the region.  This is
   # what makes province -> region a clean N:1 nesting (see 00_config.R and
-  # docs/PROVINCE_REGION_NESTING.md).
+  # PROVINCE_REGION_NESTING.md).
   bxl_region_row <- result$regions[cd_refnis == NIS_PROVINCE_BRUSSELS]
   if (nrow(bxl_region_row) > 0L &&
       !(NIS_PROVINCE_BRUSSELS %in% result$provinces$cd_refnis)) {

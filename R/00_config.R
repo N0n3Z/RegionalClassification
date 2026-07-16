@@ -490,7 +490,7 @@ NIS_PROVINCE_WALLOON_BRABANT <- 20002L  # Brabant wallon  -> Walloon region
 # province -> region a clean N:1 nesting, Brussels communes are assigned a
 # PSEUDO-PROVINCE whose code equals the region code (4000).  This is a synthetic
 # convention of this package, NOT an official NIS code; it is injected during
-# parsing (see 01_load_data.R) and documented in docs/PROVINCE_REGION_NESTING.md.
+# parsing (see 01_load_data.R) and documented in PROVINCE_REGION_NESTING.md.
 # Caveat: 4000 collides numerically with the Brussels REGION code, so a bare
 # 4000 cannot be auto-distinguished between province and region (the conversion
 # API is unaffected -- it takes explicit from/to classifications).
