@@ -147,16 +147,38 @@ result_ratio <- split_ambiguous(
 
 ---
 
-## 4. Registre de poids — `register_split_weights()`
+## 4. Poids population livrés (`variable = "population"`)
 
-Pour réutiliser les mêmes poids dans plusieurs appels, enregistrez-les une fois pour la session.
+Le package **livre** des poids population standard (communes NIS 2019, 2011–2024),
+donc le splitting proportionnel marche **clé-en-main**, sans rien enregistrer :
 
-> **Le package ne fournit aucun poids officiel.** Les valeurs `0.60` / `0.40`
-> ci-dessous sont des exemples **fictifs** d'illustration — fournissez vos
-> propres poids. Sans poids, `split_ambiguous()` applique des poids **égaux**.
+```{r shipped-population}
+# Poids population dérivés automatiquement (année la plus récente par défaut)
+split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                       master_data, variable = "population")
+#   63000  BE335  ~0.73   (part francophone réelle)
+#   63000  BE336  ~0.27   (part germanophone réelle)
+
+# Choisir une année de référence (rétropolation period-consistent)
+split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                       master_data, variable = "population", weight_year = 2015L)
+
+# split_ambiguous / rebase_series acceptent directement weights = "population"
+split_ambiguous(emploi, "arr_code", value_cols = "masse_sal",
+                from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
+                master_data, weights = "population")
+```
+
+Sans poids fournis (et sans standard pour la variable demandée),
+`split_ambiguous()` applique des poids **égaux**.
+
+## 5. Registre de poids personnalisés — `register_split_weights()`
+
+Pour des poids **personnalisés** (autre variable, ou vos propres valeurs),
+enregistrez-les une fois pour la session. Les valeurs `0.60` / `0.40` ci-dessous
+sont **fictives** (illustration) :
 
 ```{r register-weights}
-# Enregistrer des poids personnalises (FICTIFS) pour Verviers
 register_split_weights(
   from     = "NIS_DISTRICT_2019",
   to       = "NUTS_DISTRICT_2021",
@@ -165,7 +187,7 @@ register_split_weights(
     code_to   = c("BE335", "BE336"),
     weight    = c(0.60,   0.40)   # valeurs fictives -- remplacez par les votres
   ),
-  variable = "population"
+  variable = "population_custom"
 )
 
 # Réutiliser automatiquement dans split_ambiguous
@@ -177,13 +199,13 @@ result <- split_ambiguous(
   to         = "NUTS_DISTRICT_2021",
   master_data,
   weights    = get_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
-                                  variable = "population")
+                                  variable = "population_custom")
 )
 ```
 
 ```{r list-weights}
 # Lister tous les poids enregistrés dans la session
 list_split_weights()
-# FROM                      TO          VARIABLE    ROWS
-# NIS_DISTRICT_2019   NUTS_DISTRICT_2021  population  2
+# FROM                      TO          VARIABLE           ROWS
+# NIS_DISTRICT_2019   NUTS_DISTRICT_2021  population_custom  2
 ```

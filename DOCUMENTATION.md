@@ -422,21 +422,28 @@ ambigue (`1:N` ou `M:N`).
 - `value_type = "additive"` : les valeurs sont multipliees par le poids.
 - `value_type = "ratio"` : les valeurs sont recopiees a l'identique dans chaque cible.
 
-Utilise les poids enregistres (voir ci-dessous), ou 0.5/0.5 egal si aucun poids.
+Ordre des poids : `weights = "population"` (standard livre) > poids enregistres >
+0.5/0.5 egal si aucun.
 
-#### `split_weights_template(from, to, master_data)`
+#### `split_weights_template(from, to, master_data, variable = NULL, weight_year = NULL)`
 
-Retourne un `data.table(code_from, code_to, weight)` pre-rempli avec des poids egaux
-(1/N). Sert de point de depart pour definir des poids personnalises.
+Sans `variable` : `data.table(code_from, code_to, weight)` a poids **egaux** (1/N),
+point de depart pour des poids personnalises. Avec `variable = "population"` : poids
+derives du **standard population livre** (communes NIS 2019, 2011-2024) ;
+`weight_year` choisit l'annee de reference (defaut = la plus recente). Avec
+`commune_values = <table code/value>` : poids d'une variable personnalisee.
 
 ```r
+# Poids egaux (defaut)
 tpl <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
-# code_from  code_to  weight
-#     63000    BE335     0.5
-#     63000    BE336     0.5
+#     63000  BE335  0.5 ; 63000  BE336  0.5
 
-tpl[code_from == "63000" & code_to == "BE335", weight := 0.60]
-tpl[code_from == "63000" & code_to == "BE336", weight := 0.40]
+# Poids POPULATION livres (cle-en-main)
+tpl_pop  <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                                   master_data, variable = "population")
+#     63000  BE335  ~0.73 ; 63000  BE336  ~0.27  (parts reelles)
+tpl_2015 <- split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                                   master_data, variable = "population", weight_year = 2015L)
 ```
 
 #### `register_split_weights(from, to, weights_dt, variable = "default")`
