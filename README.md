@@ -36,11 +36,19 @@ remotes::install_github("N0n3Z/RegionalClassification")
 
 ## Quick Start
 
+Every usage example lives here, grouped by task. Load the package and the
+reference snapshot first:
+
 ```r
 library(nbbbenuts)
+library(data.table)
 
 master_data <- load_master_data()
+```
 
+**Convert codes** — `convert_codes()` always returns a `data.table(code_from, code_to, nature)`:
+
+```r
 # NIS communes (2019) -> NUTS3 (2021)
 convert_codes(c(21001L, 11002L, 62063L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 
@@ -50,32 +58,126 @@ convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_
 # NIS 2025 -> NUTS 2027 (official Statbel/Eurostat mapping)
 convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2027", master_data)
 
-# NIS temporal change (nature column carries UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV)
+# NIS temporal change: the `nature` column carries
+# UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV
 convert_codes(c(21001L, 11056L), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
-
-# Fuzzy name matching
-fuzzy_match_names(c("Bruxeles", "Anvers", "Liege"), "NIS_MUNICIPALITY_2019", master_data,
-                  max_dist = 0.3, language = "fr")
 ```
 
-`convert_codes()` always returns a `data.table` with exactly three columns: `code_from`, `code_to`, `nature`.
-
-## Conversion Graph
-
-The package uses a BFS-based conversion graph. All paths are resolved automatically — including multi-hop chains.
+**Inspect conversion paths** — all paths (including multi-hop) resolve automatically:
 
 ```r
-# Check whether a path exists and whether it is simple (N:1 / 1:1)
+# Is a path simple (N:1 / 1:1) or ambiguous?
 check_conversion_path("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
-check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # 1:N — see below
+check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # 1:N
 check_conversion_path("POSTAL", "NIS_REGION_2019")
 
-# Browse the full matrix of supported conversions
+# With master_data, two data-aware fields are added: `executable` and
+# `effectively_simple` (an aggregation that re-merges to one target per source
+# is deterministic even if it crosses an overlap edge -- no allow_ambiguous needed).
+check_conversion_path("NIS_DISTRICT_2019", "NUTS_PROVINCE_2021", master_data)$effectively_simple
+
+# Browse every supported conversion
 get_conversion_matrix()
 list_available_conversions()
 ```
 
-### Simple vs ambiguous conversions
+**Ambiguous conversions & weighted splits** — 1:N / M:N need `allow_ambiguous = TRUE`:
+
+```r
+# Verviers arrondissement (63000) spans two NUTS3 regions: BE335 (FR) + BE336 (DE)
+convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
+              allow_ambiguous = TRUE)
+
+# NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 is 1:N: 3 communes (46029, 46030,
+# 71072) fuse localities from different NUTS3 regions (coverage 562/565).
+convert_codes(c(21001L, 46029L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
+              allow_ambiguous = TRUE)
+
+# The package SHIPS population weights (NIS 2019 communes, 2011-2024), so
+# proportional splits work out of the box -- no registration needed.
+split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
+                       variable = "population")
+#   63000  BE335  ~0.73   (real francophone share)
+#   63000  BE336  ~0.27   (real germanophone share)
+
+# split_ambiguous() / rebase_series() accept weights = "population" directly;
+# weight_year = 2015L picks a reference year for period-consistent weights.
+emp <- data.table(arr_code = c(11000L, 63000L), total_wage = c(5e9, 1e9))
+split_ambiguous(emp, "arr_code", value_cols = "total_wage",
+                from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
+                master_data = master_data, weights = "population", value_type = "additive")
+
+# For a custom variable or your own values, register a table (0.60/0.40 here are
+# illustrative placeholders). Without any weights, splits fall back to EQUAL weights.
+register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+                       data.table(code_from = c(63000L, 63000L),
+                                  code_to   = c("BE335", "BE336"),
+                                  weight    = c(0.60, 0.40)))
+```
+
+**Dataset-level conversion & diagnostics**:
+
+```r
+dt <- data.table(commune = c(21001L, 11002L, 62063L), value = c(100, 200, 300))
+
+# Auto-detects the source classification, adds a target column
+convert_dataset(dt, code_col = "commune", to = "NUTS_DISTRICT_2021", master_data)
+
+# Coverage report / auto-detect the classification of a column
+diagnose_classification(dt, "commune", master_data)
+```
+
+**Longitudinal rebasing** — put a multi-version panel onto one target version.
+`version_map` assigns each period to its source classification:
+
+```r
+panel <- data.table(
+  year      = c(2022L, 2022L, 2025L),
+  commune   = c(11002L, 11007L, 11002L),
+  population = c(18000, 8500, 28000)
+)
+rebase_series(panel, period_col = "year", code_col = "commune", value_cols = "population",
+              version_map = list("NIS_MUNICIPALITY_2019" = 2022L,
+                                 "NIS_MUNICIPALITY_2025" = 2025L),
+              to = "NIS_MUNICIPALITY_2025", master_data = master_data)
+```
+
+**Labels, crosswalks, validation**:
+
+```r
+# Official French / Dutch names
+get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
+
+# Full correspondence table (optionally with weight column)
+get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
+get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
+
+# Validate codes against the reference set
+validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
+```
+
+**Fuzzy name matching**:
+
+```r
+fuzzy_match_names(c("Bruxeles", "Anvers", "Liege"), "NIS_MUNICIPALITY_2019", master_data,
+                  max_dist = 0.3, language = "fr")
+
+# Try several classifications at once and keep the best match per name
+identify_from_names(c("Bruxelles", "Gent"), master_data)
+```
+
+**Visualization** (optional Suggests):
+
+```r
+visualize_classification_graph()   # interactive graph (requires visNetwork)
+visualize_conversion_matrix()      # feasibility matrix (requires ggplot2)
+```
+
+## Conversion Graph
+
+The package resolves conversions over a declared graph with a two-pass BFS
+(simple edges first, then all edges). Cardinality determines whether a
+conversion needs `allow_ambiguous = TRUE`:
 
 | Type | Meaning | Requires `allow_ambiguous` |
 |------|---------|---------------------------|
@@ -84,59 +186,9 @@ list_available_conversions()
 | `1:N` | One source → multiple targets | **Yes** |
 | `M:N` | Many sources → many targets | **Yes** |
 
-```r
-# Verviers arrondissement (63000) spans two NUTS3 regions: BE335 (FR) + BE336 (DE)
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
-              allow_ambiguous = TRUE)
-
-# NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 is 1:N:
-# 3 communes (46029, 46030, 71072) fuse localities from different NUTS3 regions.
-# check_conversion_path() reports Coverage: 562/565 (99.5%) and the 3 ambiguous codes.
-convert_codes(c(21001L, 46029L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
-              allow_ambiguous = TRUE)
-```
-
-### Weighted splits for ambiguous conversions
-
-The package **ships standard population weights** (NIS 2019 communes, 2011–2024),
-so proportional splits work out of the box — no registration needed:
-
-```r
-# Population-weighted splits (most recent year by default)
-split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
-                       variable = "population")
-#   63000  BE335  ~0.73   (real francophone share)
-#   63000  BE336  ~0.27   (real germanophone share)
-
-# split_ambiguous / rebase_series accept weights = "population" directly;
-# weight_year = 2015L picks a reference year for period-consistent weights.
-split_ambiguous(my_data, "arr_code", value_cols = "total_wage",
-                from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
-                master_data = master_data, weights = "population",
-                value_type = "additive")
-```
-
-For a **custom** variable or your own values, register them (or pass a table).
-With no weights and no shipped standard, `split_ambiguous()` falls back to
-**equal** weights.
-
-```r
-# Custom weights (the 0.60/0.40 here are illustrative placeholders)
-wts <- data.table(
-  code_from = c(63000L, 63000L),
-  code_to   = c("BE335", "BE336"),
-  weight    = c(0.60, 0.40)
-)
-register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", wts)
-
-# Apply to a dataset
-split_ambiguous(my_data, "arr_code",
-                value_cols  = "total_wage",
-                from        = "NIS_DISTRICT_2019",
-                to          = "NUTS_DISTRICT_2021",
-                master_data = master_data,
-                value_type  = "additive")
-```
+An aggregation that crosses a `1:N` edge but re-merges to a single target per
+source (e.g. arrondissement → NUTS province) is **effectively simple** and does
+not require `allow_ambiguous` — check `check_conversion_path(from, to, master_data)$effectively_simple`.
 
 ## NIS Versions
 
@@ -168,41 +220,6 @@ NUTS 2027 codes implement EU Regulation 2026/195 (applicable from 1 January 2027
 
 > **Note:** A direct **forward** `NUTS_DISTRICT_2021 → NUTS_DISTRICT_2027` edge exists (`1:N`), derived at build time, for **aggregate** NUTS3 2021 data — most codes map 1:1, but a few map to two 2027 codes (three communes changed province between 2019 and 2025), so it needs `allow_ambiguous = TRUE` and weighted splitting. There is **no reverse** `2027 → 2021` conversion. If you still have the underlying communes, convert them directly (exact, no weights): `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`, or route `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
 
-## Dataset-Level Conversion
-
-```r
-library(data.table)
-dt <- data.table(commune = c(21001L, 11002L, 62063L), value = c(100, 200, 300))
-
-# Auto-detects source classification, adds target column
-convert_dataset(dt, code_col = "commune", to = "NUTS_DISTRICT_2021", master_data)
-
-# Diagnose coverage of an existing column
-diagnose_classification(dt, "commune", master_data)
-
-# Rebase a time series across NIS versions onto a single target version.
-# version_map assigns each period to its source classification.
-rebase_series(panel, period_col = "year", code_col = "commune",
-              value_cols = "population",
-              version_map = list("NIS_MUNICIPALITY_2019" = 2022L,
-                                 "NIS_MUNICIPALITY_2025" = 2025L),
-              to = "NIS_MUNICIPALITY_2025", master_data = master_data)
-```
-
-## Reference Functions
-
-```r
-# Get official French/Dutch names for codes
-get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
-
-# Build a full crosswalk table (optionally with weights)
-get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
-get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
-
-# Validate codes against the reference set
-validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
-```
-
 ## All Functions
 
 | Function | Description |
@@ -211,9 +228,11 @@ validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
 | `convert_codes(codes, from, to, master_data)` | Convert codes between classifications |
 | `convert_dataset(dt, code_col, to, master_data)` | Convert a column in a dataset |
 | `split_ambiguous(dt, code_col, ...)` | Weighted split for 1:N / M:N conversions |
+| `split_weights_template(from, to, master_data, variable, weight_year)` | Build a weights template (equal, shipped population, or custom) |
 | `rebase_series(panel, code_col, ...)` | Rebase a time series across NIS versions |
 | `diagnose_classification(dt, code_col, master_data)` | Diagnose coverage / auto-detect |
-| `check_conversion_path(from, to)` | Check path type, coverage, ambiguous codes |
+| `detect_classification(codes, master_data)` | Auto-detect a classification from codes |
+| `check_conversion_path(from, to, md = NULL)` | Check path type, executability, coverage |
 | `print_conversion_check(from, to)` | Print detailed path info to console |
 | `get_crosswalk(from, to, master_data)` | Full correspondence table |
 | `get_label(codes, classification, master_data)` | Official FR/NL names |
@@ -223,7 +242,7 @@ validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
 | `register_split_weights(from, to, weights_dt, variable)` | Register split weights |
 | `get_split_weights(from, to, variable)` | Retrieve registered weights |
 | `list_available_conversions()` | List all supported conversion edges |
-| `get_conversion_matrix()` | Full feasibility matrix |
+| `get_conversion_matrix(md = NULL)` | Full feasibility matrix |
 | `visualize_classification_graph()` | Interactive graph (requires visNetwork) |
 | `visualize_conversion_matrix()` | Matrix view (requires ggplot2) |
 
@@ -244,35 +263,38 @@ Only needed if the Statbel/Eurostat source files change. Place the files below i
 | `CONVERSION_POSTAL_NIS2025.xlsx` | Postal → NIS 2025 mapping |
 | `NUTS_ARRONDISSEMENT.csv` | NUTS 3 ↔ internal arrondissement codes |
 
+Standard population weights are rebuilt separately from `data-raw/build_standard_weights.R`.
+
 ## Package Structure
 
 ```
 nbbbenuts/
 ├── R/
-│   ├── 00_config.R              # Conversion graph edges, classification registry, NUTS 2027 lookup
+│   ├── 00_config.R              # Conversion graph edges, NIS constants, NUTS 2027 lookup
+│   ├── 00b_registry.R           # CLASSIFICATION_NODES (23-entry single source of truth)
 │   ├── 01_load_data.R           # Raw file parsers
 │   ├── 02_build_master_table.R  # Master table construction (build-time only)
 │   ├── 03_convert.R             # Conversion routing and execution
 │   ├── 04_fuzzy_match.R         # Fuzzy name matching
 │   ├── 05_conversion_check.R    # BFS path checker, conversion matrix
 │   ├── 06_visualize.R           # Visualization utilities
-│   ├── 07_dataset_convert.R     # convert_dataset(), split_ambiguous(), diagnose_classification()
+│   ├── 07_dataset_convert.R     # convert_dataset()
 │   ├── 07_detect.R              # Auto-detection of classification from codes
 │   ├── 07_diagnose.R            # Diagnostics
-│   ├── 07_split_ambiguous.R     # Weighted M:N split engine
+│   ├── 07_split_ambiguous.R     # Weighted M:N split engine + standard weights
 │   ├── 08_load_prebuilt.R       # load_master_data(), rebuild_master_data()
 │   ├── 09_query.R               # get_crosswalk(), get_label(), validate_codes()
 │   ├── 10_rebase.R              # rebase_series()
-│   ├── classifications.R        # Reference documentation for all classification identifiers
-│   └── registry.R               # CLASSIFICATION_NODES (23-entry single source of truth)
-├── inst/extdata/                # Pre-built RDS snapshot (communes, postal, nis_changes)
-├── data/raw/                    # Source files (not versioned)
-└── tests/testthat/              # 680 automated tests
+│   └── classifications.R        # Reference documentation for all classification identifiers
+├── inst/extdata/                # Pre-built RDS snapshot + standard population weights
+├── vignettes/                   # Introduction, conversions, diagnostics, ambiguous splits
+├── data/raw/                    # Source files
+└── tests/testthat/              # Automated test suite
 ```
 
 ## Testing
 
 ```r
-devtools::test()    # 680 tests — FAIL 0 | WARN 0 | SKIP 0
+devtools::test()    # FAIL 0 | WARN 0 | SKIP 0
 devtools::check()   # 0 errors | 0 warnings | 0 notes
 ```
