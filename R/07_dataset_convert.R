@@ -139,7 +139,7 @@ convert_dataset <- function(
     }
     if (na_action == "drop") result_merged <- result_merged[!is.na(get(target_col))]
     if (!keep_code) result_merged[, (code_col) := NULL]
-    return(result_merged)
+    return(result_merged[])   # trailing [] so the result auto-prints (FAQ 2.23)
   }
 
   # --- 1:1 case ---
@@ -179,7 +179,7 @@ convert_dataset <- function(
                     target_col, n_ok, n_miss))
   }
 
-  return(dt)
+  return(dt[])   # trailing [] so the result auto-prints (data.table FAQ 2.23)
 }
 
 

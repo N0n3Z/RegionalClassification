@@ -215,7 +215,10 @@ normalize_classification_id <- function(class_id) {
   }
 
   setcolorder(dt, c("code_from", "code_to", "nature"))
-  dt
+  # Trailing `dt[]` resets data.table's internal "just modified by reference"
+  # flag so the returned table auto-prints at the top level (data.table FAQ 2.23);
+  # without it a bare convert_codes(...) call would echo nothing the first time.
+  dt[]
 }
 
 #' Route conversion to the appropriate handler
