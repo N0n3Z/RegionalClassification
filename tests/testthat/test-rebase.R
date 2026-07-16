@@ -171,25 +171,25 @@ test_that("rebase_series with split=NULL replicates split values and warns", {
   expect_equal(result[arr == "BE336", pop], 100000)
 })
 
-# -- Test R10: split = "population" uses equal weights when none registered ----
-test_that("rebase_series split='population' falls back to equal weights with warning", {
+# -- Test R10: split = "population" uses the SHIPPED standard weights ----------
+test_that("rebase_series split='population' uses the shipped population weights", {
   clear_split_weights()
-  expect_warning(
-    result <- rebase_series(
-      make_arr_panel(),
-      period_col  = "year",
-      code_col    = "arr",
-      value_cols  = "pop",
-      version_map = setNames(list(2022L), CLS_NIS_DISTRICT_2019),
-      to          = CLS_NUTS_DISTRICT_2021,
-      master_data = master_data,
-      split       = "population"
-    ),
-    class = "rcl_unmatched_codes"
+  # No weights registered, but the package now ships population weights, so the
+  # Verviers split is population-weighted (not equal) and no fallback warning.
+  result <- rebase_series(
+    make_arr_panel(),
+    period_col  = "year",
+    code_col    = "arr",
+    value_cols  = "pop",
+    version_map = setNames(list(2022L), CLS_NIS_DISTRICT_2019),
+    to          = CLS_NUTS_DISTRICT_2021,
+    master_data = master_data,
+    split       = "population"
   )
-  # Equal split: 100000 / 2 = 50000 each
-  expect_equal(result[arr == "BE335", pop], 50000)
-  expect_equal(result[arr == "BE336", pop], 50000)
+  # Verviers pop (100000) split by real population shares -> francophone > germ.
+  expect_equal(sum(result[arr %in% c("BE335", "BE336"), pop]), 100000)  # sum preserved
+  expect_gt(result[arr == "BE335", pop], result[arr == "BE336", pop])
+  expect_false(isTRUE(all.equal(result[arr == "BE335", pop], 50000)))   # not equal split
 })
 
 # -- Test R11: split with registered population weights ------------------------

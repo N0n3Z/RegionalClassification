@@ -3,52 +3,93 @@
 # ------------------------------------------------------------------------------
 # Builds inst/extdata/standard_weight_values.rds : the SHIPPED standard
 # commune-level weighting variables consumed by
-#   split_weights_template(from, to, master_data, variable = "population")
+#   split_weights_template(from, to, master_data,
+#                          variable = "population",
+#                          weight_vintage = "NIS_MUNICIPALITY_2019",
+#                          weight_year = <year or NULL for most recent>)
 #
 # Approach (C): the package ships POPULATION as the standard weighting variable;
 # any other variable (employment, area, ...) is supplied by the user at call time
 # via `commune_values =` (no shipped data needed for those).
 #
-# Output schema: data.table(variable chr, code chr, value num)
+# Output schema: data.table(variable chr, vintage chr, year int, code chr, value num)
 #   variable = "population"
-#   code     = NIS 2019 commune code (character)  <-- the weighting "vintage"
+#   vintage  = commune classification the codes belong to (weighting refinement)
+#   year     = reference year of the population figures (multiple years shipped)
+#   code     = commune code in `vintage`  (character)
 #   value    = inhabitants
 #
-# The weighting vintage is NIS 2019 communes: it is the finest common refinement
-# of every current ambiguous edge (NUTS3 2021<->2027, Verviers arr->NUTS3,
-# NIS 2025->NUTS3 2021). split_weights_template() maps each 2019 commune to its
-# `from` and `to` code and aggregates the values.
+# split_weights_template() maps each `vintage` commune to its `from` and `to`
+# code and aggregates the values into per-edge weights. Weights are ratios, so
+# the absolute level per year matters little; the year dimension lets a caller
+# pick period-consistent weights (e.g. for historical retropolation).
 # ==============================================================================
 
 library(data.table)
-# library(readxl)   # uncomment if the source is an .xlsx
+library(readxl)
 
-# --- 1. Read the raw population per NIS 2019 commune --------------------------
-# EXPECTED: a Statbel commune-level population table for the 2019 commune
-# perimeter, with a commune-code column and a population column.
-# Drop the raw file under data/raw/ and adapt the two lines below.
-#
-#   pop <- as.data.table(readxl::read_excel("data/raw/POPULATION_2019.xlsx"))
-#   pop <- pop[, .(code = as.character(CD_REFNIS), value = as.numeric(POPULATION))]
-#
-stop("Fill in the raw population read above before running this script.")
+# --- 1. Read the raw population tables ----------------------------------------
+# Each source is a long table (YEAR, CD_REFNIS, TOTAL, CLASSIFICATION) for one
+# commune vintage. Add more blocks (e.g. a NIS_MUNICIPALITY_BEFORE_2019 file for
+# historical retropolation) by appending to `sources` below.
+sources <- list(
+  list(
+    file    = "data/raw/POPULATION_2011_2024_NIS2019.xlsx",
+    vintage = "NIS_MUNICIPALITY_2019"
+  )
+  # , list(file = "data/raw/POPULATION_..._NIS_BEFORE2019.xlsx",
+  #        vintage = "NIS_MUNICIPALITY_BEFORE_2019")
+)
 
-# --- 2. Assemble the standard weights table ----------------------------------
-# One block per shipped standard variable. Add more later if desired.
-standard_weight_values <- rbindlist(list(
-  data.table(variable = "population", code = pop$code, value = pop$value)
-))
+read_pop <- function(src) {
+  dt <- as.data.table(readxl::read_excel(src$file))
+  # Tolerate minor header variations; expect YEAR / CD_REFNIS / TOTAL.
+  setnames(dt,
+           old = c(grep("^YEAR$",  names(dt), ignore.case = TRUE, value = TRUE)[1],
+                   grep("REFNIS|INS", names(dt), ignore.case = TRUE, value = TRUE)[1],
+                   grep("TOTAL|POP",  names(dt), ignore.case = TRUE, value = TRUE)[1]),
+           new = c("year", "code", "value"))
+  data.table(
+    variable = "population",
+    vintage  = src$vintage,
+    year     = as.integer(dt$year),
+    code     = as.character(dt$code),
+    value    = as.numeric(dt$value)
+  )
+}
 
-# --- 3. Sanity checks --------------------------------------------------------
-# Every NIS 2019 commune should have a population value, else some ambiguous
-# code_from could get an all-zero mass and fall back to equal weights.
-# devtools::load_all(".")
-# md <- load_master_data()
-# comm19 <- as.character(md$communes[nis_version == VER_2019, cd_commune])
-# missing <- setdiff(comm19, standard_weight_values[variable == "population", code])
-# if (length(missing)) warning(sprintf("%d 2019 communes without population", length(missing)))
+standard_weight_values <- rbindlist(lapply(sources, read_pop), use.names = TRUE)
 
-# --- 4. Persist --------------------------------------------------------------
+# --- 2. Sanity checks ---------------------------------------------------------
+stopifnot(
+  all(c("variable", "vintage", "year", "code", "value") %in% names(standard_weight_values)),
+  standard_weight_values[, !anyNA(year) && !anyNA(value) && all(nzchar(code))]
+)
+# Every commune of each shipped vintage should have a value for every year, else
+# some ambiguous code_from could get an all-zero mass and fall back to equal
+# weights. Verify against the master table.
+devtools::load_all(".", quiet = TRUE)
+md <- load_master_data()
+vintage_master <- c(
+  NIS_MUNICIPALITY_2019        = VER_2019,
+  NIS_MUNICIPALITY_BEFORE_2019 = VER_BEFORE_2019
+)
+for (v in unique(standard_weight_values$vintage)) {
+  comm <- as.character(unique(md$communes[nis_version == vintage_master[[v]], cd_commune]))
+  for (y in sort(unique(standard_weight_values[vintage == v, year]))) {
+    have <- standard_weight_values[vintage == v & year == y, code]
+    miss <- setdiff(comm, have)
+    if (length(miss))
+      warning(sprintf("%s %d: %d commune(s) without population: %s",
+                      v, y, length(miss), paste(head(miss, 5), collapse = ", ")))
+  }
+}
+
+# --- 3. Persist ---------------------------------------------------------------
 saveRDS(standard_weight_values, "inst/extdata/standard_weight_values.rds")
-message("Wrote inst/extdata/standard_weight_values.rds (",
-        nrow(standard_weight_values), " rows).")
+message(sprintf(
+  "Wrote inst/extdata/standard_weight_values.rds (%d rows; vintages: %s; years: %s).",
+  nrow(standard_weight_values),
+  paste(unique(standard_weight_values$vintage), collapse = ", "),
+  paste(range(standard_weight_values$year), collapse = "-")
+))

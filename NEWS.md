@@ -56,6 +56,16 @@
 
 ## New features
 
+* **Shipped standard population weights.** The package now ships commune-level
+  population for NIS 2019 communes across multiple years (2011-2024), so
+  `split_weights_template(from, to, md, variable = "population")` and
+  `split_ambiguous(..., weights = "population")` / `rebase_series(..., split =
+  "population")` work out of the box -- proportional splits without registering
+  weights. A new `weight_year` argument selects the reference year (default: the
+  most recent) for period-consistent weights, e.g. historical retropolation. The
+  shipped table carries `variable`/`vintage`/`year`/`code`/`value`, ready to hold
+  additional vintages (e.g. BEFORE_2019) later without rework.
+
 * **Data-aware conversion gate.** `check_conversion_path(from, to, md)` now
   returns `executable` and `effectively_simple`, and `convert_codes()` /
   `convert_dataset()` gate on `effectively_simple`. Aggregations that cross an

@@ -120,7 +120,7 @@ split_ambiguous <- function(
 
   # --- Resolve weights ---
   resolved <- .resolve_weights(ambig_codes, all_map, from_norm, to_norm,
-                                weights, normalize, verbose)
+                                weights, normalize, verbose, master_data)
 
   # --- Simple rows (1:1) ---
   dt_simple <- dt[!get(code_col) %in% ambig_codes]
@@ -333,6 +333,11 @@ clear_split_weights <- function() {
 #'   (default `CLS_NIS_MUNICIPALITY_2019`). Both `from` and `to` must be reachable
 #'   from it via a simple (N:1) path; the 2019 commune level covers every current
 #'   ambiguous edge.
+#' @param weight_year Optional reference year for a shipped standard `variable`.
+#'   The package ships population for several years; `NULL` (default) uses the
+#'   **most recent** shipped year, or pass an integer (e.g. `2019L`) for
+#'   period-consistent weights (e.g. historical retropolation). Ignored when
+#'   `commune_values` is supplied.
 #' @return A `data.table` with columns `code_from` (character), `code_to`
 #'   (character), and `weight` (numeric, summing to 1 per `code_from`). Returns an
 #'   empty table (with a message) when no ambiguous codes exist for the pair.
@@ -349,23 +354,21 @@ clear_split_weights <- function() {
 #'   # 1:     63000   BE335    0.5
 #'   # 2:     63000   BE336    0.5
 #'
-#'   # 1-bis. Standard population weights (requires standard_weight_values.rds;
-#'   #         see data-raw/build_standard_weights.R):
-#'   if (FALSE) {
-#'     tpl_pop <- split_weights_template(
-#'       "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
-#'     )
-#'   }
-#'   # Custom commune-level values (no standard file needed):
+#'   # 1-bis. Standard POPULATION weights (shipped): most recent year by default,
+#'   #         or pick a year for period-consistent (e.g. retropolation) weights.
+#'   tpl_pop  <- split_weights_template(
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
+#'   )
+#'   tpl_2015 <- split_weights_template(
+#'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
+#'     variable = "population", weight_year = 2015L
+#'   )
+#'
+#'   # Or a custom commune-level variable you supply:
 #'   my_vals <- data.table::data.table(code = c(63012, 63023), value = c(8000, 2000))
 #'   tpl_cus <- split_weights_template(
 #'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, commune_values = my_vals
 #'   )
-#'
-#'   # 2. Replace equal weights with population-based values
-#'   #    (Verviers: ~85.7 % francophone / ~14.3 % germanophone)
-#'   tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
-#'   tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
 #'
 #'   # 3a. Register for repeated use
 #'   register_split_weights(
@@ -385,7 +388,8 @@ clear_split_weights <- function() {
 split_weights_template <- function(from, to, master_data,
                                    variable       = NULL,
                                    commune_values = NULL,
-                                   weight_vintage = CLS_NIS_MUNICIPALITY_2019) {
+                                   weight_vintage = CLS_NIS_MUNICIPALITY_2019,
+                                   weight_year    = NULL) {
   from_norm <- normalize_classification_id(from)
   to_norm   <- normalize_classification_id(to)
   .validate_master_data(master_data)
@@ -418,9 +422,11 @@ split_weights_template <- function(from, to, master_data,
   }
 
   # --- Variable-based weights (standard or custom) ---
-  # Resolve commune-level values (code, value) at weight_vintage.
+  # Resolve commune-level values (code, value) at weight_vintage (and, for a
+  # shipped standard, at weight_year -- NULL picks the most recent year).
   vintage <- normalize_classification_id(weight_vintage)
-  vals    <- .resolve_weight_values(variable, commune_values, vintage, master_data)
+  vals    <- .resolve_weight_values(variable, commune_values, vintage,
+                                    weight_year, master_data)
 
   # Map each weighting commune to its `from` and `to` code. Both legs must be
   # simple (N:1) from a commune, so convert without allow_ambiguous (1 row each).
@@ -447,8 +453,10 @@ split_weights_template <- function(from, to, master_data,
 
 # Resolve a single weighting variable to commune-level (code, value) at `vintage`.
 # Priority: explicit commune_values > shipped standard for `variable`.
+# `year` selects a shipped reference year (NULL = most recent); ignored for
+# commune_values (which the caller supplies at a single period already).
 #' @noRd
-.resolve_weight_values <- function(variable, commune_values, vintage, master_data) {
+.resolve_weight_values <- function(variable, commune_values, vintage, year, master_data) {
   if (!is.null(commune_values)) {
     cv <- as.data.table(commune_values)
     if (ncol(cv) < 2L)
@@ -462,21 +470,25 @@ split_weights_template <- function(from, to, master_data,
     abort("Provide either `variable` (a shipped standard) or `commune_values`.",
           class = "rcl_invalid_input")
 
-  std <- .standard_weight_values(variable, master_data)
+  std <- .standard_weight_values(variable, vintage, year, master_data)
   if (is.null(std))
-    abort(sprintf(paste0("No shipped standard weights for variable '%s'. Supply ",
-                         "commune_values=, or build the standard table via ",
-                         "data-raw/build_standard_weights.R."), variable),
+    abort(sprintf(paste0("No shipped standard weights for variable '%s' at vintage '%s'",
+                         "%s. Supply commune_values=, or build the standard table via ",
+                         "data-raw/build_standard_weights.R."),
+                  variable, vintage,
+                  if (is.null(year)) "" else sprintf(" / year %s", year)),
           class = "rcl_data_missing")
   std
 }
 
-# Look up shipped standard commune-level values for `variable` -> (code, value),
-# or NULL if unavailable.  Source: master_data$standard_weights (variable, code,
-# value) if present, else inst/extdata/standard_weight_values.rds.
+# Look up shipped standard commune-level values for (variable, vintage, year) ->
+# (code, value), or NULL if unavailable.  Source: master_data$standard_weights if
+# present, else inst/extdata/standard_weight_values.rds.  Schema:
+# data.table(variable, vintage, year, code, value).  A NULL/absent `year` selects
+# the most recent shipped year; an absent `vintage` column (legacy single-vintage
+# file) is treated as matching any vintage.
 #' @noRd
-.standard_weight_values <- function(variable, master_data) {
-  var_name <- variable
+.standard_weight_values <- function(variable, vintage, year, master_data) {
   sw <- master_data$standard_weights
   if (is.null(sw)) {
     f <- system.file("extdata", "standard_weight_values.rds", package = "nbbbenuts")
@@ -485,8 +497,21 @@ split_weights_template <- function(from, to, master_data,
   if (is.null(sw)) return(NULL)
   sw <- as.data.table(sw)
   if (!all(c("variable", "code", "value") %in% names(sw))) return(NULL)
-  hit <- sw[sw$variable == var_name]          # base-style index: avoids NSE on `variable`
+
+  # Use renamed locals in the [i] filters: inside DT[...] a bare `variable` /
+  # `vintage` would resolve to the COLUMN (data.table NSE), not the argument,
+  # making the filter a no-op (column == column, all TRUE).
+  var_name  <- variable
+  vint_name <- vintage
+  hit <- sw[sw$variable == var_name]
+  if ("vintage" %in% names(hit)) hit <- hit[hit$vintage == vint_name]
   if (nrow(hit) == 0L) return(NULL)
+
+  if ("year" %in% names(hit)) {
+    yr  <- if (is.null(year)) max(hit$year, na.rm = TRUE) else as.integer(year)
+    hit <- hit[hit$year == yr]
+    if (nrow(hit) == 0L) return(NULL)
+  }
   hit[, .(code = as.character(code), value = as.numeric(value))]
 }
 
@@ -496,7 +521,8 @@ split_weights_template <- function(from, to, master_data,
 # ==============================================================================
 
 #' @noRd
-.resolve_weights <- function(ambig_codes, all_map, from, to, weights, normalize, verbose) {
+.resolve_weights <- function(ambig_codes, all_map, from, to, weights, normalize, verbose,
+                             master_data = NULL) {
 
   # Equal-weight fallback
   equal_wts <- all_map[code_from %in% ambig_codes,
@@ -548,13 +574,23 @@ split_weights_template <- function(from, to, master_data,
 
     } else if (is.character(weights) && length(weights) == 1) {
       reg <- .get_reg_weights(variable = weights)
+      if (is.null(reg) && !is.null(master_data)) {
+        # Not registered -> try the SHIPPED standard for this variable (e.g.
+        # "population"), at the most recent shipped year. For a specific year,
+        # build the template explicitly with split_weights_template(weight_year=).
+        std_tpl <- tryCatch(
+          suppressMessages(split_weights_template(from, to, master_data, variable = weights)),
+          rcl_data_missing = function(e) NULL, error = function(e) NULL)
+        if (!is.null(std_tpl) && nrow(std_tpl) > 0L) reg <- std_tpl
+      }
       if (is.null(reg)) {
-        warn(sprintf("Weight variable '%s' not found in registry for %s -> %s. Using equal weights.",
+        warn(sprintf(paste0("Weight variable '%s' not found in registry or shipped ",
+                            "standard for %s -> %s. Using equal weights."),
                      weights, from, to),
              class = "rcl_unmatched_codes")
         equal_wts
       } else {
-        if (verbose) message(sprintf("  Using '%s' weights from registry.", weights))
+        if (verbose) message(sprintf("  Using '%s' weights.", weights))
         .merge_weights(equal_wts, reg)
       }
 

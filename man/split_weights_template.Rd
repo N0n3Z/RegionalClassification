@@ -10,7 +10,8 @@ split_weights_template(
   master_data,
   variable = NULL,
   commune_values = NULL,
-  weight_vintage = CLS_NIS_MUNICIPALITY_2019
+  weight_vintage = CLS_NIS_MUNICIPALITY_2019,
+  weight_year = NULL
 )
 }
 \arguments{
@@ -34,6 +35,12 @@ columns are used). Supplying it computes **custom** weights and overrides the
 (default `CLS_NIS_MUNICIPALITY_2019`). Both `from` and `to` must be reachable
 from it via a simple (N:1) path; the 2019 commune level covers every current
 ambiguous edge.}
+
+\item{weight_year}{Optional reference year for a shipped standard `variable`.
+The package ships population for several years; `NULL` (default) uses the
+**most recent** shipped year, or pass an integer (e.g. `2019L`) for
+period-consistent weights (e.g. historical retropolation). Ignored when
+`commune_values` is supplied.}
 }
 \value{
 A `data.table` with columns `code_from` (character), `code_to`
@@ -73,23 +80,21 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
   # 1:     63000   BE335    0.5
   # 2:     63000   BE336    0.5
 
-  # 1-bis. Standard population weights (requires standard_weight_values.rds;
-  #         see data-raw/build_standard_weights.R):
-  if (FALSE) {
-    tpl_pop <- split_weights_template(
-      "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
-    )
-  }
-  # Custom commune-level values (no standard file needed):
+  # 1-bis. Standard POPULATION weights (shipped): most recent year by default,
+  #         or pick a year for period-consistent (e.g. retropolation) weights.
+  tpl_pop  <- split_weights_template(
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, variable = "population"
+  )
+  tpl_2015 <- split_weights_template(
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
+    variable = "population", weight_year = 2015L
+  )
+
+  # Or a custom commune-level variable you supply:
   my_vals <- data.table::data.table(code = c(63012, 63023), value = c(8000, 2000))
   tpl_cus <- split_weights_template(
     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, commune_values = my_vals
   )
-
-  # 2. Replace equal weights with population-based values
-  #    (Verviers: ~85.7 \% francophone / ~14.3 \% germanophone)
-  tpl[code_from == "63000" & code_to == "BE335", weight := 0.857]
-  tpl[code_from == "63000" & code_to == "BE336", weight := 0.143]
 
   # 3a. Register for repeated use
   register_split_weights(
