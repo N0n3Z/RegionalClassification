@@ -70,3 +70,17 @@ test_that("NIS_MUNICIPALITY_2019 -> NIS_COUNTRY path is simple", {
   chk <- check_conversion_path(CLS_NIS_MUNICIPALITY_2019, CLS_NIS_COUNTRY)
   expect_true(chk$is_simple)
 })
+
+# -- Leading-zero alias: "01000" (Statbel form) matches stored "1000" (v2.0.0) -
+
+test_that("country accepts the zero-padded '01000' form as an alias of '1000'", {
+  master_data <- load_master_data()
+  # validate_codes against a specified classification is unambiguous.
+  res <- validate_codes(c("01000", "1000"), CLS_NIS_COUNTRY, master_data)
+  expect_true(all(res$is_valid))
+  # the canonical form is returned (leading zero stripped to match the stored code)
+  expect_equal(res$code, c("1000", "1000"))
+  # .canon_codes() strips the pad for numeric codes and leaves NUTS codes intact
+  expect_equal(nbbbenuts:::.canon_codes(c("01000", "21004", "BE100", NA)),
+               c("1000", "21004", "BE100", NA))
+})

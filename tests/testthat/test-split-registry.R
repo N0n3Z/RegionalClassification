@@ -309,3 +309,15 @@ test_that("population weights also cover the NUTS3 2021->2027 aggregate edge", {
   expect_gt(nrow(tpl), 0L)
   expect_true(all(abs(tpl[, sum(weight), by = code_from]$V1 - 1) < 1e-9))
 })
+
+test_that("split_ambiguous coerces an integer source column to character (fix A)", {
+  # Integer input must not leave the source code column as integer while the
+  # target column is character (type consistency, like convert_dataset).
+  r_int <- split_ambiguous(data.table(arr = 63000L, emploi = 100),
+                           "arr", value_cols = "emploi",
+                           from = CLS_NIS_DISTRICT_2019, to = CLS_NUTS_DISTRICT_2021,
+                           master_data = master_data, weights = "population",
+                           value_type = "additive", verbose = FALSE)
+  expect_type(r_int$arr, "character")
+  expect_setequal(unique(r_int$arr), "63000")
+})

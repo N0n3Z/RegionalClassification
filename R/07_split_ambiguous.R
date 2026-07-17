@@ -94,6 +94,12 @@ split_ambiguous <- function(
     target_col <- default_col_name(to_norm)
   }
 
+  # Coerce the source key to the node's canonical (character) type, like
+  # convert_dataset() does, so the returned source column is character regardless
+  # of how the user typed it (a bare integer column would otherwise survive as
+  # integer while the target column is character).
+  dt[, (code_col) := .node_coerce(get(code_col), from_norm)]
+
   # --- Get full mapping (M:N allowed) ---
   all_codes <- unique(na.omit(dt[[code_col]]))
   all_map   <- convert_codes(all_codes, from_norm, to_norm, master_data,

@@ -305,11 +305,29 @@ CLASSIFICATION_NODES <- list(
 #' @noRd
 .node_code_type <- function(id) .node(id)[["code_type"]]
 
+#' Canonicalise a code vector to its stored string form.
+#'
+#' Every code is stored as character (v2.0.0). Purely numeric codes are round-
+#' tripped through integer so leading-zero input matches the stored form -- most
+#' importantly the Statbel country code, written "01000" but stored "1000". Codes
+#' containing letters (NUTS "BE100") are left untouched. NA is preserved.
+#' @noRd
+.canon_codes <- function(codes) {
+  ch  <- as.character(codes)
+  num <- !is.na(ch) & grepl("^[0-9]+$", ch)
+  ch[num] <- as.character(as.integer(ch[num]))
+  ch
+}
+
 #' Coerce a code vector to the canonical storage type for `id`
+#'
+#' All nodes are character (v2.0.0); coercion also canonicalises leading zeros
+#' via .canon_codes() so integer input and zero-padded forms map to the stored
+#' code. Integer input therefore stays permissive (21004L -> "21004").
 #' @noRd
 .node_coerce <- function(codes, id) {
-  if (.node_code_type(id) == "integer") as.integer(codes)
-  else                                   as.character(codes)
+  .node_code_type(id)          # validates `id` and preserves the code_type contract
+  .canon_codes(codes)
 }
 
 #' Reference code table for a classification
