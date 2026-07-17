@@ -112,6 +112,24 @@
   invisible(TRUE)
 }
 
+# Convert integer/numeric code columns (cd_* / code*) of a flat table to
+# character, in place. Codes are identifiers, not quantities: as of v2.0.0 every
+# classification code is stored and returned as character (see
+# CLASSIFICATION_NODES$code_type and .node_coerce, R/00b_registry.R). This runs at
+# the END of build_master_table so the integer arithmetic used to DERIVE codes
+# (cd_arr %/% 1000L, REFNIS level classification by modulo) has already happened.
+# Already-character columns (NUTS "BE100", NBB "21") are left untouched, so the
+# helper is safe to apply to any flat table. NA is preserved.
+.stringify_code_columns <- function(dt) {
+  if (is.null(dt)) return(invisible(dt))
+  code_cols <- grep("^cd_|^code", names(dt), value = TRUE)
+  for (col in code_cols) {
+    if (is.numeric(dt[[col]]))
+      set(dt, j = col, value = as.character(dt[[col]]))
+  }
+  invisible(dt)
+}
+
 #' Build the master classification table from all loaded data
 #'
 #' Creates a unified table structure with three main data.tables:
@@ -298,6 +316,15 @@ build_master_table <- function(raw_data) {
   crosswalks <- build_crosswalks(communes_unified, postal_unified, nis_changes_unified)
   .assert_cols(crosswalks,
                c("from_id", "to_id", "code_from", "code_to", "nature"), "crosswalks")
+
+  # --- 9c. Stringify NIS/POSTAL code columns (v2.0.0) ---
+  # entities$code and crosswalks$code_from/code_to are already character (they
+  # stack mixed NIS/NUTS codes at build time), so only the three flat NIS/POSTAL
+  # tables carry integer code columns that must be converted for the all-character
+  # contract. See .stringify_code_columns() above.
+  .stringify_code_columns(communes_unified)
+  .stringify_code_columns(postal_unified)
+  .stringify_code_columns(nis_changes_unified)
 
   # --- 10. Assemble result ---
   result <- list(

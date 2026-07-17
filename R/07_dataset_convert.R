@@ -34,7 +34,7 @@
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   salaries <- data.table::data.table(
-#'     commune = c(21004L, 11002L, 44021L), avg_salary = c(3200, 2900, 2700))
+#'     commune = c("21004", "11002", "44021"), avg_salary = c(3200, 2900, 2700))
 #'
 #'   # Explicit source
 #'   convert_dataset(salaries, "commune", "NUTS_DISTRICT_2021", master_data,

@@ -14,7 +14,7 @@ test_that("NIS_COUNTRY is in CLASSIFICATION_NODES and has correct metadata", {
   expect_equal(n$system,     "NIS")
   expect_equal(n$level,      "country")
   expect_true(is.na(n$version))
-  expect_equal(n$code_type,  "integer")
+  expect_equal(n$code_type,  "character")
   expect_equal(n$code_col,   "cd_nis_country")
 })
 
@@ -40,18 +40,18 @@ test_that("nomenclature_parents(NIS_REGION_2019) includes NIS_COUNTRY", {
 
 # -- Conversion ----------------------------------------------------------------
 
-test_that("NIS_REGION_2019 -> NIS_COUNTRY returns 1000L for all three regions", {
+test_that("NIS_REGION_2019 -> NIS_COUNTRY returns \"1000\" for all three regions", {
   regions <- c(NIS_REGION_FLEMISH, NIS_REGION_WALLOON, NIS_REGION_BRUSSELS)
   result  <- convert_codes(regions, CLS_NIS_REGION_2019, CLS_NIS_COUNTRY, master_data)
   expect_equal(nrow(result), 3L)
-  expect_true(all(result$code_to == 1000L))
-  expect_type(result$code_to, "integer")
+  expect_true(all(result$code_to == "1000"))
+  expect_type(result$code_to, "character")
 })
 
-test_that("NIS_REGION_2025 -> NIS_COUNTRY returns 1000L", {
+test_that("NIS_REGION_2025 -> NIS_COUNTRY returns \"1000\"", {
   regions <- c(NIS_REGION_FLEMISH, NIS_REGION_WALLOON, NIS_REGION_BRUSSELS)
   result  <- convert_codes(regions, CLS_NIS_REGION_2025, CLS_NIS_COUNTRY, master_data)
-  expect_true(all(result$code_to == 1000L))
+  expect_true(all(result$code_to == "1000"))
 })
 
 test_that("NIS_REGION_BEFORE_2019 -> NIS_COUNTRY returns 1000L", {

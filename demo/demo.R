@@ -4,6 +4,10 @@
 # This script illustrates every public function of the package.
 # Run it section by section in RStudio or from the command line:
 #   Rscript demo/demo.R
+#
+# NOTE (v2.0.0): all geographic codes are CHARACTER strings ("21004", "1000", ...).
+# Integer input is still accepted and converted, but the returned code columns
+# are always character.
 # ==============================================================================
 
 library(nbbbenuts)
@@ -83,7 +87,7 @@ la[perimeter_relation == "identity"]   # 1:1 correspondences
 
 # --- 2a. NIS 2019 communes -> NUTS3 2021 ----------------------------------------
 convert_codes(
-  c(21004L, 11002L, 44021L, 62063L),
+  c("21004", "11002", "44021", "62063"),
   from = "NIS_MUNICIPALITY_2019",
   to   = "NUTS_DISTRICT_2021",
   master_data
@@ -95,14 +99,14 @@ convert_codes(
 # 4:     62063   BE332   RECODE   (Liege district)
 
 # --- 2b. Postal codes -> NIS communes -------------------------------------------
-convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
+convert_codes(c("1000", "2000", "4000"), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 #    code_from  code_to  nature
 # 1:      1000    21004   RECODE  (Brussels)
 # 2:      2000    11002   RECODE  (Antwerp)
 # 3:      4000    62063   RECODE  (Liege)
 
 # --- 2c. NIS commune -> every geographic level --------------------------------
-commune <- 11002L  # Antwerp
+commune <- "11002"  # Antwerp
 
 convert_codes(commune, "NIS_MUNICIPALITY_2019", "NIS_DISTRICT_2019", master_data)
 convert_codes(commune, "NIS_MUNICIPALITY_2019", "NIS_PROVINCE_2019",       master_data)
@@ -119,7 +123,7 @@ convert_codes(commune, "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", master_data
 # longer exists -> Flemish Brabant (20001) / Walloon Brabant (20002).
 # Brussels-Capital has no statutory province: it is assigned a pseudo-province
 # equal to its region code (4000).
-convert_codes(c(10000L, 20001L, 20002L, 4000L),
+convert_codes(c("10000", "20001", "20002", "4000"),
               "NIS_PROVINCE_2019", "NIS_REGION_2019", master_data)
 #    code_from  code_to  nature
 # 1:    10000     2000   RECODE  (Antwerp         -> Flemish)
@@ -136,41 +140,41 @@ convert_codes(c(10000L, 20001L, 20002L, 4000L),
 #   CHANGE_PROV -- commune moved to another province (1 commune)
 
 # NIS 2019 -> NIS 2025: commune mergers
-convert_codes(c(11002L, 11007L), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+convert_codes(c("11002", "11007"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from  code_to  nature
 # 1:     11002    11002   UNCHANGED
 # 2:     11007    11002   FUSION   (Borgerhout merged into Antwerp)
 
 # NIS 2019 -> NIS 2025: CHANGE_DSTR (commune 44045 -> different district)
-convert_codes(44045L, "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+convert_codes("44045", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from  code_to       nature
 # 1:     44045    46029  CHANGE_DSTR
 
 # NIS 2019 -> NIS 2025: CHANGE_PROV (commune 11056 -> different province)
-convert_codes(11056L, "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+convert_codes("11056", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from  code_to       nature
 # 1:     11056    46030  CHANGE_PROV
 
 # NIS 2025 -> NIS 2019: decomposition (returns several rows for mergers)
-convert_codes(11002L, "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
+convert_codes("11002", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
               allow_ambiguous = TRUE)
 #    code_from  code_to  nature
 # 1:     11002    11002   UNCHANGED
 # 2:     11002    11007   FUSION
 
 # The nature is symmetric on the reverse path (CHANGE_PROV preserved)
-convert_codes(46030L, "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
+convert_codes("46030", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
               allow_ambiguous = TRUE)
 #    code_from  code_to       nature
 # ...           11056   CHANGE_PROV   (the matching row)
 
 # NIS BEFORE_2019 -> NIS 2019
-convert_codes(c(55022L, 56011L), "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019",
+convert_codes(c("55022", "56011"), "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019",
               master_data)
 
 # --- 2e. NUTS 2027 (EU Regulation 2026/195) -----------------------------------
 convert_codes(
-  c(21004L, 11002L, 44021L),
+  c("21004", "11002", "44021"),
   "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027",
   master_data
 )
@@ -200,12 +204,12 @@ tryCatch(
 # --- 2f. Ambiguous conversion -- Verviers district (1:N) ------------------------
 # Verviers -> NUTS3 is a TRUE split (BE335 != BE336): blocked by default.
 tryCatch(
-  convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data),
+  convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data),
   error = function(e) message("Expected error: ", conditionMessage(e))
 )
 
 # Force all possible correspondences
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
               master_data, allow_ambiguous = TRUE)
 #    code_from  code_to  nature
 # 1:     63000   BE335   OVERLAP  (Verviers district, French-speaking)
@@ -215,11 +219,11 @@ convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
 # Even though the path crosses the 1:N Verviers edge, aggregating to a coarser
 # level where BE335 and BE336 re-converge (province BE33, region BE3, country BE)
 # is deterministic: the data-aware gate allows it directly (audit M2).
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_PROVINCE_2021", master_data)
+convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_PROVINCE_2021", master_data)
 #    code_from  code_to  nature
 # 1:     63000    BE33   RECODE   (a single target -> no ambiguity)
 
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_COUNTRY", master_data)
+convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_COUNTRY", master_data)
 #    code_from  code_to  nature
 # 1:     63000      BE   RECODE
 
@@ -229,7 +233,7 @@ convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_COUNTRY", master_data)
 # ==============================================================================
 
 dt <- data.table(
-  cd_commune = c(21004L, 11002L, 44021L, 62063L),
+  cd_commune = c("21004", "11002", "44021", "62063"),
   pop        = c(180000L, 530000L, 260000L, 200000L)
 )
 
@@ -250,7 +254,7 @@ convert_dataset(dt2, "cd_commune", from = "NIS_MUNICIPALITY_2019",
 # 4. Code validation -- validate_codes()
 # ==============================================================================
 
-validate_codes(c(21004L, 99999L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+validate_codes(c("21004", "99999", "11002"), "NIS_MUNICIPALITY_2019", master_data)
 #      code  is_valid
 # 1:  21004      TRUE
 # 2:  99999     FALSE
@@ -266,23 +270,23 @@ validate_codes(c("21", "99"),      "NBB_DISTRICT_2021", master_data)
 # ==============================================================================
 
 # French names
-get_label(c(21004L, 11002L, 62063L), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
+get_label(c("21004", "11002", "62063"), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
 #      code      label
 # 1:  21004  Bruxelles
 # 2:  11002      Anvers
 # 3:  62063      Liege
 
 # Dutch names
-get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data, lang = "nl")
+get_label(c("21004", "11002"), "NIS_MUNICIPALITY_2019", master_data, lang = "nl")
 
 # NUTS3
 get_label(c("BE100", "BE211", "BE332"), "NUTS_DISTRICT_2021", master_data, lang = "fr")
 
 # Postal codes
-get_label(c(1000L, 2000L), "POSTAL", master_data, lang = "fr")
+get_label(c("1000", "2000"), "POSTAL", master_data, lang = "fr")
 
 # Unknown code -> NA
-get_label(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
+get_label(c("21004", "99999"), "NIS_MUNICIPALITY_2019", master_data)
 
 
 # ==============================================================================
@@ -306,7 +310,7 @@ get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = 
 # NB: 0.60/0.40 are FICTITIOUS illustrative values -- not official weights.
 register_split_weights(
   "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
-  data.table(code_from = c(63000L, 63000L),
+  data.table(code_from = c("63000", "63000"),
              code_to   = c("BE335", "BE336"),
              weight    = c(0.60, 0.40))
 )
@@ -344,11 +348,11 @@ diagnose_classification(nuts3_data, "nuts3", master_data)
 
 # --- 7c. Direct detection -- detect_classification() ---------------------------
 # Returns the single most likely identifier (>= 80% match).
-detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_MUNICIPALITY_2019"
+detect_classification(c("21004", "11002", "62063"), master_data)  # "NIS_MUNICIPALITY_2019"
 detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS_DISTRICT_2021"
 detect_classification(c("BE261", "BE262"),        master_data)  # "NUTS_DISTRICT_2027" (2027 vintage)
 detect_classification("BE",                       master_data)  # "NUTS_COUNTRY"
-detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
+detect_classification(c("1000", "2000"),            master_data)  # "POSTAL"
 
 
 # ==============================================================================
@@ -364,7 +368,7 @@ detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
 
 # --- 8a. split_ambiguous() directly --------------------------------------------
 arr_data <- data.table(
-  arr_code   = c(11000L, 62000L, 63000L),
+  arr_code   = c("11000", "62000", "63000"),
   total_wage = c(5e9, 3e9, 1e9),
   avg_salary = c(2900, 2700, 2400)
 )
@@ -447,7 +451,7 @@ clear_split_weights()
 # Communes 11002 (Antwerp) and 11007 (Borgerhout) merged in NIS 2025.
 panel <- data.table(
   year       = c(2022L, 2022L, 2022L, 2025L, 2025L),
-  commune    = c(11002L, 11007L, 21004L, 11002L, 21004L),
+  commune    = c("11002", "11007", "21004", "11002", "21004"),
   population = c(530000, 42000, 180000, 590000, 182000)
 )
 
@@ -469,7 +473,7 @@ result_n1 <- rebase_series(
 # --- 9b. Ratio variable -- aggregation with the mean --------------------------
 panel_rates <- data.table(
   year    = c(2022L, 2022L),
-  commune = c(11002L, 11007L),
+  commune = c("11002", "11007"),
   taux_emploi = c(0.62, 0.58)
 )
 
@@ -489,7 +493,7 @@ result_ratio <- rebase_series(
 # --- 9c. 1:N split: district-level data to NUTS3 ------------------------------
 arr_panel <- data.table(
   year    = c(2020L, 2021L, 2020L, 2021L),
-  arr     = c(63000L, 63000L, 11000L, 11000L),
+  arr     = c("63000", "63000", "11000", "11000"),
   emplois = c(120000, 122000, 310000, 315000)
 )
 
@@ -524,7 +528,7 @@ result_direct <- rebase_series(
 )
 
 # --- 9d. Uncovered periods -- rcl_missing_periods warning ----------------------
-data_mixed <- data.table(year = 2022:2024, commune = 21004L, pop = c(1, 2, 3))
+data_mixed <- data.table(year = 2022:2024, commune = "21004", pop = c(1, 2, 3))
 withCallingHandlers(
   rebase_series(
     data_mixed,

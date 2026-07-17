@@ -103,7 +103,7 @@ labels afterwards with [get_label()] or a join.
   # Communes 11002 and 11007 merged into 11002 in NIS 2025
   panel <- data.table::data.table(
     year      = c(2022L, 2022L, 2022L, 2025L, 2025L),
-    commune   = c(11002L, 11007L, 21004L, 11002L, 21004L),
+    commune   = c("11002", "11007", "21004", "11002", "21004"),
     population = c(18000, 8500, 180000, 28000, 185000)
   )
 
@@ -126,7 +126,7 @@ labels afterwards with [get_label()] or a join.
 
   arr_data <- data.table::data.table(
     year  = c(2020L, 2021L),
-    arr   = c(63000L, 63000L),
+    arr   = c("63000", "63000"),
     emploi = c(120000, 122000)
   )
 

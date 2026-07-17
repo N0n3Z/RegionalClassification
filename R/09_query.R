@@ -32,7 +32,7 @@
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   validate_codes(c(21004L, 99999L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+#'   validate_codes(c("21004", "99999", "11002"), "NIS_MUNICIPALITY_2019", master_data)
 #' }
 #' @export
 validate_codes <- function(codes, classification, master_data) {
@@ -62,7 +62,7 @@ validate_codes <- function(codes, classification, master_data) {
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+#'   get_label(c("21004", "11002"), "NIS_MUNICIPALITY_2019", master_data)
 #'   get_label(c("BE100", "BE211"), "NUTS_DISTRICT_2021", master_data, lang = "nl")
 #' }
 #' @export

@@ -103,7 +103,7 @@ unambiguous (1:1 or N:1) codes are omitted since they never need splitting.
 
   # 3b. Or pass directly to split_ambiguous
   arr_data <- data.table::data.table(
-    year = c(2020L, 2021L), arr = c(63000L, 63000L), emploi = c(120000, 122000)
+    year = c(2020L, 2021L), arr = c("63000", "63000"), emploi = c(120000, 122000)
   )
   split_ambiguous(arr_data, "arr", value_cols = "emploi",
                   from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",

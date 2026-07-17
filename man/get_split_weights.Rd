@@ -24,7 +24,7 @@ Retrieve registered split weights
   library(data.table)
   register_split_weights(
     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
-    data.table(code_from = c(63000L, 63000L),
+    data.table(code_from = c("63000", "63000"),
                code_to   = c("BE335", "BE336"),
                weight    = c(0.857, 0.143))
   )

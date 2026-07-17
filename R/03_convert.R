@@ -29,17 +29,17 @@
 #'   master_data <- load_master_data()
 #'
 #'   # NIS communes -> NUTS3 2021
-#'   convert_codes(c(21004L, 11002L, 62063L),
+#'   convert_codes(c("21004", "11002", "62063"),
 #'                 "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 #'
 #'   # Postal codes -> NIS communes
-#'   convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
+#'   convert_codes(c("1000", "2000", "4000"), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 #'
 #'   # NIS communes -> NUTS3 2027
-#'   convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027", master_data)
+#'   convert_codes(c("21004", "11002"), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027", master_data)
 #'
 #'   # Ambiguous conversion (Verviers arrondissement spans two NUTS3 regions)
-#'   convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+#'   convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
 #'                 master_data, allow_ambiguous = TRUE)
 #' }
 #' @export

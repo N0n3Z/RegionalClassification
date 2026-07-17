@@ -33,7 +33,7 @@
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   arr_salaries <- data.table::data.table(
-#'     arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
+#'     arr_code   = c("11000", "62000", "63000"),   # 63000 = Verviers (ambiguous)
 #'     total_wage = c(5e9, 3e9, 1e9),
 #'     avg_salary = c(2900, 2700, 2400)
 #'   )
@@ -47,7 +47,7 @@
 #'
 #'   # Manual population weights for Verviers
 #'   weights <- data.table::data.table(
-#'     code_from = c(63000L, 63000L),
+#'     code_from = c("63000", "63000"),
 #'     code_to   = c("BE335", "BE336"),
 #'     weight    = c(0.857, 0.143)
 #'   )
@@ -204,7 +204,7 @@ split_ambiguous <- function(
 #'     from       = "NIS_DISTRICT_2019",
 #'     to         = "NUTS_DISTRICT_2021",
 #'     weights_dt = data.table::data.table(
-#'       code_from = c(63000L, 63000L),
+#'       code_from = c("63000", "63000"),
 #'       code_to   = c("BE335", "BE336"),
 #'       weight    = c(0.857, 0.143)
 #'     ),
@@ -243,7 +243,7 @@ register_split_weights <- function(from, to, weights_dt, variable = "population"
 #'   library(data.table)
 #'   register_split_weights(
 #'     "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
-#'     data.table(code_from = c(63000L, 63000L),
+#'     data.table(code_from = c("63000", "63000"),
 #'                code_to   = c("BE335", "BE336"),
 #'                weight    = c(0.857, 0.143))
 #'   )
@@ -377,7 +377,7 @@ clear_split_weights <- function() {
 #'
 #'   # 3b. Or pass directly to split_ambiguous
 #'   arr_data <- data.table::data.table(
-#'     year = c(2020L, 2021L), arr = c(63000L, 63000L), emploi = c(120000, 122000)
+#'     year = c(2020L, 2021L), arr = c("63000", "63000"), emploi = c(120000, 122000)
 #'   )
 #'   split_ambiguous(arr_data, "arr", value_cols = "emploi",
 #'                   from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",

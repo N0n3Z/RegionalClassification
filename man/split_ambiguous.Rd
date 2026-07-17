@@ -63,7 +63,7 @@ registered weights.
 \donttest{
   master_data <- load_master_data()
   arr_salaries <- data.table::data.table(
-    arr_code   = c(11000L, 62000L, 63000L),   # 63000 = Verviers (ambiguous)
+    arr_code   = c("11000", "62000", "63000"),   # 63000 = Verviers (ambiguous)
     total_wage = c(5e9, 3e9, 1e9),
     avg_salary = c(2900, 2700, 2400)
   )
@@ -77,7 +77,7 @@ registered weights.
 
   # Manual population weights for Verviers
   weights <- data.table::data.table(
-    code_from = c(63000L, 63000L),
+    code_from = c("63000", "63000"),
     code_to   = c("BE335", "BE336"),
     weight    = c(0.857, 0.143)
   )

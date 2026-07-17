@@ -42,8 +42,13 @@ The package normally runs off the pre-built snapshot in `inst/extdata/*.rds`
 - `R/07_dataset_convert.R`, `R/07_split_ambiguous.R`, `R/10_rebase.R` — dataset-
   level conversion, weighted M:N splitting (Verviers), longitudinal rebasing.
 
-Facts worth knowing: NIS/POSTAL codes are **integer**, NUTS codes are
-**character**. Verviers (NIS arr 63000) is the canonical ambiguous case
+Facts worth knowing: **all classification codes are `character`** (v2.0.0; NIS
+and POSTAL used to be integer). Input stays permissive — integer codes are
+coerced via `.node_coerce()` — but everything is stored and returned as
+character. The build derives the NIS hierarchy with integer arithmetic on REFNIS
+codes (`cd_arr %/% 1000L`, level classification by modulo) and only stringifies
+the code columns at the end of `build_master_table()` via
+`.stringify_code_columns()`. Verviers (NIS arr 63000) is the canonical ambiguous case
 (NUTS3 BE335 FR + BE336 DE). The conversion graph and the executor must stay in
 lock-step — `tests/testthat/test-route-parity.R` guards that.
 

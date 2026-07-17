@@ -29,7 +29,7 @@ library(nbbbenuts)
 master_data <- load_master_data()
 
 # Par défaut : erreur explicite si conversion ambiguë
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
+convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data)
 # Error: Conversion from 'NIS_DISTRICT_2019' to 'NUTS_DISTRICT_2021' is NOT a
 # simple (direct) conversion.
 
@@ -43,7 +43,7 @@ check_conversion_path("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 ```{r allow-ambiguous}
 # Forcer le retour de toutes les correspondances
 result <- convert_codes(
-  63000L,
+  "63000",
   from             = "NIS_DISTRICT_2019",
   to               = "NUTS_DISTRICT_2021",
   master_data,
@@ -67,7 +67,7 @@ Quand les données sont au niveau arrondissement et doivent être ventilées au 
 library(data.table)
 
 emploi <- data.table(
-  arr_code  = c(11000L, 63000L),   # Antwerpen + Verviers
+  arr_code  = c("11000", "63000"),   # Antwerpen + Verviers
   emplois   = c(500000L, 80000L),
   masse_sal = c(12e9, 1.8e9)
 )
@@ -101,13 +101,13 @@ sum(result$masse_sal) == sum(emploi$masse_sal)  # TRUE
 ```{r split-weighted}
 # Poids basés sur la population réelle de chaque sous-région
 weights_pop <- data.table(
-  code_from = c(63000L, 63000L),
+  code_from = c("63000", "63000"),
   code_to   = c("BE335", "BE336"),
   weight    = c(0.60,   0.40)    # valeurs FICTIVES d.illustration
 )
 
 result_weighted <- split_ambiguous(
-  dt         = emploi[arr_code == 63000L],
+  dt         = emploi[arr_code == "63000"],
   code_col   = "arr_code",
   value_cols = "masse_sal",
   from       = "NIS_DISTRICT_2019",
@@ -128,7 +128,7 @@ Pour des indicateurs moyens (salaire moyen, taux d'emploi...), utiliser `value_t
 
 ```{r split-ratio}
 taux <- data.table(
-  arr_code       = c(11000L, 63000L),
+  arr_code       = c("11000", "63000"),
   taux_emploi    = c(0.68, 0.61),
   salaire_moyen  = c(3200, 2850)
 )
@@ -183,7 +183,7 @@ register_split_weights(
   from     = "NIS_DISTRICT_2019",
   to       = "NUTS_DISTRICT_2021",
   weights_dt = data.table(
-    code_from = c(63000L, 63000L),
+    code_from = c("63000", "63000"),
     code_to   = c("BE335", "BE336"),
     weight    = c(0.60,   0.40)   # valeurs fictives -- remplacez par les votres
   ),

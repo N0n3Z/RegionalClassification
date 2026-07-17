@@ -130,8 +130,8 @@ test_that("code 4000 is valid in NIS_PROVINCE_2019, NIS_REGION_2019, and POSTAL"
 test_that("NIS_PROVINCE_2019 4000 converts to NIS_REGION_2019 4000 (self-mapping)", {
   result <- convert_codes(4000L, CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data)
   expect_equal(nrow(result), 1L)
-  expect_equal(result$code_from, 4000L)
-  expect_equal(result$code_to,   4000L)
+  expect_equal(result$code_from, "4000")
+  expect_equal(result$code_to,   "4000")
   # N:1 nesting: no allow_ambiguous needed
 })
 

@@ -58,7 +58,7 @@ CLASSIFICATION_NODES <- list(
   # ---- NIS BEFORE_2019 -------------------------------------------------------
   NIS_MUNICIPALITY_BEFORE_2019 = list(
     system = "NIS",  level = "municipality",         version = VER_BEFORE_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_BEFORE_2019, code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
     distinct = FALSE, detectable = TRUE,
@@ -66,7 +66,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_DISTRICT_BEFORE_2019 = list(
     system = "NIS",  level = "district",  version = VER_BEFORE_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_BEFORE_2019, code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
     distinct = TRUE,  detectable = FALSE,
@@ -74,7 +74,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_PROVINCE_BEFORE_2019 = list(
     system = "NIS",  level = "province",         version = VER_BEFORE_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_BEFORE_2019, code_col = "cd_province",
     label_fr_col = "tx_prov_fr",     label_nl_col = "tx_prov_nl",
     distinct = TRUE,  detectable = FALSE,
@@ -82,7 +82,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_REGION_BEFORE_2019 = list(
     system = "NIS",  level = "region",           version = VER_BEFORE_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_BEFORE_2019, code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
     distinct = TRUE,  detectable = FALSE,
@@ -92,7 +92,7 @@ CLASSIFICATION_NODES <- list(
   # ---- NIS 2019 --------------------------------------------------------------
   NIS_MUNICIPALITY_2019 = list(
     system = "NIS",  level = "municipality",         version = VER_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
     distinct = FALSE, detectable = TRUE,
@@ -100,7 +100,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_DISTRICT_2019 = list(
     system = "NIS",  level = "district",  version = VER_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
     distinct = TRUE,  detectable = TRUE,
@@ -108,7 +108,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_PROVINCE_2019 = list(
     system = "NIS",  level = "province",         version = VER_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_province",
     label_fr_col = "tx_prov_fr",     label_nl_col = "tx_prov_nl",
     distinct = TRUE,  detectable = TRUE,
@@ -116,7 +116,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_REGION_2019 = list(
     system = "NIS",  level = "region",           version = VER_2019,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
     distinct = TRUE,  detectable = TRUE,
@@ -126,7 +126,7 @@ CLASSIFICATION_NODES <- list(
   # ---- NIS 2025 --------------------------------------------------------------
   NIS_MUNICIPALITY_2025 = list(
     system = "NIS",  level = "municipality",         version = VER_2025,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_commune",
     label_fr_col = "tx_commune_fr",  label_nl_col = "tx_commune_nl",
     distinct = FALSE, detectable = TRUE,
@@ -134,7 +134,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_DISTRICT_2025 = list(
     system = "NIS",  level = "district",  version = VER_2025,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_arr",
     label_fr_col = "tx_arr_fr",      label_nl_col = "tx_arr_nl",
     distinct = TRUE,  detectable = FALSE,
@@ -142,7 +142,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_PROVINCE_2025 = list(
     system = "NIS",  level = "province",         version = VER_2025,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_province",
     label_fr_col = "tx_prov_fr",     label_nl_col = "tx_prov_nl",
     distinct = TRUE,  detectable = FALSE,
@@ -150,7 +150,7 @@ CLASSIFICATION_NODES <- list(
   ),
   NIS_REGION_2025 = list(
     system = "NIS",  level = "region",           version = VER_2025,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2025, code_col = "cd_region",
     label_fr_col = "tx_region_fr",   label_nl_col = "tx_region_nl",
     distinct = TRUE,  detectable = FALSE,
@@ -159,12 +159,14 @@ CLASSIFICATION_NODES <- list(
 
   # ---- NIS country ------------------------------------------------------------
   # NIS code for Belgium as a whole: 01000 in Statbel source (REFNIS type "REALM").
-  # Stored as integer 1000L (leading zero is an artefact of the 5-digit display).
+  # Stored as the character string "1000" (the leading zero of the 5-digit display
+  # is dropped, matching the historical integer representation 1000L; kept as "1000"
+  # rather than "01000" so it aligns with every other stored code).
   # Unversioned: Belgium's identity code does not change across NIS versions.
-  # Synthetic column cd_nis_country = 1000L added to communes master table.
+  # Synthetic column cd_nis_country = "1000" added to communes master table.
   NIS_COUNTRY = list(
     system = "NIS",  level = "country",          version = NA_character_,
-    code_type = "integer",   source_table = "communes",
+    code_type = "character", source_table = "communes",
     version_filter = VER_2019, code_col = "cd_nis_country",
     label_fr_col = NA_character_,    label_nl_col = NA_character_,
     distinct = TRUE,  detectable = FALSE,
@@ -253,7 +255,7 @@ CLASSIFICATION_NODES <- list(
   # ---- POSTAL ----------------------------------------------------------------
   POSTAL = list(
     system = "POSTAL", level = "postal", version = NA_character_,
-    code_type = "integer",   source_table = "postal",
+    code_type = "character", source_table = "postal",
     version_filter = VER_2019, code_col = "cd_postal",
     label_fr_col = "tx_postal_name_fr", label_nl_col = "tx_postal_name_nl",
     distinct = FALSE, detectable = TRUE,

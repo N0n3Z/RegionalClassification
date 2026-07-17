@@ -46,21 +46,22 @@ library(data.table)
 master_data <- load_master_data()
 ```
 
-**Convert codes** — `convert_codes()` always returns a `data.table(code_from, code_to, nature)`:
+**Convert codes** — `convert_codes()` always returns a `data.table(code_from, code_to, nature)`.
+All codes are `character` (integer input is accepted and converted):
 
 ```r
 # NIS communes (2019) -> NUTS3 (2021)
-convert_codes(c(21001L, 11002L, 62063L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
+convert_codes(c("21001", "11002", "62063"), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 
 # Postal codes -> NIS communes
-convert_codes(c(1000L, 2000L, 4000L), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
+convert_codes(c("1000", "2000", "4000"), "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 
 # NIS 2025 -> NUTS 2027 (official Statbel/Eurostat mapping)
-convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2027", master_data)
+convert_codes(c("21004", "11002"), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2027", master_data)
 
 # NIS temporal change: the `nature` column carries
 # UNCHANGED / FUSION / CHANGE_DSTR / CHANGE_PROV
-convert_codes(c(21001L, 11056L), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+convert_codes(c("21001", "11056"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 ```
 
 **Inspect conversion paths** — all paths (including multi-hop) resolve automatically:
@@ -85,12 +86,12 @@ list_available_conversions()
 
 ```r
 # Verviers arrondissement (63000) spans two NUTS3 regions: BE335 (FR) + BE336 (DE)
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
+convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
               allow_ambiguous = TRUE)
 
 # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 is 1:N: 3 communes (46029, 46030,
 # 71072) fuse localities from different NUTS3 regions (coverage 562/565).
-convert_codes(c(21001L, 46029L), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
+convert_codes(c("21001", "46029"), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
               allow_ambiguous = TRUE)
 
 # The package SHIPS population weights (NIS 2019 communes, 2011-2024), so
@@ -102,7 +103,7 @@ split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
 
 # split_ambiguous() / rebase_series() accept weights = "population" directly;
 # weight_year = 2015L picks a reference year for period-consistent weights.
-emp <- data.table(arr_code = c(11000L, 63000L), total_wage = c(5e9, 1e9))
+emp <- data.table(arr_code = c("11000", "63000"), total_wage = c(5e9, 1e9))
 split_ambiguous(emp, "arr_code", value_cols = "total_wage",
                 from = "NIS_DISTRICT_2019", to = "NUTS_DISTRICT_2021",
                 master_data = master_data, weights = "population", value_type = "additive")
@@ -110,7 +111,7 @@ split_ambiguous(emp, "arr_code", value_cols = "total_wage",
 # For a custom variable or your own values, register a table (0.60/0.40 here are
 # illustrative placeholders). Without any weights, splits fall back to EQUAL weights.
 register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
-                       data.table(code_from = c(63000L, 63000L),
+                       data.table(code_from = c("63000", "63000"),
                                   code_to   = c("BE335", "BE336"),
                                   weight    = c(0.60, 0.40)))
 ```
@@ -118,7 +119,7 @@ register_split_weights("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
 **Dataset-level conversion & diagnostics**:
 
 ```r
-dt <- data.table(commune = c(21001L, 11002L, 62063L), value = c(100, 200, 300))
+dt <- data.table(commune = c("21001", "11002", "62063"), value = c(100, 200, 300))
 
 # Auto-detects the source classification, adds a target column
 convert_dataset(dt, code_col = "commune", to = "NUTS_DISTRICT_2021", master_data)
@@ -133,7 +134,7 @@ diagnose_classification(dt, "commune", master_data)
 ```r
 panel <- data.table(
   year      = c(2022L, 2022L, 2025L),
-  commune   = c(11002L, 11007L, 11002L),
+  commune   = c("11002", "11007", "11002"),
   population = c(18000, 8500, 28000)
 )
 rebase_series(panel, period_col = "year", code_col = "commune", value_cols = "population",
@@ -146,14 +147,14 @@ rebase_series(panel, period_col = "year", code_col = "commune", value_cols = "po
 
 ```r
 # Official French / Dutch names
-get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
+get_label(c("21004", "11002"), "NIS_MUNICIPALITY_2019", master_data, lang = "fr")
 
 # Full correspondence table (optionally with weight column)
 get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
 
 # Validate codes against the reference set
-validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
+validate_codes(c("21004", "99999"), "NIS_MUNICIPALITY_2019", master_data)
 ```
 
 **Fuzzy name matching**:

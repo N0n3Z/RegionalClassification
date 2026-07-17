@@ -107,7 +107,7 @@ Sans `classification`, la fonction compare le dataset contre toutes les classifi
 ```{r diagnose-detect}
 # Dataset avec des communes NIS 2019
 communes_data <- data.table(
-  code = c(21004L, 11002L, 44021L, 62063L, 63079L)
+  code = c("21004", "11002", "44021", "62063", "63079")
 )
 
 res_detect <- diagnose_classification(communes_data, "code", master_data)
@@ -154,13 +154,13 @@ res$version         # "2027"
 Variante légère qui retourne directement la classification la plus probable pour un vecteur de codes, sans afficher de sortie console.
 
 ```{r detect-class}
-detect_classification(c(21004L, 11002L, 62063L), master_data)
+detect_classification(c("21004", "11002", "62063"), master_data)
 # [1] "NIS_MUNICIPALITY_2019"
 
 detect_classification(c("BE100", "BE211", "BE332"), master_data)
 # [1] "NUTS_DISTRICT_2021"
 
-detect_classification(c(1000L, 2000L, 4000L), master_data)
+detect_classification(c("1000", "2000", "4000"), master_data)
 # [1] "POSTAL"
 ```
 
