@@ -21,15 +21,15 @@ library(data.table)
 test_that("convert_codes returns CHANGE_DSTR for commune 44045 (arr change -> 46029)", {
   r <- convert_codes(44045L, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   expect_equal(r$nature,   "CHANGE_DSTR")
-  expect_equal(r$code_to,  46029L)
-  expect_equal(r$code_from, 44045L)
+  expect_equal(r$code_to,  "46029")
+  expect_equal(r$code_from, "44045")
 })
 
 test_that("convert_codes returns CHANGE_DSTR for commune 73040 (arr change -> 71072)", {
   r <- convert_codes(73040L, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   expect_equal(r$nature,   "CHANGE_DSTR")
-  expect_equal(r$code_to,  71072L)
-  expect_equal(r$code_from, 73040L)
+  expect_equal(r$code_to,  "71072")
+  expect_equal(r$code_from, "73040")
 })
 
 # -- TN2: CHANGE_PROV -- forward (2019 -> 2025) --------------------------------
@@ -37,8 +37,8 @@ test_that("convert_codes returns CHANGE_DSTR for commune 73040 (arr change -> 71
 test_that("convert_codes returns CHANGE_PROV for commune 11056 (prov change -> 46030)", {
   r <- convert_codes(11056L, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   expect_equal(r$nature,   "CHANGE_PROV")
-  expect_equal(r$code_to,  46030L)
-  expect_equal(r$code_from, 11056L)
+  expect_equal(r$code_to,  "46030")
+  expect_equal(r$code_from, "11056")
 })
 
 # -- TN3: CHANGE_DSTR / CHANGE_PROV -- reverse (2025 -> 2019) ------------------
@@ -73,7 +73,7 @@ test_that("UNCHANGED commune returns nature='UNCHANGED' and same code", {
   # 21004 = Auderghem (Brussels): code persists unchanged in 2025
   r <- convert_codes(21004L, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   expect_equal(r$nature,   "UNCHANGED")
-  expect_equal(r$code_to,  21004L)
+  expect_equal(r$code_to,  "21004")
 })
 
 test_that("FUSION commune returns nature='FUSION'", {

@@ -310,7 +310,7 @@ print_nis_tree <- function(communes, max_communes = 3) {
 
   for (r in seq_len(nrow(regions))) {
     reg <- regions[r]
-    cat(sprintf("Region: %s (%d)\n", reg$tx_region_fr, reg$cd_region))
+    cat(sprintf("Region: %s (%s)\n", reg$tx_region_fr, reg$cd_region))
 
     provs <- unique(communes[cd_region == reg$cd_region,
                               .(cd_province, tx_prov_fr)])
@@ -337,7 +337,7 @@ print_nis_tree <- function(communes, max_communes = 3) {
         prefix_a_child <- paste0(prefix_p_child,
                                  ifelse(is_last_arr, "    ", "|   "))
 
-        cat(sprintf("%sArr: %s (%d)\n", prefix_a, arr$tx_arr_fr, arr$cd_arr))
+        cat(sprintf("%sArr: %s (%s)\n", prefix_a, arr$tx_arr_fr, arr$cd_arr))
 
         comms <- communes[cd_arr == arr$cd_arr,
                            .(cd_commune, tx_commune_fr)]
@@ -349,7 +349,7 @@ print_nis_tree <- function(communes, max_communes = 3) {
           is_last_comm <- c_i == show_n && show_n == n_comms
           prefix_c <- paste0(prefix_a_child,
                              ifelse(is_last_comm, "+-- ", "|-- "))
-          cat(sprintf("%s%s (%d)\n", prefix_c,
+          cat(sprintf("%s%s (%s)\n", prefix_c,
                       comm$tx_commune_fr, comm$cd_commune))
         }
         if (show_n < n_comms) {
@@ -401,7 +401,7 @@ print_nuts_tree <- function(master_data, max_communes = 3) {
         show_n  <- min(max_communes, n_comms)
 
         for (c_i in seq_len(show_n)) {
-          cat(sprintf("  |   |   |   |-- %s %s (NIS: %d)\n",
+          cat(sprintf("  |   |   |   |-- %s %s (NIS: %s)\n",
                       comms$cd_nuts_lau[c_i],
                       comms$tx_commune_fr[c_i],
                       comms$cd_commune[c_i]))

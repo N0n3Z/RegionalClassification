@@ -30,7 +30,7 @@ same conversion pair.
     from       = "NIS_DISTRICT_2019",
     to         = "NUTS_DISTRICT_2021",
     weights_dt = data.table::data.table(
-      code_from = c(63000L, 63000L),
+      code_from = c("63000", "63000"),
       code_to   = c("BE335", "BE336"),
       weight    = c(0.857, 0.143)
     ),

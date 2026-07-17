@@ -1,3 +1,25 @@
+# nbbbenuts 2.0.0
+
+## Breaking changes
+
+* **All classification codes are now `character`.** NIS and POSTAL codes were
+  previously stored and returned as `integer`; they are now `character`, matching
+  NUTS and NBB codes (which were already character). A geographic code is an
+  identifier, not a quantity, so a single string type is used throughout.
+  - **Input is permissive**: passing integer codes (e.g. `convert_codes(21004L, ...)`)
+    still works — they are coerced to their character form (`"21004"`).
+  - **Output changes**: every returned `code_from` / `code_to` column, and every
+    code column of `master_data` (`communes`, `postal`, `nis_changes`,
+    `entities`, `crosswalks`) and of the bundled example datasets, is now
+    `character`. Downstream joins, comparisons, and `==` filters that relied on
+    integer codes must be updated (character-vs-integer comparisons still work via
+    R's automatic coercion, but the stored type is character).
+  - The bundled `inst/extdata/*.rds` snapshots were rebuilt. If you maintain a
+    custom snapshot, re-run `rebuild_master_data()`.
+  - The country code keeps the value `"1000"` (the historical integer form of the
+    `01000` Statbel REALM code), not `"01000"`.
+
+
 # nbbbenuts 1.1.0
 
 ## Improvements

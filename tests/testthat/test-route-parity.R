@@ -113,10 +113,10 @@ test_that("NIS_PROVINCE_2019 -> NIS_REGION_2019 is a clean N:1 nesting", {
   r <- convert_codes(c(10000L, 20001L, 20002L, 4000L),
                      CLS_NIS_PROVINCE_2019, CLS_NIS_REGION_2019, master_data)
   expect_equal(nrow(r), 4L)
-  expect_equal(r[code_from == 10000L]$code_to, 2000L)  # Anvers          -> Flemish
-  expect_equal(r[code_from == 20001L]$code_to, 2000L)  # Vlaams-Brabant  -> Flemish
-  expect_equal(r[code_from == 20002L]$code_to, 3000L)  # Brabant wallon  -> Walloon
-  expect_equal(r[code_from == 4000L]$code_to,  4000L)  # Brussels pseudo -> Brussels
+  expect_equal(r[code_from == "10000"]$code_to, "2000")  # Anvers          -> Flemish
+  expect_equal(r[code_from == "20001"]$code_to, "2000")  # Vlaams-Brabant  -> Flemish
+  expect_equal(r[code_from == "20002"]$code_to, "3000")  # Brabant wallon  -> Walloon
+  expect_equal(r[code_from == "4000"]$code_to,  "4000")  # Brussels pseudo -> Brussels
 })
 
 # -- POSTAL multi-hop now flows through the generic composer -------------------

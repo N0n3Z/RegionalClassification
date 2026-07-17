@@ -226,12 +226,21 @@ test_that("NIS_MUNICIPALITY_2019 -> NIS_REGION_2019 assigns regions correctly", 
   codes  <- c(11002L, 44021L, 21001L, 62063L, 23002L, 25005L)
   result <- convert_codes(codes, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_REGION_2019, master_data)
 
-  expect_equal(result[code_from == 11002L]$code_to, 2000L)  # Antwerp -> Flemish
-  expect_equal(result[code_from == 44021L]$code_to, 2000L)  # Gent -> Flemish
-  expect_equal(result[code_from == 21001L]$code_to, 4000L)  # Brussels -> Brussels
-  expect_equal(result[code_from == 62063L]$code_to, 3000L)  # Liege -> Walloon
-  expect_equal(result[code_from == 23002L]$code_to, 2000L)  # Flemish Brabant -> Flemish
-  expect_equal(result[code_from == 25005L]$code_to, 3000L)  # Walloon Brabant -> Walloon
+  expect_equal(result[code_from == "11002"]$code_to, "2000")  # Antwerp -> Flemish
+  expect_equal(result[code_from == "44021"]$code_to, "2000")  # Gent -> Flemish
+  expect_equal(result[code_from == "21001"]$code_to, "4000")  # Brussels -> Brussels
+  expect_equal(result[code_from == "62063"]$code_to, "3000")  # Liege -> Walloon
+  expect_equal(result[code_from == "23002"]$code_to, "2000")  # Flemish Brabant -> Flemish
+  expect_equal(result[code_from == "25005"]$code_to, "3000")  # Walloon Brabant -> Walloon
+})
+
+test_that("convert_codes is input-permissive and always returns character codes (v2.0.0)", {
+  # Integer input is still accepted (coerced), and every returned code is character.
+  r_int <- convert_codes(21004L,  CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
+  r_chr <- convert_codes("21004", CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
+  expect_identical(r_int, r_chr)
+  expect_type(r_int$code_from, "character")
+  expect_type(r_int$code_to,   "character")
 })
 
 # -- Test 15: Uniform return schema (code_from, code_to, nature) --------------

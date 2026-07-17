@@ -32,14 +32,17 @@
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   validate_codes(c(21004L, 99999L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+#'   validate_codes(c("21004", "99999", "11002"), "NIS_MUNICIPALITY_2019", master_data)
 #' }
 #' @export
 validate_codes <- function(codes, classification, master_data) {
   cls <- normalize_classification_id(classification)
   .validate_master_data(master_data)
   ref  <- .list_codes_for(cls, master_data)
-  data.table(code = as.character(codes), is_valid = as.character(codes) %in% ref)
+  # Canonicalise input (e.g. the country "01000" -> stored "1000") so zero-padded
+  # and integer forms validate against the reference set.
+  codes_c <- .node_coerce(codes, cls)
+  data.table(code = codes_c, is_valid = codes_c %in% ref)
 }
 
 
@@ -62,7 +65,7 @@ validate_codes <- function(codes, classification, master_data) {
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   get_label(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", master_data)
+#'   get_label(c("21004", "11002"), "NIS_MUNICIPALITY_2019", master_data)
 #'   get_label(c("BE100", "BE211"), "NUTS_DISTRICT_2021", master_data, lang = "nl")
 #' }
 #' @export
@@ -74,7 +77,7 @@ get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) 
   meta      <- .node_label_meta(cls)
   label_col <- if (lang == "fr") meta$fr else meta$nl
 
-  input <- data.table(code = as.character(codes))
+  input <- data.table(code = .node_coerce(codes, cls))
 
   if (is.na(label_col)) {
     input[, label := NA_character_]

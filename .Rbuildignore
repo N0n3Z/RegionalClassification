@@ -13,3 +13,4 @@
 ^DOCUMENTATION\.log$
 ^data-raw$
 ^onboarding_email\.eml$
+^onboarding_email\.html$

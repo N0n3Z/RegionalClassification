@@ -53,8 +53,9 @@ Deux dimensions temporelles :
 - **NUTS** : `2021` (en vigueur) et `2027` (Reglement UE 2026/195).
 
 **Proprietes cles de l'API :**
-- Codes NIS et POSTAL sont de type **integer** ; codes NUTS et NBB sont de type
-  **character**.
+- Tous les codes sont de type **character** (depuis v2.0.0). L'entree reste
+  permissive : passer des codes integer fonctionne (ils sont convertis en
+  character), mais la sortie et le stockage sont toujours en character.
 - `convert_codes()` renvoie toujours un `data.table(code_from, code_to, nature)`.
 - Les conversions ambigues (1:N, M:N) sont bloquees par defaut ; `allow_ambiguous = TRUE`
   leve cette garde.
@@ -73,17 +74,17 @@ niveau (et non en lignes separees). Total : 23 identifiants.
 
 | Systeme | Niveau            | Identifiants (par version)                                                       | Type | Notes |
 |---------|-------------------|----------------------------------------------------------------------------------|------|-------|
-| NIS     | municipality      | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` | int  | Communes (les versions refletent les vagues de fusion 2019/2025) |
-| NIS     | district          | `NIS_DISTRICT_BEFORE_2019`, `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025`             | int  | Arrondissements |
-| NIS     | province          | `NIS_PROVINCE_BEFORE_2019`, `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025`             | int  | Scission Brabant : `20001` Brabant flamand / `20002` Brabant wallon ; Bruxelles pseudo-province `4000` |
-| NIS     | region            | `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, `NIS_REGION_2025`                   | int  | Flamande `2000`, Wallonne `3000`, Bruxelles `4000` |
-| NIS     | country           | `NIS_COUNTRY`                                                                    | int  | Code NIS `1000` (source Statbel : 01000 / ROYAUME / HET RIJK). Non-versionne. |
+| NIS     | municipality      | `NIS_MUNICIPALITY_BEFORE_2019`, `NIS_MUNICIPALITY_2019`, `NIS_MUNICIPALITY_2025` | chr  | Communes (les versions refletent les vagues de fusion 2019/2025) |
+| NIS     | district          | `NIS_DISTRICT_BEFORE_2019`, `NIS_DISTRICT_2019`, `NIS_DISTRICT_2025`             | chr  | Arrondissements |
+| NIS     | province          | `NIS_PROVINCE_BEFORE_2019`, `NIS_PROVINCE_2019`, `NIS_PROVINCE_2025`             | chr  | Scission Brabant : `20001` Brabant flamand / `20002` Brabant wallon ; Bruxelles pseudo-province `4000` |
+| NIS     | region            | `NIS_REGION_BEFORE_2019`, `NIS_REGION_2019`, `NIS_REGION_2025`                   | chr  | Flamande `2000`, Wallonne `3000`, Bruxelles `4000` |
+| NIS     | country           | `NIS_COUNTRY`                                                                    | chr  | Code NIS `1000` (source Statbel : 01000 / ROYAUME / HET RIJK). Non-versionne. |
 | NUTS    | LAU / municipality| `NUTS_MUNICIPALITY_2021`                                                         | chr  | Bijection 1:1 avec `NIS_MUNICIPALITY_2019` en Belgique (meme territoire, codage Eurostat) |
 | NUTS    | district (NUTS 3) | `NUTS_DISTRICT_2021`, `NUTS_DISTRICT_2027`                                       | chr  | |
 | NUTS    | province (NUTS 2) | `NUTS_PROVINCE_2021`, `NUTS_PROVINCE_2027`                                       | chr  | |
 | NUTS    | region (NUTS 1)   | `NUTS_REGION_2021`, `NUTS_REGION_2027`                                           | chr  | |
 | NUTS    | country (NUTS 0)  | `NUTS_COUNTRY`                                                                   | chr  | Non-versionne |
-| POSTAL  | postal            | `POSTAL`                                                                         | int  | Codes postaux bpost |
+| POSTAL  | postal            | `POSTAL`                                                                         | chr  | Codes postaux bpost |
 | NBB     | district          | `NBB_DISTRICT_2021`                                                              | chr  | Code interne 2 chiffres ; Verviers scinde : 65=FR, 66=DE |
 
 **Alias acceptes** : les identifiants tolerent plusieurs formes abreges
@@ -210,7 +211,7 @@ is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")  # TRU
 - `CHANGE_PROV` : 1 commune (11056 -> 46030)
 
 **Symetrie temporelle** : la nature est preservee sur le chemin inverse.
-`convert_codes(46030L, "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", md, allow_ambiguous=TRUE)`
+`convert_codes("46030", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", md, allow_ambiguous=TRUE)`
 renvoie `CHANGE_PROV` pour la ligne `code_to == 11056`.
 
 ---
@@ -247,7 +248,7 @@ Etapes intermediaires du pipeline de construction, exposees pour usage avance.
 **Fonction centrale.** Convertit un vecteur de codes.
 
 **Parametres :**
-- `codes` : vecteur de codes source (integer ou character selon la classification).
+- `codes` : vecteur de codes source (character ; integer accepte et converti).
 - `from`, `to` : identifiants de classification (voir section 2).
 - `master_data` : objet retourne par `load_master_data()`.
 - `allow_ambiguous` : si `FALSE` (defaut), leve `rcl_ambiguous_conversion` pour tout
@@ -264,16 +265,16 @@ l'avertissement `rcl_unmatched_codes` est emis.
 
 ```r
 # Simple N:1
-convert_codes(c(21004L, 11002L), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
+convert_codes(c("21004", "11002"), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
 
 # Temporel avec nature
-convert_codes(c(11002L, 11007L), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+convert_codes(c("11002", "11007"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 # code_from  code_to  nature
 #     11002    11002  UNCHANGED
 #     11007    11002  FUSION
 
 # Ambigu -- Verviers
-convert_codes(63000L, "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
+convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",
               master_data, allow_ambiguous = TRUE)
 # code_from  code_to  nature
 #     63000    BE335  OVERLAP
@@ -296,7 +297,7 @@ auto-genere si `NULL`). Si `from = NULL`, auto-detecte la classification source 
 - `na_action` : `"warn"` (defaut, garde les NA), `"keep"` (silencieux), `"drop"` (supprime les lignes).
 
 ```r
-dt <- data.table(commune = c(21004L, 11002L), pop = c(180000, 530000))
+dt <- data.table(commune = c("21004", "11002"), pop = c(180000, 530000))
 convert_dataset(dt, "commune", "NUTS_DISTRICT_2021", master_data, from = "NIS_MUNICIPALITY_2019")
 #    commune      pop  cd_nuts3_2021
 # 1:   21004   180000         BE100
@@ -318,7 +319,7 @@ Retourne une liste nommee :
 | `relations` | character | vecteur des cardinalites par saut |
 | `explanation` | character | texte lisible |
 | `edges_used` | list | aretes utilisees (elements de `CONVERSION_GRAPH_EDGES`) |
-| `ambiguous_codes` | integer/character | codes ambigus (si applicables) |
+| `ambiguous_codes` | character | codes ambigus (si applicables) |
 | `coverage` | character | couverture (si applicable) |
 | `perimeter_relations` | character | semantique par saut : `"temporal"` / `"identity"` / `"nesting"` / `"overlap"` |
 | `perimeter_status` | character | `"preserving"` ou `"crossing"` |
@@ -359,7 +360,7 @@ Verifie l'appartenance des codes a une classification.
 Retourne `data.table(code, is_valid)`.
 
 ```r
-validate_codes(c(21004L, 99999L), "NIS_MUNICIPALITY_2019", master_data)
+validate_codes(c("21004", "99999"), "NIS_MUNICIPALITY_2019", master_data)
 #    code  is_valid
 #   21004      TRUE
 #   99999     FALSE
@@ -488,7 +489,7 @@ Convertit un panel longitudinal spanning plusieurs versions NIS vers une version
 ```r
 panel <- data.table(
   year = c(2022L, 2022L, 2025L),
-  commune = c(11002L, 11007L, 11002L),
+  commune = c("11002", "11007", "11002"),
   pop = c(530000, 42000, 590000)
 )
 
@@ -631,7 +632,7 @@ CLASSIFICATION_NODES[["NIS_MUNICIPALITY_2019"]]
 # $system        "NIS"
 # $level         "municipality"
 # $version       "2019"
-# $code_type     "integer"
+# $code_type     "character"
 # $source_table  "communes"
 # $version_filter "2019"
 # $code_col      "cd_commune"

@@ -32,9 +32,9 @@
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   detect_classification(c(21004L, 11002L, 62063L), master_data)  # "NIS_MUNICIPALITY_2019"
+#'   detect_classification(c("21004", "11002", "62063"), master_data)  # "NIS_MUNICIPALITY_2019"
 #'   detect_classification(c("BE100", "BE211"),        master_data)  # "NUTS_DISTRICT_2021"
-#'   detect_classification(c(1000L, 2000L),            master_data)  # "POSTAL"
+#'   detect_classification(c("1000", "2000"),            master_data)  # "POSTAL"
 #' }
 #' @export
 detect_classification <- function(codes, master_data) {
@@ -43,7 +43,9 @@ detect_classification <- function(codes, master_data) {
   if (length(codes_sample) == 0) return(NULL)
   # Use at most 50 values for speed
   codes_sample <- codes_sample[seq_len(min(50L, length(codes_sample)))]
-  codes_chr    <- as.character(codes_sample)
+  # Canonicalise (e.g. the country "01000" -> "1000") so zero-padded input is
+  # matched against the reference sets.
+  codes_chr    <- .canon_codes(codes_sample)
 
   # --- Type-based pre-filter ---
   all_char <- all(grepl("^[A-Za-z]", codes_chr))
