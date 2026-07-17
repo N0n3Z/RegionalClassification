@@ -42,7 +42,7 @@ The package normally runs off the pre-built snapshot in `inst/extdata/*.rds`
 - `R/07_dataset_convert.R`, `R/07_split_ambiguous.R`, `R/10_rebase.R` — dataset-
   level conversion, weighted M:N splitting (Verviers), longitudinal rebasing.
 
-Facts worth knowing: **all classification codes are `character`** (v2.0.0; NIS
+Facts worth knowing: **all classification codes are `character`** (v1.2.0; NIS
 and POSTAL used to be integer). Input stays permissive — integer codes are
 coerced via `.node_coerce()` — but everything is stored and returned as
 character. The build derives the NIS hierarchy with integer arithmetic on REFNIS

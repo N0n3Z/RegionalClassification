@@ -113,7 +113,7 @@
 }
 
 # Convert integer/numeric code columns (cd_* / code*) of a flat table to
-# character, in place. Codes are identifiers, not quantities: as of v2.0.0 every
+# character, in place. Codes are identifiers, not quantities: as of v1.2.0 every
 # classification code is stored and returned as character (see
 # CLASSIFICATION_NODES$code_type and .node_coerce, R/00b_registry.R). This runs at
 # the END of build_master_table so the integer arithmetic used to DERIVE codes
@@ -317,7 +317,7 @@ build_master_table <- function(raw_data) {
   .assert_cols(crosswalks,
                c("from_id", "to_id", "code_from", "code_to", "nature"), "crosswalks")
 
-  # --- 9c. Stringify NIS/POSTAL code columns (v2.0.0) ---
+  # --- 9c. Stringify NIS/POSTAL code columns (v1.2.0) ---
   # entities$code and crosswalks$code_from/code_to are already character (they
   # stack mixed NIS/NUTS codes at build time), so only the three flat NIS/POSTAL
   # tables carry integer code columns that must be converted for the all-character

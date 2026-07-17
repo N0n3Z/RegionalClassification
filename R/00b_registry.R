@@ -307,7 +307,7 @@ CLASSIFICATION_NODES <- list(
 
 #' Canonicalise a code vector to its stored string form.
 #'
-#' Every code is stored as character (v2.0.0). Purely numeric codes are round-
+#' Every code is stored as character (v1.2.0). Purely numeric codes are round-
 #' tripped through integer so leading-zero input matches the stored form -- most
 #' importantly the Statbel country code, written "01000" but stored "1000". Codes
 #' containing letters (NUTS "BE100") are left untouched. NA is preserved.
@@ -321,7 +321,7 @@ CLASSIFICATION_NODES <- list(
 
 #' Coerce a code vector to the canonical storage type for `id`
 #'
-#' All nodes are character (v2.0.0); coercion also canonicalises leading zeros
+#' All nodes are character (v1.2.0); coercion also canonicalises leading zeros
 #' via .canon_codes() so integer input and zero-padded forms map to the stored
 #' code. Integer input therefore stays permissive (21004L -> "21004").
 #' @noRd

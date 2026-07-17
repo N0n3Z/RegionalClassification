@@ -234,7 +234,7 @@ test_that("NIS_MUNICIPALITY_2019 -> NIS_REGION_2019 assigns regions correctly", 
   expect_equal(result[code_from == "25005"]$code_to, "3000")  # Walloon Brabant -> Walloon
 })
 
-test_that("convert_codes is input-permissive and always returns character codes (v2.0.0)", {
+test_that("convert_codes is input-permissive and always returns character codes (v1.2.0)", {
   # Integer input is still accepted (coerced), and every returned code is character.
   r_int <- convert_codes(21004L,  CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
   r_chr <- convert_codes("21004", CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)

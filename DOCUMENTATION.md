@@ -53,7 +53,7 @@ Deux dimensions temporelles :
 - **NUTS** : `2021` (en vigueur) et `2027` (Reglement UE 2026/195).
 
 **Proprietes cles de l'API :**
-- Tous les codes sont de type **character** (depuis v2.0.0). L'entree reste
+- Tous les codes sont de type **character** (depuis v1.2.0). L'entree reste
   permissive : passer des codes integer fonctionne (ils sont convertis en
   character), mais la sortie et le stockage sont toujours en character.
 - `convert_codes()` renvoie toujours un `data.table(code_from, code_to, nature)`.

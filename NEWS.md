@@ -1,4 +1,4 @@
-# nbbbenuts 2.0.0
+# nbbbenuts 1.2.0
 
 ## Breaking changes
 

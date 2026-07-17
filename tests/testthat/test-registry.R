@@ -169,7 +169,7 @@ test_that(".node_reference_codes() agrees with .list_codes_for() for key nodes",
 
 # -- .node_coerce() type coercion ---------------------------------------------
 test_that(".node_coerce() coerces NIS nodes to character (input-permissive)", {
-  # v2.0.0: every classification code is character. Integer input is still
+  # v1.2.0: every classification code is character. Integer input is still
   # accepted and normalised to its character form.
   expect_type(nbbbenuts:::.node_coerce("21004", CLS_NIS_MUNICIPALITY_2019), "character")
   expect_equal(nbbbenuts:::.node_coerce(21004L, CLS_NIS_MUNICIPALITY_2019), "21004")

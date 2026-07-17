@@ -5,7 +5,7 @@
 # Run it section by section in RStudio or from the command line:
 #   Rscript demo/demo.R
 #
-# NOTE (v2.0.0): all geographic codes are CHARACTER strings ("21004", "1000", ...).
+# NOTE (v1.2.0): all geographic codes are CHARACTER strings ("21004", "1000", ...).
 # Integer input is still accepted and converted, but the returned code columns
 # are always character.
 # ==============================================================================
