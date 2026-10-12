@@ -72,7 +72,7 @@ test_that("edit-count methods use a relative distance, not raw edit counts", {
   # confident match.
   r <- fuzzy_match_names("Bruxeles", CLS_NIS_MUNICIPALITY_2019, master_data,
                          max_dist = 0.2, method = "osa", language = "fr")
-  expect_equal(r$matched_code, "21004")
+  expect_equal(r$code_matched, "21004")
   expect_true(r$is_confident)
   expect_lt(r$distance, 0.2)
   expect_gt(r$distance, 0)

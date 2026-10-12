@@ -47,7 +47,7 @@ utils::globalVariables(c(
   "cd_refnis_new", "cd_refnis_old", "cd_region",
   "classification", "code", "code_from", "code_to",
   "distance", "from",
-  "input_name", "is_confident", "is_simple", "is_valid_commune",
+  "label_input", "is_confident", "is_simple", "is_valid_commune",
   "level", "match_pct", "n_occurrences",
   "nature", "nis_version", "notes",
   "rate", "ref_code", "ref_name", "ref_name_norm", "relation",

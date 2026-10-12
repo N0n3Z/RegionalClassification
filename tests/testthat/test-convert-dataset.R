@@ -2,18 +2,18 @@ library(data.table)
 
 # -- Test CD1: conversion simple NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021 ----------------
 test_that("convert_dataset adds target column correctly", {
-  dt <- data.table(cd_commune = c(21004L, 11002L, 62063L), value = 1:3)
-  result <- convert_dataset(dt, "cd_commune", to = CLS_NUTS_DISTRICT_2021, master_data)
+  dt <- data.table(code_nis_municipality_2019 = c(21004L, 11002L, 62063L), value = 1:3)
+  result <- convert_dataset(dt, "code_nis_municipality_2019", to = CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(is.data.table(result))
-  expect_true("cd_nuts3_2021" %in% names(result) || any(grepl("nuts3", names(result), ignore.case = TRUE)))
+  expect_true("code_nuts_district_2021" %in% names(result) || any(grepl("nuts3", names(result), ignore.case = TRUE)))
   expect_equal(nrow(result), 3L)
 })
 
 # -- Test CD2: auto-detection de la classification source ----------------------
 test_that("convert_dataset auto-detects from when omitted", {
-  dt <- data.table(cd_commune = c(21004L, 11002L), pop = c(100L, 200L))
+  dt <- data.table(code_nis_municipality_2019 = c(21004L, 11002L), pop = c(100L, 200L))
   expect_no_error(
-    convert_dataset(dt, "cd_commune", to = CLS_NUTS_DISTRICT_2021, master_data)
+    convert_dataset(dt, "code_nis_municipality_2019", to = CLS_NUTS_DISTRICT_2021, master_data)
   )
 })
 
@@ -45,9 +45,9 @@ test_that("convert_dataset works for POSTAL -> NIS_MUNICIPALITY_2019", {
 
 # -- Test CD6: donnees inchangees (colonnes supplementaires preservees) ---------
 test_that("convert_dataset preserves all original columns", {
-  dt <- data.table(cd_commune = c(21004L, 11002L), pop = c(100L, 200L),
+  dt <- data.table(code_nis_municipality_2019 = c(21004L, 11002L), pop = c(100L, 200L),
                    income = c(30000.0, 28000.0))
-  result <- convert_dataset(dt, "cd_commune", to = CLS_NUTS_DISTRICT_2021, master_data)
+  result <- convert_dataset(dt, "code_nis_municipality_2019", to = CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(all(c("pop", "income") %in% names(result)))
 })
 
@@ -63,7 +63,7 @@ test_that("convert_dataset M:N join is robust to the user column type", {
   )
   # Verviers (63000) fans out to BE335 + BE336; 62000 stays 1 row.
   expect_equal(nrow(r[arr == 63000L]), 2L)
-  expect_true(all(!is.na(r$cd_nuts3_2021)))
+  expect_true(all(!is.na(r$code_nuts_district_2021)))
 })
 
 test_that("convert_dataset M:N branch warns rcl_unmatched_codes for unmatched codes", {
@@ -83,19 +83,13 @@ test_that("convert_dataset M:N branch drops unmatched codes with na_action = dro
                     to = CLS_NUTS_DISTRICT_2021, master_data,
                     allow_ambiguous = TRUE, na_action = "drop", verbose = FALSE)
   )
-  expect_equal(sum(is.na(r$cd_nuts3_2021)), 0L)
+  expect_equal(sum(is.na(r$code_nuts_district_2021)), 0L)
   expect_false(99999L %in% r$arr)
 })
 
-# -- default_col_name covers every classification (no verbose fallback) --------
-test_that("default_col_name returns a short valid name for every classification", {
+# -- default_col_name follows the schema v2 rule for every classification -------
+test_that("default_col_name is code_<lower-cased id> for every classification", {
   for (cls in VALID_CLASSIFICATIONS) {
-    nm <- nbbbenuts:::default_col_name(cls)
-    expect_true(is.character(nm) && length(nm) == 1L && nzchar(nm))
-    # No node should fall through to the VERBOSE fallback that echoes the whole
-    # multi-word identifier (e.g. cd_nis_district_before_2019). Country/postal
-    # nodes have short names that coincide with the fallback formula -- allowed.
-    expect_false(grepl("_(district|province|region|municipality)_", nm),
-                 info = sprintf("%s -> verbose fallback name '%s'", cls, nm))
+    expect_equal(nbbbenuts:::default_col_name(cls), paste0("code_", tolower(cls)), info = cls)
   }
 })

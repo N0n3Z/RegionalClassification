@@ -82,10 +82,10 @@ result <- split_ambiguous(
   value_type = "additive"   # totaux à redistribuer
 )
 print(result)
-#    cd_nuts3_2021  emplois   masse_sal
-# 1:         BE211  500000   12000000000   (Antwerpen, 1:1)
-# 2:         BE335   40000     900000000   (Verviers FR, 50%)
-# 3:         BE336   40000     900000000   (Verviers DE, 50%)
+#    code_nuts_district_2021  emplois   masse_sal
+# 1:                   BE211  500000   12000000000   (Antwerpen, 1:1)
+# 2:                   BE335   40000     900000000   (Verviers FR, 50%)
+# 3:                   BE336   40000     900000000   (Verviers DE, 50%)
 ```
 
 ### Vérification de la conservation des totaux
@@ -117,7 +117,7 @@ result_weighted <- split_ambiguous(
   value_type = "additive"
 )
 print(result_weighted)
-#    cd_nuts3_2021  masse_sal
+#    code_nuts_district_2021  masse_sal
 # 1:         BE335  1542600000   (85.7% de 1.8 Mrd)
 # 2:         BE336   257400000   (14.3% de 1.8 Mrd)
 ```

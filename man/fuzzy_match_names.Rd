@@ -37,7 +37,7 @@ methods.}
 \item{language}{Preferred language for matching: "fr", "nl", or "both" (default)}
 }
 \value{
-data.table with input_name, matched_name, matched_code, distance
+data.table with label_input, label_matched, code_matched, distance
   (relative, in \code{[0, 1]}), language, is_confident
 }
 \description{

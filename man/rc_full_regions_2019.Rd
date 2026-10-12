@@ -7,7 +7,7 @@
 \format{
 A `data.table` with 3 rows and 5 columns:
 \describe{
-  \item{cd_region}{Integer. NIS 2019 region code (2000, 3000, 4000).}
+  \item{code_nis_region_2019}{Character. NIS 2019 region code (2000, 3000, 4000).}
   \item{population}{Integer. Resident population (fictional, 500 000--3 700 000).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}

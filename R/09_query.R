@@ -118,8 +118,10 @@ get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) 
 #'   added. Unambiguous codes receive `weight = 1`. Ambiguous (1:N) codes use
 #'   population weights from the session registry (see
 #'   [register_split_weights()]) when available, otherwise equal weights.
-#' @return A `data.table` with columns named after `from` and `to`. When
-#'   `weights = TRUE`, an additional numeric `weight` column is included.
+#' @return A `data.table` with one code column per classification, named
+#'   `code_<lower-cased id>` (e.g. `code_nis_district_2019`,
+#'   `code_nuts_district_2021`). When `weights = TRUE`, an additional numeric
+#'   `weight` column is included.
 #' @examples
 #' \donttest{
 #'   master_data <- load_master_data()
@@ -167,7 +169,8 @@ get_crosswalk <- function(from, to, master_data, weights = FALSE) {
     }
   }
 
-  setnames(result, c("code_from", "code_to"), c(from_norm, to_norm))
-  if (weights) setcolorder(result, c(from_norm, to_norm, "weight"))
+  out_cols <- c(default_col_name(from_norm), default_col_name(to_norm))
+  setnames(result, c("code_from", "code_to"), out_cols)
+  if (weights) setcolorder(result, c(out_cols, "weight"))
   result
 }

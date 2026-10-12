@@ -7,7 +7,7 @@
 \format{
 A `data.table` with 44 rows and 5 columns:
 \describe{
-  \item{cd_nuts3}{Character. NUTS3 2021 code (e.g. `"BE100"`).}
+  \item{code_nuts_district_2021}{Character. NUTS3 2021 code (e.g. `"BE100"`).}
   \item{population}{Integer. Resident population (fictional, 10 000--700 000).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -28,7 +28,7 @@ head(rc_full_nuts3_2021)
 
 \donttest{
   master_data <- load_master_data()
-  convert_dataset(rc_full_nuts3_2021, "cd_nuts3",
+  convert_dataset(rc_full_nuts3_2021, "code_nuts_district_2021",
                   from = "NUTS_DISTRICT_2021",
                   to   = "NUTS_PROVINCE_2021", master_data)
 }

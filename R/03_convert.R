@@ -448,8 +448,9 @@ route_conversion <- function(input_dt, from, to, md) {
 #'   \item{nesting}{Many fine units aggregate into one coarser unit (N:1).}
 #'   \item{overlap}{A source unit straddles multiple target units (1:N / M:N).}
 #' }
-#' @return data.table with columns \code{from}, \code{to}, \code{relation},
-#'   \code{perimeter_relation}, \code{notes}.
+#' @return data.table with columns \code{classification_from},
+#'   \code{classification_to}, \code{relation}, \code{perimeter_relation},
+#'   \code{notes}.
 #' @examples
 #' list_available_conversions()
 #' @export
@@ -459,8 +460,8 @@ list_available_conversions <- function() {
   # multiple rows, misaligning the perimeter_relation vector.
   edges <- rbindlist(lapply(CONVERSION_GRAPH_EDGES, function(e) {
     data.table(
-      from     = e$from,
-      to       = e$to,
+      classification_from = e$from,
+      classification_to   = e$to,
       relation = e$relation,
       notes    = if (!is.null(e$notes) && length(e$notes) == 1L) e$notes
                  else NA_character_
@@ -468,7 +469,7 @@ list_available_conversions <- function() {
   }), use.names = TRUE, fill = TRUE)
   prel <- vapply(CONVERSION_GRAPH_EDGES, .edge_perimeter_relation, character(1))
   edges[, perimeter_relation := prel]
-  edges[, .(from, to, relation, perimeter_relation, notes)]
+  edges[, .(classification_from, classification_to, relation, perimeter_relation, notes)]
 }
 
 .validate_master_data <- function(master_data) {

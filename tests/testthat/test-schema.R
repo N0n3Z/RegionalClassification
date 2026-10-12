@@ -117,3 +117,41 @@ test_that("conversion on an in-memory v1 object aborts with rcl_legacy_schema", 
     class = "rcl_legacy_schema"
   )
 })
+
+# -- User-facing outputs ---------------------------------------------------------
+
+test_that("bundled example datasets use code_<lower-cased id> character code columns", {
+  ds_cls <- c(
+    rc_communes_2019 = "NIS_MUNICIPALITY_2019", rc_communes_2025 = "NIS_MUNICIPALITY_2025",
+    rc_postal = "POSTAL", rc_arrondissements_2019 = "NIS_DISTRICT_2019",
+    rc_nuts3_2021 = "NUTS_DISTRICT_2021",
+    rc_full_municipalities_2019 = "NIS_MUNICIPALITY_2019",
+    rc_full_municipalities_2025 = "NIS_MUNICIPALITY_2025",
+    rc_full_districts_2019 = "NIS_DISTRICT_2019", rc_full_regions_2019 = "NIS_REGION_2019",
+    rc_full_nuts3_2021 = "NUTS_DISTRICT_2021", rc_full_nuts3_2027 = "NUTS_DISTRICT_2027",
+    rc_full_postal = "POSTAL", rc_dirty_municipalities_2019 = "NIS_MUNICIPALITY_2019"
+  )
+  for (nm in names(ds_cls)) {
+    dt  <- get(nm, envir = asNamespace("nbbbenuts"))
+    col <- nbbbenuts:::default_col_name(ds_cls[[nm]])
+    expect_equal(names(dt)[1L], col, info = nm)
+    expect_type(dt[[col]], "character")
+    expect_false(any(grepl("^(cd|nom|tx)_", names(dt))), info = nm)
+  }
+})
+
+test_that("convert_dataset / get_crosswalk name code columns after the classification", {
+  r <- convert_dataset(rc_communes_2019, "code_nis_municipality_2019",
+                       from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_DISTRICT_2021,
+                       master_data, verbose = FALSE)
+  expect_true("code_nuts_district_2021" %in% names(r))
+  cw <- get_crosswalk(CLS_POSTAL, CLS_NIS_MUNICIPALITY_2019, master_data)
+  expect_equal(names(cw), c("code_postal", "code_nis_municipality_2019"))
+})
+
+test_that("conversion listings use classification_from / classification_to", {
+  expect_equal(names(list_available_conversions())[1:2],
+               c("classification_from", "classification_to"))
+  expect_equal(names(get_conversion_matrix())[1:2],
+               c("classification_from", "classification_to"))
+})

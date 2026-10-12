@@ -40,9 +40,29 @@
 
   `CLASSIFICATION_NODES` (`source_table`, `code_col`, `label_*_col`) follows the
   same names. The conversion results themselves are unchanged (same codes,
-  same rows); so are the user-facing column names of `convert_codes()`
-  (`code_from`, `code_to`, ...), of `convert_dataset()` and of the split-weight
-  API (`code_from`, `code_to`, `weight`).
+  same rows). `convert_codes()` (`code_from`, `code_to`, `nature`), the
+  split-weight API (`code_from`, `code_to`, `weight`), `get_label()` and
+  `validate_codes()` already followed the convention and are unchanged.
+
+* **User-facing outputs follow the same convention.** A code column created
+  for a classification is named `code_<lower-cased id>`, version included:
+
+  | Function / data | v1 | v2 |
+  |---|---|---|
+  | `convert_dataset()`, `split_ambiguous()` default `target_col` | `cd_nuts3_2021`, `cd_nis2019`, `cd_arr2019`, `cd_prov2019`, `cd_lau2021`, `cd_arr_internal`, ... | `code_nuts_district_2021`, `code_nis_municipality_2019`, `code_nis_district_2019`, `code_nis_province_2019`, `code_nuts_municipality_2021`, `code_nbb_district_2021`, ... |
+  | `get_crosswalk()` | columns named after the ids (`NIS_DISTRICT_2019`, `NUTS_DISTRICT_2021`) | `code_nis_district_2019`, `code_nuts_district_2021` |
+  | `list_available_conversions()`, `get_conversion_matrix()` | `from`, `to` | `classification_from`, `classification_to` |
+  | `fuzzy_match_names()`, `identify_from_names()` | `input_name`, `matched_name`, `matched_code` | `label_input`, `label_matched`, `code_matched` |
+  | example datasets `rc_*` | `cd_commune`, `cd_arr`, `cd_region`, `cd_nuts3`, `cd_nuts3_2027`, `cd_postal`; `nom_fr` / `nom_nl` | `code_nis_municipality_2019` / `_2025`, `code_nis_district_2019`, `code_nis_region_2019`, `code_nuts_district_2021`, `code_nuts_district_2027`, `code_postal`; `label_fr` / `label_nl` |
+
+  The code columns of `rc_communes_2019`, `rc_communes_2025`,
+  `rc_arrondissements_2019` and `rc_postal` are now character (they were still
+  integer). Measure columns (`population`, `emplois`, ...) are unchanged.
+
+## Dependencies
+
+* `data.table (>= 1.17.0)` is now required: the test suite crashes R
+  (segfault in `is.sorted()`) with data.table 1.14.10.
 
 * **v1 snapshots are migrated automatically.** `load_master_data()` reads a
   pre-2.0.0 snapshot directory (`communes.rds`, `cd_*` columns), migrates it in

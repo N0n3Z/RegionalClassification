@@ -7,9 +7,9 @@
 \format{
 A `data.table` with 10 rows and 7 columns:
 \describe{
-  \item{cd_commune}{Integer. NIS 2025 commune code.}
-  \item{nom_fr}{Character. French name of the commune.}
-  \item{nom_nl}{Character. Dutch name of the commune.}
+  \item{code_nis_municipality_2025}{Character. NIS 2025 commune code.}
+  \item{label_fr}{Character. French name of the commune.}
+  \item{label_nl}{Character. Dutch name of the commune.}
   \item{population}{Integer. Resident population (fictional).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -29,7 +29,7 @@ head(rc_communes_2025)
 
 \donttest{
   master_data <- load_master_data()
-  convert_dataset(rc_communes_2025, "cd_commune",
+  convert_dataset(rc_communes_2025, "code_nis_municipality_2025",
                   from = "NIS_MUNICIPALITY_2025", to = "NUTS_DISTRICT_2027", master_data)
 }
 }

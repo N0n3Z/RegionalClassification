@@ -79,21 +79,21 @@ test_that("get_label works for POSTAL", {
 test_that("get_crosswalk returns a data.table with named columns", {
   result <- get_crosswalk(CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(is.data.table(result))
-  expect_true(CLS_NIS_MUNICIPALITY_2019 %in% names(result))
-  expect_true(CLS_NUTS_DISTRICT_2021       %in% names(result))
+  expect_true("code_nis_municipality_2019" %in% names(result))
+  expect_true("code_nuts_district_2021"    %in% names(result))
 })
 
 test_that("get_crosswalk covers all source codes", {
   result <- get_crosswalk(CLS_NIS_MUNICIPALITY_2019, CLS_NUTS_DISTRICT_2021, master_data)
   all_2019 <- nbbbenuts:::.list_codes_for(CLS_NIS_MUNICIPALITY_2019, master_data)
   # Every source code is represented (some may map to NA if no NUTS available)
-  expect_true(all(all_2019 %in% result$NIS_MUNICIPALITY_2019))
+  expect_true(all(all_2019 %in% result$code_nis_municipality_2019))
 })
 
 test_that("get_crosswalk for POSTAL -> NIS_MUNICIPALITY_2019 is N:1", {
   result <- get_crosswalk(CLS_POSTAL, CLS_NIS_MUNICIPALITY_2019, master_data)
   # Each postal code appears exactly once (N:1)
-  expect_equal(nrow(result), uniqueN(result$POSTAL))
+  expect_equal(nrow(result), uniqueN(result$code_postal))
 })
 
 test_that("get_crosswalk errors for invalid classification", {
@@ -115,7 +115,7 @@ test_that("get_crosswalk weights=TRUE uses equal weights for ambiguous pair", {
   clear_split_weights()
   result <- get_crosswalk(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, master_data, weights = TRUE)
   expect_true("weight" %in% names(result))
-  verviers <- result[NIS_DISTRICT_2019 == "63000"]
+  verviers <- result[code_nis_district_2019 == "63000"]
   expect_equal(nrow(verviers), 2L)
   expect_equal(sum(verviers$weight), 1, tolerance = 1e-9)
   expect_equal(verviers$weight[1], 0.5, tolerance = 1e-9)
@@ -130,9 +130,9 @@ test_that("get_crosswalk weights=TRUE uses registered weights when available", {
                weight    = c(0.857, 0.143))
   )
   result <- get_crosswalk(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021, master_data, weights = TRUE)
-  verviers <- result[NIS_DISTRICT_2019 == "63000"]
-  expect_equal(verviers[NUTS_DISTRICT_2021 == "BE335", weight], 0.857, tolerance = 1e-9)
-  expect_equal(verviers[NUTS_DISTRICT_2021 == "BE336", weight], 0.143, tolerance = 1e-9)
+  verviers <- result[code_nis_district_2019 == "63000"]
+  expect_equal(verviers[code_nuts_district_2021 == "BE335", weight], 0.857, tolerance = 1e-9)
+  expect_equal(verviers[code_nuts_district_2021 == "BE336", weight], 0.143, tolerance = 1e-9)
   clear_split_weights()
 })
 

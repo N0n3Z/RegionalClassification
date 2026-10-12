@@ -184,7 +184,7 @@ convert_dataset(dt, "commune",
                 from = "NIS_MUNICIPALITY_2019",
                 to   = "NUTS_DISTRICT_2021",
                 master_data)
-# Adds column 'cd_nuts3_2021' with converted codes.
+# Adds column 'code_nuts_district_2021' with converted codes.
 ```
 
 ---
@@ -363,7 +363,7 @@ fuzzy_match_names(
   max_dist = 0.3,
   language = "both"
 )
-#   input_name  matched_name  matched_code  distance  is_confident
+#   label_input  label_matched  code_matched  distance  is_confident
 #   Bruxeles    Bruxelles        21004       0.037      TRUE
 #   Antwerpn    Antwerpen        11002       0.037      TRUE
 #   Liege       Liège            62063       0.150      TRUE

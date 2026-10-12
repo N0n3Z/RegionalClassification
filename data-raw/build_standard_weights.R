@@ -75,7 +75,7 @@ vintage_master <- c(
   NIS_MUNICIPALITY_BEFORE_2019 = VER_BEFORE_2019
 )
 for (v in unique(standard_weight_values$vintage)) {
-  comm <- as.character(unique(md$communes[nis_version == vintage_master[[v]], cd_commune]))
+  comm <- as.character(unique(md$municipalities[version == vintage_master[[v]], code_nis_municipality]))
   for (y in sort(unique(standard_weight_values[vintage == v, year]))) {
     have <- standard_weight_values[vintage == v & year == y, code]
     miss <- setdiff(comm, have)

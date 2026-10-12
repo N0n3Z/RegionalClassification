@@ -7,8 +7,8 @@
 \format{
 A `data.table` with 8 rows and 5 columns:
 \describe{
-  \item{cd_arr}{Integer. NIS 2019 arrondissement code.}
-  \item{nom_fr}{Character. French name of the arrondissement.}
+  \item{code_nis_district_2019}{Character. NIS 2019 arrondissement code.}
+  \item{label_fr}{Character. French name of the arrondissement.}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
   \item{population}{Integer. Resident population (fictional).}
@@ -32,7 +32,7 @@ head(rc_arrondissements_2019)
   # Verviers (63000) is ambiguous: spans BE335 and BE336
   split_ambiguous(
     dt         = rc_arrondissements_2019,
-    code_col   = "cd_arr",
+    code_col   = "code_nis_district_2019",
     value_cols = c("emplois", "masse_sal"),
     from       = "NIS_DISTRICT_2019",
     to         = "NUTS_DISTRICT_2021",

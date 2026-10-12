@@ -223,7 +223,7 @@ visualize_conversion_matrix <- function(output_file = NULL) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     message("Package 'ggplot2' not installed. Showing text matrix.")
     # Pivot to wide format
-    wide <- dcast(mat, from ~ to, value.var = "is_simple")
+    wide <- dcast(mat, classification_from ~ classification_to, value.var = "is_simple")
     print(wide)
     return(invisible(wide))
   }
@@ -231,9 +231,9 @@ visualize_conversion_matrix <- function(output_file = NULL) {
   # Create heatmap
   mat[, status := fifelse(is_simple, "Simple", "Ambigu")]
   mat[is.na(is_simple), status := "Pas de chemin"]
-  mat[from == to, status := "Identite"]
+  mat[classification_from == classification_to, status := "Identite"]
 
-  p <- ggplot2::ggplot(mat, ggplot2::aes(x = to, y = from, fill = status)) +
+  p <- ggplot2::ggplot(mat, ggplot2::aes(x = classification_to, y = classification_from, fill = status)) +
     ggplot2::geom_tile(color = "white", linewidth = 0.5) +
     ggplot2::scale_fill_manual(
       values = c("Simple" = "#27AE60", "Ambigu" = "#E74C3C",

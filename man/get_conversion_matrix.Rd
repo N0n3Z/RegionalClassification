@@ -16,7 +16,8 @@ superset of what the executor materialises (it auto-inverts edges), so
 tell the genuinely usable ambiguous routes from the declared-only ones.}
 }
 \value{
-data.table with columns \code{from}, \code{to}, \code{is_simple},
+data.table with columns \code{classification_from},
+  \code{classification_to}, \code{is_simple},
   \code{relation_chain}, and (when \code{md} is supplied) \code{executable}.
 }
 \description{

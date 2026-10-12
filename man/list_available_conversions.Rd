@@ -7,8 +7,9 @@
 list_available_conversions()
 }
 \value{
-data.table with columns \code{from}, \code{to}, \code{relation},
-  \code{perimeter_relation}, \code{notes}.
+data.table with columns \code{classification_from},
+  \code{classification_to}, \code{relation}, \code{perimeter_relation},
+  \code{notes}.
 }
 \description{
 Returns a data.table with one row per declared edge in

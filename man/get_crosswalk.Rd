@@ -19,8 +19,10 @@ population weights from the session registry (see
 [register_split_weights()]) when available, otherwise equal weights.}
 }
 \value{
-A `data.table` with columns named after `from` and `to`. When
-  `weights = TRUE`, an additional numeric `weight` column is included.
+A `data.table` with one code column per classification, named
+  `code_<lower-cased id>` (e.g. `code_nis_district_2019`,
+  `code_nuts_district_2021`). When `weights = TRUE`, an additional numeric
+  `weight` column is included.
 }
 \description{
 Returns every (from, to) pair that exists in the reference data. For simple

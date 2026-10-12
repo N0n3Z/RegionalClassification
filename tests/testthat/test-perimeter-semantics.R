@@ -158,7 +158,7 @@ test_that("list_available_conversions includes perimeter_relation column", {
 
 test_that("list_available_conversions: temporal edges classified correctly", {
   la <- list_available_conversions()
-  temporal_edges <- la[from == CLS_NIS_MUNICIPALITY_2019 & to == CLS_NIS_MUNICIPALITY_2025]
+  temporal_edges <- la[classification_from == CLS_NIS_MUNICIPALITY_2019 & classification_to == CLS_NIS_MUNICIPALITY_2025]
   expect_equal(nrow(temporal_edges), 1L)
   expect_equal(temporal_edges$perimeter_relation, "temporal")
 })
@@ -166,11 +166,11 @@ test_that("list_available_conversions: temporal edges classified correctly", {
 test_that("list_available_conversions: overlap edges classified correctly", {
   la <- list_available_conversions()
   # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 is 1:N (overlap)
-  ov <- la[from == CLS_NIS_MUNICIPALITY_2025 & to == CLS_NUTS_DISTRICT_2021]
+  ov <- la[classification_from == CLS_NIS_MUNICIPALITY_2025 & classification_to == CLS_NUTS_DISTRICT_2021]
   expect_equal(nrow(ov), 1L)
   expect_equal(ov$perimeter_relation, "overlap")
   # NIS_ARR -> NUTS_DISTRICT_2021 is M:N (overlap)
-  ov2 <- la[from == CLS_NIS_DISTRICT_2019 & to == CLS_NUTS_DISTRICT_2021]
+  ov2 <- la[classification_from == CLS_NIS_DISTRICT_2019 & classification_to == CLS_NUTS_DISTRICT_2021]
   expect_equal(nrow(ov2), 1L)
   expect_equal(ov2$perimeter_relation, "overlap")
 })

@@ -7,7 +7,7 @@
 \format{
 A `data.table` with 43 rows and 5 columns:
 \describe{
-  \item{cd_arr}{Integer. NIS 2019 arrondissement code.}
+  \item{code_nis_district_2019}{Character. NIS 2019 arrondissement code.}
   \item{population}{Integer. Resident population (fictional, 5 000--600 000).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -30,7 +30,7 @@ head(rc_full_districts_2019)
 \donttest{
   master_data <- load_master_data()
   # Verviers (63000) spans BE335 and BE336 -- requires split_ambiguous()
-  split_ambiguous(rc_full_districts_2019, "cd_arr",
+  split_ambiguous(rc_full_districts_2019, "code_nis_district_2019",
                   value_cols = "emplois",
                   from = "NIS_DISTRICT_2019",
                   to   = "NUTS_DISTRICT_2021", master_data)

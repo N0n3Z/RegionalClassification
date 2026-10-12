@@ -23,7 +23,7 @@
 #'   (via \code{stringdist::stringsim}) so \code{max_dist} is comparable across
 #'   methods.
 #' @param language Preferred language for matching: "fr", "nl", or "both" (default)
-#' @return data.table with input_name, matched_name, matched_code, distance
+#' @return data.table with label_input, label_matched, code_matched, distance
 #'   (relative, in \code{[0, 1]}), language, is_confident
 #' @examples
 #' \donttest{
@@ -174,9 +174,9 @@ match_single_name <- function(name, ref, max_dist = 0.1, method = "jw") {
     # Return best match with a warning flag
     best <- ref[best_idx[1]]
     return(data.table(
-      input_name = name,
-      matched_name = best$ref_name,
-      matched_code = best$ref_code,
+      label_input = name,
+      label_matched = best$ref_name,
+      code_matched = best$ref_code,
       distance = min_dist,
       language = best$ref_language,
       is_confident = FALSE
@@ -186,9 +186,9 @@ match_single_name <- function(name, ref, max_dist = 0.1, method = "jw") {
   # Return all matches at minimum distance
   best <- ref[best_idx]
   return(data.table(
-    input_name = name,
-    matched_name = best$ref_name,
-    matched_code = best$ref_code,
+    label_input = name,
+    label_matched = best$ref_name,
+    code_matched = best$ref_code,
     distance = min_dist,
     language = best$ref_language,
     is_confident = TRUE
@@ -285,9 +285,9 @@ identify_from_names <- function(names, master_data,
   }
 
   # For each input name, pick the best (lowest-distance) match across all classifications
-  best <- combined[, .SD[which.min(distance)], by = input_name]
+  best <- combined[, .SD[which.min(distance)], by = label_input]
 
-  unmatched <- best[is_confident == FALSE, input_name]
+  unmatched <- best[is_confident == FALSE, label_input]
   if (length(unmatched) > 0) {
     warn(
       sprintf("No confident match found for: %s", paste(unmatched, collapse = ", ")),

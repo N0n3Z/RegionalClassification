@@ -1,6 +1,9 @@
 # ==============================================================================
 # R/data.R -- Documentation of bundled sample datasets
 # ==============================================================================
+# Code columns follow the schema v2 user-facing rule: code_<lower-cased
+# classification id> (the column convert_dataset() would create for it), and
+# are character; labels are label_fr / label_nl.
 
 #' Sample communes -- NIS 2019
 #'
@@ -11,9 +14,9 @@
 #'
 #' @format A `data.table` with 12 rows and 7 columns:
 #' \describe{
-#'   \item{cd_commune}{Integer. NIS 2019 commune code.}
-#'   \item{nom_fr}{Character. French name of the commune.}
-#'   \item{nom_nl}{Character. Dutch name of the commune.}
+#'   \item{code_nis_municipality_2019}{Character. NIS 2019 commune code.}
+#'   \item{label_fr}{Character. French name of the commune.}
+#'   \item{label_nl}{Character. Dutch name of the commune.}
 #'   \item{population}{Integer. Resident population (fictional).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -25,7 +28,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_communes_2019, "cd_commune",
+#'   convert_dataset(rc_communes_2019, "code_nis_municipality_2019",
 #'                   to = "NUTS_DISTRICT_2021", master_data)
 #' }
 "rc_communes_2019"
@@ -38,9 +41,9 @@
 #'
 #' @format A `data.table` with 10 rows and 7 columns:
 #' \describe{
-#'   \item{cd_commune}{Integer. NIS 2025 commune code.}
-#'   \item{nom_fr}{Character. French name of the commune.}
-#'   \item{nom_nl}{Character. Dutch name of the commune.}
+#'   \item{code_nis_municipality_2025}{Character. NIS 2025 commune code.}
+#'   \item{label_fr}{Character. French name of the commune.}
+#'   \item{label_nl}{Character. Dutch name of the commune.}
 #'   \item{population}{Integer. Resident population (fictional).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -52,7 +55,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_communes_2025, "cd_commune",
+#'   convert_dataset(rc_communes_2025, "code_nis_municipality_2025",
 #'                   from = "NIS_MUNICIPALITY_2025", to = "NUTS_DISTRICT_2027", master_data)
 #' }
 "rc_communes_2025"
@@ -65,8 +68,8 @@
 #'
 #' @format A `data.table` with 12 rows and 4 columns:
 #' \describe{
-#'   \item{cd_postal}{Integer. Belgian postal code.}
-#'   \item{nom_fr}{Character. French locality name.}
+#'   \item{code_postal}{Character. Belgian postal code.}
+#'   \item{label_fr}{Character. French locality name.}
 #'   \item{population}{Integer. Resident population (fictional).}
 #'   \item{revenu_moy}{Numeric. Average income in EUR (fictional).}
 #' }
@@ -76,7 +79,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_postal, "cd_postal",
+#'   convert_dataset(rc_postal, "code_postal",
 #'                   from = "POSTAL", to = "NIS_MUNICIPALITY_2019", master_data)
 #' }
 "rc_postal"
@@ -90,8 +93,8 @@
 #'
 #' @format A `data.table` with 8 rows and 5 columns:
 #' \describe{
-#'   \item{cd_arr}{Integer. NIS 2019 arrondissement code.}
-#'   \item{nom_fr}{Character. French name of the arrondissement.}
+#'   \item{code_nis_district_2019}{Character. NIS 2019 arrondissement code.}
+#'   \item{label_fr}{Character. French name of the arrondissement.}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
 #'   \item{population}{Integer. Resident population (fictional).}
@@ -106,7 +109,7 @@
 #'   # Verviers (63000) is ambiguous: spans BE335 and BE336
 #'   split_ambiguous(
 #'     dt         = rc_arrondissements_2019,
-#'     code_col   = "cd_arr",
+#'     code_col   = "code_nis_district_2019",
 #'     value_cols = c("emplois", "masse_sal"),
 #'     from       = "NIS_DISTRICT_2019",
 #'     to         = "NUTS_DISTRICT_2021",
@@ -124,8 +127,8 @@
 #'
 #' @format A `data.table` with 10 rows and 5 columns:
 #' \describe{
-#'   \item{cd_nuts3}{Character. NUTS3 2021 code (e.g. "BE100").}
-#'   \item{nom_fr}{Character. French name of the NUTS3 region.}
+#'   \item{code_nuts_district_2021}{Character. NUTS3 2021 code (e.g. "BE100").}
+#'   \item{label_fr}{Character. French name of the NUTS3 region.}
 #'   \item{gdp_mio_eur}{Numeric. GDP in millions of EUR (fictional).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{taux_chomage}{Numeric. Unemployment rate, 0--1 (fictional).}
@@ -140,7 +143,7 @@
 #'   # Aggregate NUTS3 2021 to NUTS2 2021
 #'   # Note: NUTS_DISTRICT_2021 and NUTS_DISTRICT_2027 cover different geographic areas;
 #'   # there is no direct conversion between them (see ?classification_reference).
-#'   convert_dataset(rc_nuts3_2021, "cd_nuts3",
+#'   convert_dataset(rc_nuts3_2021, "code_nuts_district_2021",
 #'                   from = "NUTS_DISTRICT_2021", to = "NUTS_PROVINCE_2021", master_data)
 #' }
 "rc_nuts3_2021"
@@ -158,7 +161,7 @@
 #'
 #' @format A `data.table` with 581 rows and 5 columns:
 #' \describe{
-#'   \item{cd_commune}{Integer. NIS 2019 commune code.}
+#'   \item{code_nis_municipality_2019}{Character. NIS 2019 commune code.}
 #'   \item{population}{Integer. Resident population (fictional, 200--180 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional, ~35--55 \% of population).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -172,7 +175,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_municipalities_2019, "cd_commune",
+#'   convert_dataset(rc_full_municipalities_2019, "code_nis_municipality_2019",
 #'                   from = "NIS_MUNICIPALITY_2019",
 #'                   to   = "NUTS_DISTRICT_2021", master_data)
 #' }
@@ -186,7 +189,7 @@
 #'
 #' @format A `data.table` with 565 rows and 5 columns:
 #' \describe{
-#'   \item{cd_commune}{Integer. NIS 2025 commune code.}
+#'   \item{code_nis_municipality_2025}{Character. NIS 2025 commune code.}
 #'   \item{population}{Integer. Resident population (fictional, 200--180 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -199,7 +202,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_municipalities_2025, "cd_commune",
+#'   convert_dataset(rc_full_municipalities_2025, "code_nis_municipality_2025",
 #'                   from = "NIS_MUNICIPALITY_2025",
 #'                   to   = "NUTS_DISTRICT_2027", master_data)
 #' }
@@ -215,7 +218,7 @@
 #'
 #' @format A `data.table` with 43 rows and 5 columns:
 #' \describe{
-#'   \item{cd_arr}{Integer. NIS 2019 arrondissement code.}
+#'   \item{code_nis_district_2019}{Character. NIS 2019 arrondissement code.}
 #'   \item{population}{Integer. Resident population (fictional, 5 000--600 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -229,7 +232,7 @@
 #' \donttest{
 #'   master_data <- load_master_data()
 #'   # Verviers (63000) spans BE335 and BE336 -- requires split_ambiguous()
-#'   split_ambiguous(rc_full_districts_2019, "cd_arr",
+#'   split_ambiguous(rc_full_districts_2019, "code_nis_district_2019",
 #'                   value_cols = "emplois",
 #'                   from = "NIS_DISTRICT_2019",
 #'                   to   = "NUTS_DISTRICT_2021", master_data)
@@ -244,7 +247,7 @@
 #'
 #' @format A `data.table` with 3 rows and 5 columns:
 #' \describe{
-#'   \item{cd_region}{Integer. NIS 2019 region code (2000, 3000, 4000).}
+#'   \item{code_nis_region_2019}{Character. NIS 2019 region code (2000, 3000, 4000).}
 #'   \item{population}{Integer. Resident population (fictional, 500 000--3 700 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -264,7 +267,7 @@
 #'
 #' @format A `data.table` with 44 rows and 5 columns:
 #' \describe{
-#'   \item{cd_nuts3}{Character. NUTS3 2021 code (e.g. `"BE100"`).}
+#'   \item{code_nuts_district_2021}{Character. NUTS3 2021 code (e.g. `"BE100"`).}
 #'   \item{population}{Integer. Resident population (fictional, 10 000--700 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -277,7 +280,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_nuts3_2021, "cd_nuts3",
+#'   convert_dataset(rc_full_nuts3_2021, "code_nuts_district_2021",
 #'                   from = "NUTS_DISTRICT_2021",
 #'                   to   = "NUTS_PROVINCE_2021", master_data)
 #' }
@@ -291,7 +294,7 @@
 #'
 #' @format A `data.table` with 44 rows and 5 columns:
 #' \describe{
-#'   \item{cd_nuts3_2027}{Character. NUTS3 2027 code (e.g. `"BE100"`).}
+#'   \item{code_nuts_district_2027}{Character. NUTS3 2027 code (e.g. `"BE100"`).}
 #'   \item{population}{Integer. Resident population (fictional, 10 000--700 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -304,7 +307,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_nuts3_2027, "cd_nuts3_2027",
+#'   convert_dataset(rc_full_nuts3_2027, "code_nuts_district_2027",
 #'                   from = "NUTS_DISTRICT_2027",
 #'                   to   = "NUTS_PROVINCE_2027", master_data)
 #' }
@@ -319,7 +322,7 @@
 #'
 #' @format A `data.table` with 1 149 rows and 5 columns:
 #' \describe{
-#'   \item{cd_postal}{Integer. Belgian postal code.}
+#'   \item{code_postal}{Character. Belgian postal code.}
 #'   \item{population}{Integer. Resident population (fictional, 50--80 000).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -332,7 +335,7 @@
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_postal, "cd_postal",
+#'   convert_dataset(rc_full_postal, "code_postal",
 #'                   from = "POSTAL",
 #'                   to   = "NIS_MUNICIPALITY_2019", master_data)
 #' }
@@ -355,7 +358,7 @@
 #'
 #' @format A `data.table` with 319 rows and 5 columns:
 #' \describe{
-#'   \item{cd_commune}{Integer. NIS commune code (may be NA or from NIS 2025).}
+#'   \item{code_nis_municipality_2019}{Character. NIS commune code (may be NA or from NIS 2025).}
 #'   \item{population}{Integer. Resident population (fictional; may be NA).}
 #'   \item{emplois}{Integer. Number of jobs (fictional).}
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -370,10 +373,10 @@
 #'   master_data <- load_master_data()
 #'
 #'   # Auto-detect and diagnose the classification
-#'   diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
+#'   diagnose_classification(rc_dirty_municipalities_2019, "code_nis_municipality_2019", master_data)
 #'
 #'   # Check which codes are unknown in NIS 2019
-#'   validate_codes(rc_dirty_municipalities_2019$cd_commune,
+#'   validate_codes(rc_dirty_municipalities_2019$code_nis_municipality_2019,
 #'                  "NIS_MUNICIPALITY_2019", master_data)
 #' }
 "rc_dirty_municipalities_2019"

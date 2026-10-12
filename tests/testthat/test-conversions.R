@@ -148,8 +148,8 @@ test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 supports weighted splitting"
   # BE100 -> 1 row (unchanged); BE211 -> 2 rows split 0.8 / 0.2; total preserved.
   expect_equal(nrow(r), 3L)
   expect_lt(abs(sum(r$emp) - 1500), 1e-6)
-  expect_lt(abs(r[cd_nuts3_2027 == "BE261", emp] - 400), 1e-6)
-  expect_lt(abs(r[cd_nuts3_2027 == "BE276", emp] - 100), 1e-6)
+  expect_lt(abs(r[code_nuts_district_2027 == "BE261", emp] - 400), 1e-6)
+  expect_lt(abs(r[code_nuts_district_2027 == "BE276", emp] - 100), 1e-6)
 })
 
 # -- Test 12: diagnose_classification() -- check mode --------------------------
@@ -214,9 +214,9 @@ test_that("split_ambiguous splits Verviers correctly with additive weights", {
 
   expect_equal(nrow(r), 4L)
   expect_lt(abs(sum(r$total_wage) - 9e9), 1)
-  expect_equal(nrow(r[cd_nuts3_2021 %in% c("BE335", "BE336")]), 2L)
-  expect_lt(abs(r[cd_nuts3_2021 == "BE335", total_wage] - 857e6), 1e3)
-  expect_lt(abs(r[cd_nuts3_2021 == "BE336", total_wage] - 143e6), 1e3)
+  expect_equal(nrow(r[code_nuts_district_2021 %in% c("BE335", "BE336")]), 2L)
+  expect_lt(abs(r[code_nuts_district_2021 == "BE335", total_wage] - 857e6), 1e3)
+  expect_lt(abs(r[code_nuts_district_2021 == "BE336", total_wage] - 143e6), 1e3)
 })
 
 # -- Test 14: NIS_REGION conversion correctness (regression for province mapping bug) -

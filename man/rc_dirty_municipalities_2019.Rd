@@ -7,7 +7,7 @@
 \format{
 A `data.table` with 319 rows and 5 columns:
 \describe{
-  \item{cd_commune}{Integer. NIS commune code (may be NA or from NIS 2025).}
+  \item{code_nis_municipality_2019}{Character. NIS commune code (may be NA or from NIS 2025).}
   \item{population}{Integer. Resident population (fictional; may be NA).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -38,10 +38,10 @@ data(rc_dirty_municipalities_2019)
   master_data <- load_master_data()
 
   # Auto-detect and diagnose the classification
-  diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
+  diagnose_classification(rc_dirty_municipalities_2019, "code_nis_municipality_2019", master_data)
 
   # Check which codes are unknown in NIS 2019
-  validate_codes(rc_dirty_municipalities_2019$cd_commune,
+  validate_codes(rc_dirty_municipalities_2019$code_nis_municipality_2019,
                  "NIS_MUNICIPALITY_2019", master_data)
 }
 }

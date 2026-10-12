@@ -44,9 +44,9 @@ test_that("get_all_classification_nodes includes expected nodes", {
 test_that("get_conversion_matrix returns a square-ish matrix with expected columns", {
   mat <- get_conversion_matrix()
   expect_true(is.data.table(mat))
-  expect_true(all(c("from", "to", "is_simple", "relation_chain") %in% names(mat)))
+  expect_true(all(c("classification_from", "classification_to", "is_simple", "relation_chain") %in% names(mat)))
   # Identity entries should be simple
-  expect_true(all(mat[from == to, is_simple]))
+  expect_true(all(mat[classification_from == classification_to, is_simple]))
 })
 
 # -- Test CC7: print_conversion_check ne retourne pas d'erreur ----------------

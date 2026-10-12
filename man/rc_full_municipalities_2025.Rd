@@ -7,7 +7,7 @@
 \format{
 A `data.table` with 565 rows and 5 columns:
 \describe{
-  \item{cd_commune}{Integer. NIS 2025 commune code.}
+  \item{code_nis_municipality_2025}{Character. NIS 2025 commune code.}
   \item{population}{Integer. Resident population (fictional, 200--180 000).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -27,7 +27,7 @@ head(rc_full_municipalities_2025)
 
 \donttest{
   master_data <- load_master_data()
-  convert_dataset(rc_full_municipalities_2025, "cd_commune",
+  convert_dataset(rc_full_municipalities_2025, "code_nis_municipality_2025",
                   from = "NIS_MUNICIPALITY_2025",
                   to   = "NUTS_DISTRICT_2027", master_data)
 }

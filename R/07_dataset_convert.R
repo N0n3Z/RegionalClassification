@@ -191,35 +191,13 @@ convert_dataset <- function(
 
 
 #' Default column name for a given classification
+#'
+#' Schema v2 user-facing rule: `code_` + the lower-cased classification id, with
+#' its version (a user dataset has no `version` column to carry it), e.g.
+#' `NUTS_DISTRICT_2021` -> `code_nuts_district_2021`.
 #' @param classification Classification identifier string
 #' @return Character scalar: snake_case column name for the classification
 #' @keywords internal
 default_col_name <- function(classification) {
-  mapping <- c(
-    NIS_MUNICIPALITY_BEFORE_2019  = "cd_nis_before2019",
-    NIS_MUNICIPALITY_2019         = "cd_nis2019",
-    NIS_MUNICIPALITY_2025         = "cd_nis2025",
-    NIS_DISTRICT_BEFORE_2019      = "cd_arr_before2019",
-    NIS_DISTRICT_2019  = "cd_arr2019",
-    NIS_DISTRICT_2025  = "cd_arr2025",
-    NIS_PROVINCE_BEFORE_2019      = "cd_prov_before2019",
-    NIS_PROVINCE_2019        = "cd_prov2019",
-    NIS_PROVINCE_2025        = "cd_prov2025",
-    NIS_REGION_BEFORE_2019        = "cd_reg_before2019",
-    NIS_REGION_2019          = "cd_reg2019",
-    NIS_REGION_2025          = "cd_reg2025",
-    NIS_COUNTRY              = "cd_nis_country",
-    NUTS_DISTRICT_2021               = "cd_nuts3_2021",
-    NUTS_DISTRICT_2027               = "cd_nuts3_2027",
-    NUTS_PROVINCE_2021               = "cd_nuts2_2021",
-    NUTS_PROVINCE_2027               = "cd_nuts2_2027",
-    NUTS_REGION_2021               = "cd_nuts1_2021",
-    NUTS_REGION_2027               = "cd_nuts1_2027",
-    NUTS_MUNICIPALITY_2021            = "cd_lau2021",
-    NUTS_COUNTRY             = "cd_nuts_country",
-    POSTAL                   = "cd_postal",
-    NBB_DISTRICT_2021  = "cd_arr_internal"
-  )
-  if (classification %in% names(mapping)) return(mapping[[classification]])
-  paste0("cd_", tolower(classification))
+  paste0("code_", tolower(classification))
 }

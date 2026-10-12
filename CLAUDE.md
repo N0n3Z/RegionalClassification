@@ -59,6 +59,9 @@ intermediates (`01_load_data.R`, per-version sub-tables) keep source names
 (`cd_refnis`, `cd_nuts3`, ...) and are renamed once via `SCHEMA_V1_TO_V2`
 (`R/00_config.R`), which also migrates v1 snapshots on load
 (`.migrate_schema_v1()`, warning `rcl_legacy_schema`).
+User-facing code columns (`convert_dataset()` targets, `get_crosswalk()`,
+example datasets `rc_*`) use the full id, version included:
+`default_col_name()` = `code_<lower-cased id>` (`code_nuts_district_2021`).
 `tests/testthat/test-schema.R` enforces the convention. Verviers (NIS arr 63000) is the canonical ambiguous case
 (NUTS3 BE335 FR + BE336 DE). The conversion graph and the executor must stay in
 lock-step — `tests/testthat/test-route-parity.R` guards that.

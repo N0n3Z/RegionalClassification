@@ -71,7 +71,7 @@ get_conversion_matrix(master_data)[is_simple == FALSE & effectively_simple == TR
 
 # All available conversions with their perimeter semantics
 la <- list_available_conversions()
-# Columns: from, to, relation, perimeter_relation, notes
+# Columns: classification_from, classification_to, relation, perimeter_relation, notes
 la[perimeter_relation == "temporal"]   # conversions between NIS versions
 la[perimeter_relation == "overlap"]    # 1:N (straddling; no M:N edge currently)
 la[perimeter_relation == "nesting"]    # pure N:1 aggregations
@@ -233,20 +233,20 @@ convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_COUNTRY", master_data)
 # ==============================================================================
 
 dt <- data.table(
-  cd_commune = c("21004", "11002", "44021", "62063"),
-  pop        = c(180000L, 530000L, 260000L, 200000L)
+  code_nis_municipality_2019 = c("21004", "11002", "44021", "62063"),
+  pop                        = c(180000L, 530000L, 260000L, 200000L)
 )
 
 # Auto-detect the source classification + add a NUTS3 column
-convert_dataset(dt, "cd_commune",
+convert_dataset(dt, "code_nis_municipality_2019",
                 from = "NIS_MUNICIPALITY_2019",
                 to   = "NUTS_DISTRICT_2021",
                 master_data)
-# Adds the 'cd_nuts3_2021' column.
+# Adds the 'code_nuts_district_2021' column.
 
 # Full conversion: communes -> NUTS3 -> NIS districts
 dt2 <- copy(dt)
-convert_dataset(dt2, "cd_commune", from = "NIS_MUNICIPALITY_2019",
+convert_dataset(dt2, "code_nis_municipality_2019", from = "NIS_MUNICIPALITY_2019",
                 to = "NIS_DISTRICT_2019", master_data)
 
 
@@ -573,7 +573,7 @@ withCallingHandlers(
 # --- 10a. Full conversion of a clean dataset -----------------------------------
 data(rc_full_municipalities_2019)
 
-convert_dataset(rc_full_municipalities_2019, "cd_commune",
+convert_dataset(rc_full_municipalities_2019, "code_nis_municipality_2019",
                 from = "NIS_MUNICIPALITY_2019",
                 to   = "NUTS_DISTRICT_2021",
                 master_data)
@@ -581,7 +581,7 @@ convert_dataset(rc_full_municipalities_2019, "cd_commune",
 # --- 10b. NUTS3 2021 -> NUTS2 2021 --------------------------------------------
 data(rc_full_nuts3_2021)
 
-convert_dataset(rc_full_nuts3_2021, "cd_nuts3",
+convert_dataset(rc_full_nuts3_2021, "code_nuts_district_2021",
                 from = "NUTS_DISTRICT_2021",
                 to   = "NUTS_PROVINCE_2021",
                 master_data)
@@ -589,7 +589,7 @@ convert_dataset(rc_full_nuts3_2021, "cd_nuts3",
 # --- 10c. Postal codes -> NIS 2019 communes ------------------------------------
 data(rc_full_postal)
 
-convert_dataset(rc_full_postal, "cd_postal",
+convert_dataset(rc_full_postal, "code_postal",
                 from = "POSTAL",
                 to   = "NIS_MUNICIPALITY_2019",
                 master_data)
@@ -598,17 +598,17 @@ convert_dataset(rc_full_postal, "cd_postal",
 data(rc_dirty_municipalities_2019)
 
 # Verification against NIS_MUNICIPALITY_2019
-diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data,
+diagnose_classification(rc_dirty_municipalities_2019, "code_nis_municipality_2019", master_data,
                         classification = "NIS_MUNICIPALITY_2019")
 # Reports: duplicates, unknown codes (2025 version), NA codes
 
 # Precise validation
-val <- validate_codes(rc_dirty_municipalities_2019$cd_commune,
+val <- validate_codes(rc_dirty_municipalities_2019$code_nis_municipality_2019,
                       "NIS_MUNICIPALITY_2019", master_data)
 val[is_valid == FALSE]
 
 # Auto-detect the best classification
-diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
+diagnose_classification(rc_dirty_municipalities_2019, "code_nis_municipality_2019", master_data)
 
 
 # ==============================================================================
@@ -622,7 +622,7 @@ fuzzy_match_names(
   max_dist = 0.3,
   language = "both"
 )
-#   input_name  matched_name  matched_code  distance  is_confident
+#   label_input  label_matched  code_matched  distance  is_confident
 #   Bruxeles    Bruxelles        21004       0.037      TRUE
 #   Antwerpn    Antwerpen        11002       0.037      TRUE
 #   Liege       Liege            62063       0.150      TRUE

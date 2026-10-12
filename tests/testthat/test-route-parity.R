@@ -13,12 +13,12 @@ library(data.table)
 
 test_that("every simple conversion in the matrix is executable (graph <-> executor parity)", {
   mtx    <- get_conversion_matrix()
-  simple <- mtx[is_simple == TRUE & from != to]
+  simple <- mtx[is_simple == TRUE & classification_from != classification_to]
 
   # Executability is now tested against the CROSSWALK graph (.xw_path via
   # .route_is_executable), i.e. what route_conversion() can actually run -- not
   # mere reachability in the declared CONVERSION_GRAPH_EDGES graph.
-  ok  <- mapply(nbbbenuts:::.route_is_executable, simple$from, simple$to,
+  ok  <- mapply(nbbbenuts:::.route_is_executable, simple$classification_from, simple$classification_to,
                 MoreArgs = list(md = master_data))
   bad <- simple[!ok]
 
@@ -26,7 +26,7 @@ test_that("every simple conversion in the matrix is executable (graph <-> execut
     nrow(bad), 0L,
     info = paste0(
       "Simple routes the executor cannot resolve: ",
-      paste(bad$from, "->", bad$to, collapse = "; ")
+      paste(bad$classification_from, "->", bad$classification_to, collapse = "; ")
     )
   )
 })
@@ -42,23 +42,23 @@ test_that("get_conversion_matrix(md) exposes executability and simple => executa
   expect_true("executable" %in% names(mtx))
 
   # Historical invariant: every simple route is executable.
-  expect_equal(nrow(mtx[is_simple == TRUE & from != to & executable == FALSE]), 0L)
+  expect_equal(nrow(mtx[is_simple == TRUE & classification_from != classification_to & executable == FALSE]), 0L)
 
   # Such declared-but-non-executable pairs genuinely exist (auto-inverted
   # de-aggregation edges); the matrix must surface them, not hide them.
-  expect_true(nrow(mtx[from != to & executable == FALSE]) > 0L)
+  expect_true(nrow(mtx[classification_from != classification_to & executable == FALSE]) > 0L)
 })
 
 test_that("declared-but-non-executable routes fail as rcl_no_route, not contradictory advice", {
   mtx      <- get_conversion_matrix(master_data)
-  non_exec <- mtx[from != to & executable == FALSE]
+  non_exec <- mtx[classification_from != classification_to & executable == FALSE]
 
   # Sample one target per source family to keep the test fast while covering the
   # different origin node types.
-  probe <- non_exec[, .SD[1L], by = from]
+  probe <- non_exec[, .SD[1L], by = classification_from]
 
   for (i in seq_len(nrow(probe))) {
-    f <- probe$from[i]; t <- probe$to[i]
+    f <- probe$classification_from[i]; t <- probe$classification_to[i]
     src <- nbbbenuts:::.list_codes_for(f, master_data)
     if (length(src) == 0L) next
     # Even with allow_ambiguous = TRUE the route is a dead-end: it must raise
@@ -160,5 +160,5 @@ test_that("get_conversion_matrix(md) exposes effectively_simple", {
   # Every topologically simple route is also effectively simple.
   expect_equal(nrow(mtx[is_simple == TRUE & effectively_simple == FALSE]), 0L)
   # At least one route is effectively-but-not-topologically simple (the M2 wins).
-  expect_true(nrow(mtx[is_simple == FALSE & effectively_simple == TRUE & from != to]) > 0L)
+  expect_true(nrow(mtx[is_simple == FALSE & effectively_simple == TRUE & classification_from != classification_to]) > 0L)
 })

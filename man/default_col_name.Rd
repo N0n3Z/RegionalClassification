@@ -13,6 +13,8 @@ default_col_name(classification)
 Character scalar: snake_case column name for the classification
 }
 \description{
-Default column name for a given classification
+Schema v2 user-facing rule: `code_` + the lower-cased classification id, with
+its version (a user dataset has no `version` column to carry it), e.g.
+`NUTS_DISTRICT_2021` -> `code_nuts_district_2021`.
 }
 \keyword{internal}

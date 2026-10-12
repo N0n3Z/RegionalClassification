@@ -448,7 +448,8 @@ get_all_classification_nodes <- function() {
 #'   \code{is_simple} being \code{TRUE} guarantees executability but an ambiguous
 #'   (non-simple) route may or may not be executable -- use \code{executable} to
 #'   tell the genuinely usable ambiguous routes from the declared-only ones.
-#' @return data.table with columns \code{from}, \code{to}, \code{is_simple},
+#' @return data.table with columns \code{classification_from},
+#'   \code{classification_to}, \code{is_simple},
 #'   \code{relation_chain}, and (when \code{md} is supplied) \code{executable}.
 #' @export
 get_conversion_matrix <- function(md = NULL) {
@@ -458,13 +459,13 @@ get_conversion_matrix <- function(md = NULL) {
   results <- rbindlist(lapply(nodes, function(from_node) {
     rbindlist(lapply(nodes, function(to_node) {
       if (from_node == to_node) {
-        return(data.table(from = from_node, to = to_node,
+        return(data.table(classification_from = from_node, classification_to = to_node,
                           is_simple = TRUE, relation_chain = "identity"))
       }
       check <- check_conversion_path(from_node, to_node)
       data.table(
-        from = from_node,
-        to = to_node,
+        classification_from = from_node,
+        classification_to   = to_node,
         is_simple = check$is_simple,
         relation_chain = if (!is.null(check$relations))
           paste(check$relations, collapse = " -> ") else NA_character_
@@ -473,10 +474,12 @@ get_conversion_matrix <- function(md = NULL) {
   }))
 
   if (!is.null(md)) {
-    results[, executable := from == to |
-              mapply(.route_is_executable, from, to, MoreArgs = list(md = md))]
+    results[, executable := classification_from == classification_to |
+              mapply(.route_is_executable, classification_from, classification_to,
+                     MoreArgs = list(md = md))]
     results[, effectively_simple := is_simple |
-              mapply(.route_is_effectively_simple, from, to, MoreArgs = list(md = md))]
+              mapply(.route_is_effectively_simple, classification_from, classification_to,
+                     MoreArgs = list(md = md))]
   }
 
   return(results)

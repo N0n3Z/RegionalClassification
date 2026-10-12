@@ -15,7 +15,7 @@ LazyData: true
 URL: https://github.com/n0n3z/regionalclassification
 BugReports: https://github.com/n0n3z/regionalclassification/issues
 Imports:
-    data.table,
+    data.table (>= 1.17.0),
     rlang (>= 1.0.0),
     stats,
     tools,

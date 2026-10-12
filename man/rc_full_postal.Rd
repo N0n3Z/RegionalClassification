@@ -7,7 +7,7 @@
 \format{
 A `data.table` with 1 149 rows and 5 columns:
 \describe{
-  \item{cd_postal}{Integer. Belgian postal code.}
+  \item{code_postal}{Character. Belgian postal code.}
   \item{population}{Integer. Resident population (fictional, 50--80 000).}
   \item{emplois}{Integer. Number of jobs (fictional).}
   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
@@ -28,7 +28,7 @@ head(rc_full_postal)
 
 \donttest{
   master_data <- load_master_data()
-  convert_dataset(rc_full_postal, "cd_postal",
+  convert_dataset(rc_full_postal, "code_postal",
                   from = "POSTAL",
                   to   = "NIS_MUNICIPALITY_2019", master_data)
 }

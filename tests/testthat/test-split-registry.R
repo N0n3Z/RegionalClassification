@@ -99,7 +99,7 @@ test_that("list_available_conversions returns a data.table with expected columns
   result <- list_available_conversions()
   expect_true(is.data.table(result))
   # Phase 4a: also includes perimeter_relation column
-  expect_true(all(c("from", "to", "relation", "perimeter_relation") %in% names(result)))
+  expect_true(all(c("classification_from", "classification_to", "relation", "perimeter_relation") %in% names(result)))
   expect_gt(nrow(result), 10L)
 })
 
@@ -133,7 +133,7 @@ test_that("split_ambiguous finds weights anchored to primitive overlap edge", {
   )
   expect_equal(nrow(result_direct), 2L)
   # Verviers wage should be split 0.857 / 0.143 (not 0.5 / 0.5)
-  be335_wage <- result_direct[cd_nuts3_2021 == "BE335", total_wage]
+  be335_wage <- result_direct[code_nuts_district_2021 == "BE335", total_wage]
   expect_equal(be335_wage, 1e9 * 0.857, tolerance = 1)
 
   clear_split_weights()
@@ -157,7 +157,7 @@ test_that("split_ambiguous falls back to equal weights when no registry entry ex
   ))
   # Equal weights: each row gets 0.5 * 1e9
   expect_equal(nrow(result), 2L)
-  be335_wage <- result[cd_nuts3_2021 == "BE335", total_wage]
+  be335_wage <- result[code_nuts_district_2021 == "BE335", total_wage]
   expect_equal(be335_wage, 5e8, tolerance = 1)
 
   clear_split_weights()
@@ -229,9 +229,9 @@ test_that("normalize = TRUE rescales non-unit weights and preserves the total", 
                     to = CLS_NUTS_DISTRICT_2021, master_data = master_data,
                     weights = wts, value_type = "additive")   # normalize = TRUE default
   )
-  setkey(r, cd_nuts3_2021)
-  expect_equal(r[cd_nuts3_2021 == "BE335", val], 400)   # 2/5
-  expect_equal(r[cd_nuts3_2021 == "BE336", val], 600)   # 3/5
+  setkey(r, code_nuts_district_2021)
+  expect_equal(r[code_nuts_district_2021 == "BE335", val], 400)   # 2/5
+  expect_equal(r[code_nuts_district_2021 == "BE336", val], 600)   # 3/5
   expect_equal(sum(r$val), 1000)                        # additive total preserved
 })
 
@@ -245,9 +245,9 @@ test_that("normalize = FALSE applies raw weights (no rescaling)", {
                     to = CLS_NUTS_DISTRICT_2021, master_data = master_data,
                     weights = wts, value_type = "additive", normalize = FALSE)
   )
-  setkey(r, cd_nuts3_2021)
-  expect_equal(r[cd_nuts3_2021 == "BE335", val], 2000)  # 1000 * 2
-  expect_equal(r[cd_nuts3_2021 == "BE336", val], 3000)  # 1000 * 3
+  setkey(r, code_nuts_district_2021)
+  expect_equal(r[code_nuts_district_2021 == "BE335", val], 2000)  # 1000 * 2
+  expect_equal(r[code_nuts_district_2021 == "BE336", val], 3000)  # 1000 * 3
 })
 
 test_that("additive split is sum-invariant with equal weights", {
@@ -299,8 +299,8 @@ test_that("split_ambiguous(weights = 'population') uses the shipped standard end
                        value_type = "additive", verbose = FALSE)
   expect_equal(nrow(r), 2L)
   expect_equal(sum(r$emploi), 100000)                 # additive total preserved
-  expect_gt(r[cd_nuts3_2021 == "BE335", emploi],      # francophone share is larger
-            r[cd_nuts3_2021 == "BE336", emploi])
+  expect_gt(r[code_nuts_district_2021 == "BE335", emploi],      # francophone share is larger
+            r[code_nuts_district_2021 == "BE336", emploi])
 })
 
 test_that("population weights also cover the NUTS3 2021->2027 aggregate edge", {

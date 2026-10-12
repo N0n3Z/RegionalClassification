@@ -184,7 +184,7 @@ salaires <- data.table(
   salaire = c(3500, 2900, 2600)
 )
 
-# Convertit la colonne 'commune' et ajoute une colonne 'cd_nuts3_2021'
+# Convertit la colonne 'commune' et ajoute une colonne 'code_nuts_district_2021'
 result <- convert_dataset(
   dt       = salaires,
   code_col = "commune",
@@ -193,10 +193,10 @@ result <- convert_dataset(
   master_data
 )
 print(result)
-#    commune salaire cd_nuts3_2021
-# 1:   21004    3500         BE100
-# 2:   11002    2900         BE211
-# 3:   62063    2600         BE332
+#    commune salaire code_nuts_district_2021
+# 1:   21004    3500                   BE100
+# 2:   11002    2900                   BE211
+# 3:   62063    2600                   BE332
 ```
 
 ### Auto-détection de la classification source
@@ -209,10 +209,10 @@ nuts_data <- data.table(
 )
 
 convert_dataset(nuts_data, "nuts", to = "NUTS_DISTRICT_2027", master_data)
-#     nuts val cd_nuts3_2027
-# 1: BE100 100         BE100
-# 2: BE211 200         BE261
-# 3: BE332 300         BE332
+#     nuts val code_nuts_district_2027
+# 1: BE100 100                   BE100
+# 2: BE211 200                   BE261
+# 3: BE332 300                   BE332
 ```
 
 ### Nom de colonne cible personnalisé
@@ -254,8 +254,8 @@ leur **sémantique de périmètre** (colonne `perimeter_relation`).
 
 ```{r list-conversions}
 la <- list_available_conversions()
-# Colonnes : from, to, relation, perimeter_relation, notes
-print(la[, .(from, to, relation, perimeter_relation)])
+# Colonnes : classification_from, classification_to, relation, perimeter_relation, notes
+print(la[, .(classification_from, classification_to, relation, perimeter_relation)])
 
 # Filtrer par sémantique de périmètre :
 la[perimeter_relation == "temporal"]   # conversions entre versions NIS
