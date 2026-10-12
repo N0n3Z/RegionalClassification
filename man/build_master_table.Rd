@@ -10,10 +10,11 @@ build_master_table(raw_data)
 \item{raw_data}{Named list of data.tables from load_all_raw_data()}
 }
 \value{
-list with three unified flat tables plus build-time hierarchy intermediates
+list with the five unified flat tables plus build-time hierarchy intermediates
 }
 \description{
-Creates a unified table structure with three main data.tables:
-\code{communes} (all NIS versions), \code{postal} (both postal mappings),
-and \code{nis_changes} (all NIS version transitions).
+Creates the unified flat tables: \code{municipalities} (all NIS versions),
+\code{postal} (both postal mappings), \code{nis_changes} (all NIS version
+transitions), \code{entities} and \code{crosswalks}. Column names follow the
+schema v2 convention (see \code{SCHEMA_V1_TO_V2} in \file{R/00_config.R}).
 }

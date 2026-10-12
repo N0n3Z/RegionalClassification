@@ -17,9 +17,9 @@ that also appear in `VALID_CLASSIFICATIONS`).  Each entry carries:
   \item{version}{Classification version string, or `NA_character_` when not
     versioned (POSTAL, NUTS_COUNTRY).}
   \item{code_type}{Physical storage type: `"integer"` or `"character"`.}
-  \item{source_table}{Which master table holds the codes: `"communes"` or
-    `"postal"`.}
-  \item{version_filter}{The `nis_version` value used to slice the source
+  \item{source_table}{Which master table holds the codes: `"municipalities"`
+    or `"postal"`.}
+  \item{version_filter}{The `version` value used to slice the source
     table.}
   \item{code_col}{Column name of the code in the source table.}
   \item{label_fr_col}{Column name of the French label, or `NA_character_`

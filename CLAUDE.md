@@ -30,8 +30,9 @@ The package normally runs off the pre-built snapshot in `inst/extdata/*.rds`
   `VALID_CLASSIFICATIONS` (derived from edges), NIS code constants,
   `MASTER_COMMUNE_*` schema, `NUTS2021_TO_NUTS2027`.
 - `R/01_load_data.R`, `R/02_build_master_table.R` — load/parse raw files and
-  build the unified `communes` / `postal` / `nis_changes` tables (version
-  discriminator columns `nis_version` / `from_version`).
+  build the unified `municipalities` / `postal` / `nis_changes` tables (version
+  discriminator columns `version` / `version_from` / `version_to`), plus the
+  long tables `entities` and `crosswalks`.
 - `R/03_convert.R` — conversion core: `convert_codes` → `check_conversion_path`
   (gate) → `route_conversion` (direct handler in `.ROUTE_TABLE`, else compose
   single hops via `.compose_via_handlers`).
@@ -46,9 +47,19 @@ Facts worth knowing: **all classification codes are `character`** (v1.2.0; NIS
 and POSTAL used to be integer). Input stays permissive — integer codes are
 coerced via `.node_coerce()` — but everything is stored and returned as
 character. The build derives the NIS hierarchy with integer arithmetic on REFNIS
-codes (`cd_arr %/% 1000L`, level classification by modulo) and only stringifies
-the code columns at the end of `build_master_table()` via
-`.stringify_code_columns()`. Verviers (NIS arr 63000) is the canonical ambiguous case
+codes (level classification by modulo) and only stringifies the code columns at
+the end of `build_master_table()` via `.stringify_code_columns()`.
+
+**Schema v2 naming** (v2.0.0): persisted tables use
+`<role>_<subject>[_<qualifier>][_<lang>]` — `code_*`, `label_*_fr/_nl`,
+`version*`, `classification*` — where the subject is the lower-cased graph node id
+without the NIS version (`code_nis_municipality`, `code_nuts_district_2021`,
+`code_nbb_district_2021`). `communes` is now `municipalities`. Build-time
+intermediates (`01_load_data.R`, per-version sub-tables) keep source names
+(`cd_refnis`, `cd_nuts3`, ...) and are renamed once via `SCHEMA_V1_TO_V2`
+(`R/00_config.R`), which also migrates v1 snapshots on load
+(`.migrate_schema_v1()`, warning `rcl_legacy_schema`).
+`tests/testthat/test-schema.R` enforces the convention. Verviers (NIS arr 63000) is the canonical ambiguous case
 (NUTS3 BE335 FR + BE336 DE). The conversion graph and the executor must stay in
 lock-step — `tests/testthat/test-route-parity.R` guards that.
 

@@ -1,3 +1,56 @@
+# nbbbenuts 2.0.0
+
+## Breaking changes
+
+* **Standardised data model (schema v2).** The tables returned by
+  `load_master_data()` / `build_master_table()` now follow a single naming
+  convention, `<role>_<subject>[_<qualifier>][_<lang>]`, aligned on the
+  classification ids of the conversion graph:
+  - roles: `code_*` (always character), `label_*_fr` / `label_*_nl`,
+    `version` / `version_from` / `version_to`, `classification` /
+    `classification_from` / `classification_to`; `relation`, `nature` and
+    `weight` are unchanged;
+  - the subject of a code column is the lower-cased node id, without the NIS
+    version (carried by the row's `version`): `NIS_DISTRICT_2019` ->
+    `code_nis_district`, `NUTS_DISTRICT_2021` -> `code_nuts_district_2021`.
+
+  Table `communes` is renamed **`municipalities`**. Column renames:
+
+  | Table | v1 | v2 |
+  |---|---|---|
+  | municipalities | `cd_commune`, `tx_commune_fr/_nl` | `code_nis_municipality`, `label_nis_municipality_fr/_nl` |
+  | municipalities | `cd_arr`, `tx_arr_fr/_nl` | `code_nis_district`, `label_nis_district_fr/_nl` |
+  | municipalities | `cd_province`, `tx_prov_fr/_nl` | `code_nis_province`, `label_nis_province_fr/_nl` |
+  | municipalities | `cd_region`, `tx_region_fr/_nl` | `code_nis_region`, `label_nis_region_fr/_nl` |
+  | municipalities | `cd_nis_country` | `code_nis_country` |
+  | municipalities | `cd_nuts_lau` | `code_nuts_municipality_2021` |
+  | municipalities | `cd_nuts3`, `cd_nuts2`, `cd_nuts1`, `cd_nuts0` | `code_nuts_district_2021`, `code_nuts_province_2021`, `code_nuts_region_2021`, `code_nuts_country` |
+  | municipalities | `tx_nuts3_fr/_nl` | `label_nuts_district_2021_fr/_nl` |
+  | municipalities | `cd_nuts3_2027`, `cd_nuts2_2027`, `cd_nuts1_2027`, `cd_nuts0_2027` | `code_nuts_district_2027`, `code_nuts_province_2027`, `code_nuts_region_2027`, `code_nuts_country_2027` |
+  | municipalities | `cd_arr_internal` | `code_nbb_district_2021` |
+  | municipalities | `cd_arr_2digit` | *removed (unused)* |
+  | municipalities, postal | `nis_version` | `version` |
+  | postal | `cd_postal`, `cd_commune_nis`, `tx_postal_name_fr/_nl` | `code_postal`, `code_nis_municipality`, `label_postal_fr/_nl` |
+  | nis_changes | `cd_refnis_old`, `cd_refnis_new`, `from_version` | `code_from`, `code_to`, `version_from` (+ new `version_to`) |
+  | entities | `classification_id`, `name_fr/_nl` | `classification`, `label_fr/_nl` |
+  | crosswalks | `from_id`, `to_id` | `classification_from`, `classification_to` |
+
+  `municipalities` columns are now ordered `version`, NIS hierarchy, NUTS
+  2021 / 2027, NBB.
+
+  `CLASSIFICATION_NODES` (`source_table`, `code_col`, `label_*_col`) follows the
+  same names. The conversion results themselves are unchanged (same codes,
+  same rows); so are the user-facing column names of `convert_codes()`
+  (`code_from`, `code_to`, ...), of `convert_dataset()` and of the split-weight
+  API (`code_from`, `code_to`, `weight`).
+
+* **v1 snapshots are migrated automatically.** `load_master_data()` reads a
+  pre-2.0.0 snapshot directory (`communes.rds`, `cd_*` columns), migrates it in
+  memory and signals a warning of class `rcl_legacy_schema`; re-save it with
+  `save_master_tables()`. Passing an in-memory v1 `master_data` object to the
+  conversion functions aborts with the same class.
+
+
 # nbbbenuts 1.2.0
 
 ## Breaking changes

@@ -12,7 +12,9 @@ build_nis_commune_table(nis_parsed, version)
 \item{version}{"2019" or "2025"}
 }
 \value{
-data.table with commune info and parent codes
+data.table with commune info and parent codes, using the
+  source-oriented (v1) build-time names; renamed to schema v2 by
+  \code{build_master_table()}.
 }
 \description{
 Build a commune-level table with full NIS hierarchy for a given version
