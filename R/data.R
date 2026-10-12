@@ -23,15 +23,15 @@
 #'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
 #' @examples
-#' data(rc_communes_2019)
-#' head(rc_communes_2019)
+#' data(rc_municipalities_2019)
+#' head(rc_municipalities_2019)
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_communes_2019, "code_nis_municipality_2019",
+#'   convert_dataset(rc_municipalities_2019, "code_nis_municipality_2019",
 #'                   to = "NUTS_DISTRICT_2021", master_data)
 #' }
-"rc_communes_2019"
+"rc_municipalities_2019"
 
 
 #' Sample communes -- NIS 2025
@@ -50,15 +50,15 @@
 #'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
 #' @examples
-#' data(rc_communes_2025)
-#' head(rc_communes_2025)
+#' data(rc_municipalities_2025)
+#' head(rc_municipalities_2025)
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_communes_2025, "code_nis_municipality_2025",
+#'   convert_dataset(rc_municipalities_2025, "code_nis_municipality_2025",
 #'                   from = "NIS_MUNICIPALITY_2025", to = "NUTS_DISTRICT_2027", master_data)
 #' }
-"rc_communes_2025"
+"rc_municipalities_2025"
 
 
 #' Sample postal codes
@@ -100,15 +100,15 @@
 #'   \item{population}{Integer. Resident population (fictional).}
 #' }
 #' @examples
-#' data(rc_arrondissements_2019)
-#' head(rc_arrondissements_2019)
+#' data(rc_districts_2019)
+#' head(rc_districts_2019)
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
 #'
 #'   # Verviers (63000) is ambiguous: spans BE335 and BE336
 #'   split_ambiguous(
-#'     dt         = rc_arrondissements_2019,
+#'     dt         = rc_districts_2019,
 #'     code_col   = "code_nis_district_2019",
 #'     value_cols = c("emplois", "masse_sal"),
 #'     from       = "NIS_DISTRICT_2019",
@@ -116,7 +116,7 @@
 #'     master_data
 #'   )
 #' }
-"rc_arrondissements_2019"
+"rc_districts_2019"
 
 
 #' Sample NUTS3 regions -- 2021 classification
@@ -134,8 +134,8 @@
 #'   \item{taux_chomage}{Numeric. Unemployment rate, 0--1 (fictional).}
 #' }
 #' @examples
-#' data(rc_nuts3_2021)
-#' head(rc_nuts3_2021)
+#' data(rc_nuts_districts_2021)
+#' head(rc_nuts_districts_2021)
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
@@ -143,10 +143,10 @@
 #'   # Aggregate NUTS3 2021 to NUTS2 2021
 #'   # Note: NUTS_DISTRICT_2021 and NUTS_DISTRICT_2027 cover different geographic areas;
 #'   # there is no direct conversion between them (see ?classification_reference).
-#'   convert_dataset(rc_nuts3_2021, "code_nuts_district_2021",
+#'   convert_dataset(rc_nuts_districts_2021, "code_nuts_district_2021",
 #'                   from = "NUTS_DISTRICT_2021", to = "NUTS_PROVINCE_2021", master_data)
 #' }
-"rc_nuts3_2021"
+"rc_nuts_districts_2021"
 
 
 # ==============================================================================
@@ -224,7 +224,7 @@
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
 #'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
-#' @seealso [split_ambiguous()], [rc_arrondissements_2019]
+#' @seealso [split_ambiguous()], [rc_districts_2019]
 #' @examples
 #' data(rc_full_districts_2019)
 #' head(rc_full_districts_2019)
@@ -273,18 +273,18 @@
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
 #'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
-#' @seealso [rc_full_nuts3_2027], [rc_nuts3_2021]
+#' @seealso [rc_full_nuts_districts_2027], [rc_nuts_districts_2021]
 #' @examples
-#' data(rc_full_nuts3_2021)
-#' head(rc_full_nuts3_2021)
+#' data(rc_full_nuts_districts_2021)
+#' head(rc_full_nuts_districts_2021)
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_nuts3_2021, "code_nuts_district_2021",
+#'   convert_dataset(rc_full_nuts_districts_2021, "code_nuts_district_2021",
 #'                   from = "NUTS_DISTRICT_2021",
 #'                   to   = "NUTS_PROVINCE_2021", master_data)
 #' }
-"rc_full_nuts3_2021"
+"rc_full_nuts_districts_2021"
 
 
 #' Complete NUTS3 dataset -- 2027 classification
@@ -300,18 +300,18 @@
 #'   \item{masse_sal}{Numeric. Total wage bill in EUR (fictional).}
 #'   \item{taux_activite}{Numeric. Activity rate, 0--1 (fictional).}
 #' }
-#' @seealso [rc_full_nuts3_2021]
+#' @seealso [rc_full_nuts_districts_2021]
 #' @examples
-#' data(rc_full_nuts3_2027)
-#' head(rc_full_nuts3_2027)
+#' data(rc_full_nuts_districts_2027)
+#' head(rc_full_nuts_districts_2027)
 #'
 #' \donttest{
 #'   master_data <- load_master_data()
-#'   convert_dataset(rc_full_nuts3_2027, "code_nuts_district_2027",
+#'   convert_dataset(rc_full_nuts_districts_2027, "code_nuts_district_2027",
 #'                   from = "NUTS_DISTRICT_2027",
 #'                   to   = "NUTS_PROVINCE_2027", master_data)
 #' }
-"rc_full_nuts3_2027"
+"rc_full_nuts_districts_2027"
 
 
 #' Complete postal codes dataset

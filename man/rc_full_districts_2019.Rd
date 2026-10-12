@@ -37,6 +37,6 @@ head(rc_full_districts_2019)
 }
 }
 \seealso{
-[split_ambiguous()], [rc_arrondissements_2019]
+[split_ambiguous()], [rc_districts_2019]
 }
 \keyword{datasets}

@@ -122,13 +122,13 @@ test_that("conversion on an in-memory v1 object aborts with rcl_legacy_schema", 
 
 test_that("bundled example datasets use code_<lower-cased id> character code columns", {
   ds_cls <- c(
-    rc_communes_2019 = "NIS_MUNICIPALITY_2019", rc_communes_2025 = "NIS_MUNICIPALITY_2025",
-    rc_postal = "POSTAL", rc_arrondissements_2019 = "NIS_DISTRICT_2019",
-    rc_nuts3_2021 = "NUTS_DISTRICT_2021",
+    rc_municipalities_2019 = "NIS_MUNICIPALITY_2019", rc_municipalities_2025 = "NIS_MUNICIPALITY_2025",
+    rc_postal = "POSTAL", rc_districts_2019 = "NIS_DISTRICT_2019",
+    rc_nuts_districts_2021 = "NUTS_DISTRICT_2021",
     rc_full_municipalities_2019 = "NIS_MUNICIPALITY_2019",
     rc_full_municipalities_2025 = "NIS_MUNICIPALITY_2025",
     rc_full_districts_2019 = "NIS_DISTRICT_2019", rc_full_regions_2019 = "NIS_REGION_2019",
-    rc_full_nuts3_2021 = "NUTS_DISTRICT_2021", rc_full_nuts3_2027 = "NUTS_DISTRICT_2027",
+    rc_full_nuts_districts_2021 = "NUTS_DISTRICT_2021", rc_full_nuts_districts_2027 = "NUTS_DISTRICT_2027",
     rc_full_postal = "POSTAL", rc_dirty_municipalities_2019 = "NIS_MUNICIPALITY_2019"
   )
   for (nm in names(ds_cls)) {
@@ -141,7 +141,7 @@ test_that("bundled example datasets use code_<lower-cased id> character code col
 })
 
 test_that("convert_dataset / get_crosswalk name code columns after the classification", {
-  r <- convert_dataset(rc_communes_2019, "code_nis_municipality_2019",
+  r <- convert_dataset(rc_municipalities_2019, "code_nis_municipality_2019",
                        from = CLS_NIS_MUNICIPALITY_2019, to = CLS_NUTS_DISTRICT_2021,
                        master_data, verbose = FALSE)
   expect_true("code_nuts_district_2021" %in% names(r))

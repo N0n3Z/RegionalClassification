@@ -562,8 +562,8 @@ withCallingHandlers(
 #     rc_full_municipalities_2025  -- 565 NIS 2025 communes
 #     rc_full_districts_2019       -- 43 NIS 2019 districts
 #     rc_full_regions_2019         -- 3 NIS 2019 regions
-#     rc_full_nuts3_2021           -- 44 NUTS3 2021 regions
-#     rc_full_nuts3_2027           -- 44 NUTS3 2027 regions
+#     rc_full_nuts_districts_2021           -- 44 NUTS3 2021 regions
+#     rc_full_nuts_districts_2027           -- 44 NUTS3 2027 regions
 #     rc_full_postal               -- 1,149 postal codes
 #
 #   Dirty dataset (to test the diagnostics):
@@ -579,9 +579,9 @@ convert_dataset(rc_full_municipalities_2019, "code_nis_municipality_2019",
                 master_data)
 
 # --- 10b. NUTS3 2021 -> NUTS2 2021 --------------------------------------------
-data(rc_full_nuts3_2021)
+data(rc_full_nuts_districts_2021)
 
-convert_dataset(rc_full_nuts3_2021, "code_nuts_district_2021",
+convert_dataset(rc_full_nuts_districts_2021, "code_nuts_district_2021",
                 from = "NUTS_DISTRICT_2021",
                 to   = "NUTS_PROVINCE_2021",
                 master_data)

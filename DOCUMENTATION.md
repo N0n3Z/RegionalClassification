@@ -224,7 +224,7 @@ renvoie `CHANGE_PROV` pour la ligne `code_to == 11056`.
 
 Charge la table de reference pre-construite depuis `inst/extdata/*.rds`.
 Rapide (pas de fichiers bruts). Retourne une liste nommee avec :
-`communes`, `postal`, `nis_changes`, `entities`, `crosswalks`.
+`municipalities`, `postal`, `nis_changes`, `entities`, `crosswalks`.
 
 ```r
 master_data <- load_master_data()
@@ -292,16 +292,16 @@ auto-genere si `NULL`). Si `from = NULL`, auto-detecte la classification source 
 `detect_classification()`.
 
 **Parametres specifiques :**
-- `target_col` : nom de la colonne resultat. Defaut : `"cd_{to_lower}"`.
+- `target_col` : nom de la colonne resultat. Defaut : `"code_{to_lower}"` (ex. `code_nuts_district_2021`).
 - `keep_code` : conserver la colonne source ? Defaut `TRUE`.
 - `na_action` : `"warn"` (defaut, garde les NA), `"keep"` (silencieux), `"drop"` (supprime les lignes).
 
 ```r
 dt <- data.table(commune = c("21004", "11002"), pop = c(180000, 530000))
 convert_dataset(dt, "commune", "NUTS_DISTRICT_2021", master_data, from = "NIS_MUNICIPALITY_2019")
-#    commune      pop  cd_nuts3_2021
-# 1:   21004   180000         BE100
-# 2:   11002   530000         BE211
+#    commune      pop  code_nuts_district_2021
+# 1:   21004   180000                    BE100
+# 2:   11002   530000                    BE211
 ```
 
 ---
@@ -337,7 +337,7 @@ Retourne le resultat `check_conversion_path()` de maniere invisible.
 #### `list_available_conversions()`
 
 Retourne un `data.table` de toutes les aretes du graphe (incluant les inverses) avec :
-`from`, `to`, `relation`, `perimeter_relation`, `notes`.
+`classification_from`, `classification_to`, `relation`, `perimeter_relation`, `notes`.
 
 ```r
 la <- list_available_conversions()
@@ -347,7 +347,7 @@ la[perimeter_relation == "overlap"]    # aretes avec enjambement
 
 #### `get_conversion_matrix()`
 
-Retourne un `data.table` (N x N) avec : `from`, `to`, `is_simple`, `relation_chain`.
+Retourne un `data.table` (N x N) avec : `classification_from`, `classification_to`, `is_simple`, `relation_chain`.
 Couteux (O(N^2) appels a `check_conversion_path()`).
 
 ---
@@ -383,7 +383,7 @@ Si `weights = TRUE`, ajoute une colonne `weight` (utilise les poids enregistres 
 
 ```r
 cw <- get_crosswalk("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021", master_data)
-# 581 lignes (une par commune 2019), avec code_from, code_to
+# 581 lignes (une par commune 2019) : code_nis_municipality_2019, code_nuts_district_2021
 
 get_crosswalk("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data, weights = TRUE)
 # Colonne weight : 0.5/0.5 pour Verviers (63000) par defaut
@@ -515,7 +515,7 @@ rebase_series(
 Rattache des noms (orthographe approchee) a des codes officiels.
 Necessite le package `stringdist` (Suggests).
 
-**Retour :** `data.table(input_name, matched_name, matched_code, distance, is_confident)`.
+**Retour :** `data.table(label_input, label_matched, code_matched, distance, language, is_confident)`.
 
 ```r
 fuzzy_match_names(
@@ -617,7 +617,7 @@ convert_codes(codes, from, to, md)
   |
   +-- execute_conversion(codes, from, to, md)
         route_conversion(from, to, md)     -- lecture de md$crosswalks pour le saut direct
-        .crosswalk_hop(from, to, md)       -- lookup data.table [from_id == F & to_id == T]
+        .crosswalk_hop(from, to, md)       -- lookup data.table [classification_from == F & classification_to == T]
         .compose_via_crosswalks(path, md)  -- composition pour les chemins multi-sauts
         .normalize_conversion_result()     -- force le schema (code_from, code_to, nature)
                                            -- remplit nature = RECODE / OVERLAP selon perimetre
@@ -633,11 +633,11 @@ CLASSIFICATION_NODES[["NIS_MUNICIPALITY_2019"]]
 # $level         "municipality"
 # $version       "2019"
 # $code_type     "character"
-# $source_table  "communes"
+# $source_table  "municipalities"
 # $version_filter "2019"
-# $code_col      "cd_commune"
-# $label_fr_col  "tx_commune_fr"
-# $label_nl_col  "tx_commune_nl"
+# $code_col      "code_nis_municipality"
+# $label_fr_col  "label_nis_municipality_fr"
+# $label_nl_col  "label_nis_municipality_nl"
 # $distinct      FALSE
 # $detectable    TRUE
 # $aggregates    character(0)   # commune est un noeud feuille
@@ -666,66 +666,86 @@ reproduisent exactement les resultats du moteur (fixture golden + parite par are
 
 ## 8. Modele de donnees `master_data`
 
-`load_master_data()` retourne une liste avec cinq tables :
+`load_master_data()` retourne une liste avec cinq tables. Toutes les colonnes suivent
+la convention **schema v2** `<role>_<sujet>[_<qualificatif>][_<langue>]` :
 
-### `communes` -- table large
+- roles : `code_*` (toujours character), `label_*_fr` / `label_*_nl`,
+  `version` / `version_from` / `version_to`, `classification` /
+  `classification_from` / `classification_to` ; `relation`, `nature`, `weight` tels quels ;
+- le sujet d'une colonne code est l'identifiant du noeud en minuscules, **sans** la
+  version NIS (portee par la colonne `version` de la ligne) : `NIS_DISTRICT_2019` ->
+  `code_nis_district`, `NUTS_DISTRICT_2021` -> `code_nuts_district_2021`.
 
-Une ligne par `(cd_commune, nis_version)`. Colonnes principales :
+Les sorties utilisateur (colonne creee par `convert_dataset()`, `get_crosswalk()`, jeux
+d'exemple `rc_*`) gardent la version : `code_<identifiant en minuscules>`
+(`code_nis_municipality_2019`). Correspondance v1 -> v2 : `SCHEMA_V1_TO_V2`
+(`R/00_config.R`) et `NEWS.md`. Un snapshot v1 (`communes.rds`) est migre au chargement
+avec un avertissement `rcl_legacy_schema`. `tests/testthat/test-schema.R` verifie la convention.
+
+### `municipalities` -- table large
+
+Une ligne par `(code_nis_municipality, version)`. Colonnes :
 
 ```
-cd_commune     int   -- code NIS de la commune
-nis_version    chr   -- "BEFORE_2019" | "2019" | "2025"
-tx_commune_fr  chr   -- nom francais
-tx_commune_nl  chr   -- nom neerlandais
-cd_arr         int   -- code arrondissement NIS
-cd_prov        int   -- code province NIS
-cd_region      int   -- code region NIS
-cd_nuts_lau    chr   -- code NUTS LAU 2021
-cd_nuts3       chr   -- code NUTS3 2021
-cd_nuts2       chr   -- code NUTS2 2021
-cd_nuts1       chr   -- code NUTS1 2021
-cd_nuts3_2027  chr   -- code NUTS3 2027 (NULL si pas encore calcule)
-cd_internal    chr   -- code NBB_DISTRICT_2021 (2 chiffres)
+version                      chr -- "BEFORE_2019" | "2019" | "2025"
+code_nis_municipality        chr -- code NIS de la commune
+label_nis_municipality_fr/nl chr -- nom de la commune
+code_nis_district            chr -- code arrondissement NIS   (+ label_nis_district_fr/nl)
+code_nis_province            chr -- code province NIS         (+ label_nis_province_fr/nl)
+code_nis_region              chr -- code region NIS           (+ label_nis_region_fr/nl)
+code_nis_country             chr -- "1000"
+code_nuts_municipality_2021  chr -- code LAU 2021
+code_nuts_district_2021      chr -- NUTS3 2021                (+ label_nuts_district_2021_fr/nl)
+code_nuts_province_2021      chr -- NUTS2 2021
+code_nuts_region_2021        chr -- NUTS1 2021
+code_nuts_country            chr -- "BE"
+code_nuts_district_2027      chr -- NUTS3 2027 (lignes NIS 2025)
+code_nuts_province_2027      chr -- NUTS2 2027
+code_nuts_region_2027        chr -- NUTS1 2027
+code_nuts_country_2027       chr -- "BE"
+code_nbb_district_2021       chr -- code NBB_DISTRICT_2021 (2 chiffres)
 ```
 
 ### `postal` -- codes postaux
 
 ```
-cd_postal  int   -- code postal (4 chiffres)
-cd_commune int   -- commune NIS 2019 correspondante
+code_postal            chr -- code postal (4 chiffres)
+code_nis_municipality  chr -- commune NIS correspondante
+label_postal_fr/nl     chr -- nom de la localite
+version                chr -- version NIS de la commune ("2019" | "2025")
 ```
 
 ### `nis_changes` -- transitions de version
 
 ```
-from_version  chr   -- "BEFORE_2019" ou "2019"
-to_version    chr   -- "2019" ou "2025"
-code_from     int   -- code source
-code_to       int   -- code cible
-nature        chr   -- "UNCHANGED" | "FUSION" | "CHANGE_DSTR" | "CHANGE_PROV"
+code_from     chr -- code source
+code_to       chr -- code cible
+nature        chr -- "FUSION" | "CHANGE_DSTR" | "CHANGE_PROV" | ...
+version_from  chr -- "BEFORE_2019" ou "2019"
+version_to    chr -- "2019" ou "2025"
 ```
 
 ### `entities` -- enumeration des membres par classification
 
 ```
-classification_id  chr   -- identifiant de la classification
-code               chr   -- code (toujours character ici, coerce si besoin)
-name_fr            chr   -- nom francais
-name_nl            chr   -- nom neerlandais
+classification  chr -- identifiant de la classification
+code            chr -- code
+label_fr        chr -- nom francais
+label_nl        chr -- nom neerlandais
 ```
 
-Une ligne par `(classification_id, code)`. Sert a `validate_codes()`, `get_label()`,
+Une ligne par `(classification, code)`. Sert a `validate_codes()`, `get_label()`,
 `detect_classification()`.
 
 ### `crosswalks` -- liens primitifs entre classifications
 
 ```
-from_id   chr   -- classification source
-to_id     chr   -- classification cible
-code_from chr   -- code source
-code_to   chr   -- code cible (NA si code source sans correspondant)
-relation  chr   -- "1:1" | "N:1" | "1:N" | "M:N"
-nature    chr   -- nature de la conversion (voir section 5)
+classification_from  chr -- classification source
+classification_to    chr -- classification cible
+code_from            chr -- code source
+code_to              chr -- code cible (NA si code source sans correspondant)
+relation             chr -- "1:1" | "N:1" | "1:N" | "M:N"
+nature               chr -- nature de la conversion (voir section 5)
 ```
 
 Une ligne par lien primitif. C'est la table lue par `route_conversion()` pour chaque
@@ -852,13 +872,13 @@ la colonne code + `population`, `emplois`, `masse_sal`, `taux_activite`.
 
 | Dataset | Code col | N lignes | Classification |
 |---------|----------|----------|----------------|
-| `rc_full_municipalities_2019` | `cd_commune` | 581 | `NIS_MUNICIPALITY_2019` |
-| `rc_full_municipalities_2025` | `cd_commune` | 565 | `NIS_MUNICIPALITY_2025` |
-| `rc_full_districts_2019`      | `cd_arr`     |  43 | `NIS_DISTRICT_2019` |
-| `rc_full_regions_2019`        | `cd_region`  |   3 | `NIS_REGION_2019` |
-| `rc_full_nuts3_2021`          | `cd_nuts3`   |  44 | `NUTS_DISTRICT_2021` |
-| `rc_full_nuts3_2027`          | `cd_nuts3_2027` | 44 | `NUTS_DISTRICT_2027` |
-| `rc_full_postal`              | `cd_postal`  | 1 149 | `POSTAL` |
+| `rc_full_municipalities_2019` | `code_nis_municipality_2019` | 581 | `NIS_MUNICIPALITY_2019` |
+| `rc_full_municipalities_2025` | `code_nis_municipality_2025` | 565 | `NIS_MUNICIPALITY_2025` |
+| `rc_full_districts_2019`      | `code_nis_district_2019`     |  43 | `NIS_DISTRICT_2019` |
+| `rc_full_regions_2019`        | `code_nis_region_2019`       |   3 | `NIS_REGION_2019` |
+| `rc_full_nuts_districts_2021` | `code_nuts_district_2021`    |  44 | `NUTS_DISTRICT_2021` |
+| `rc_full_nuts_districts_2027` | `code_nuts_district_2027`    |  44 | `NUTS_DISTRICT_2027` |
+| `rc_full_postal`              | `code_postal`                | 1 149 | `POSTAL` |
 
 ### Dataset sale (`rc_dirty_municipalities_2019`)
 
@@ -877,15 +897,15 @@ data(rc_dirty_municipalities_2019)
 master_data <- load_master_data()
 
 # Diagnostic complet
-diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data,
+diagnose_classification(rc_dirty_municipalities_2019, "code_nis_municipality_2019", master_data,
                         classification = "NIS_MUNICIPALITY_2019")
 
 # Validation code par code
-validate_codes(rc_dirty_municipalities_2019$cd_commune,
+validate_codes(rc_dirty_municipalities_2019$code_nis_municipality_2019,
                "NIS_MUNICIPALITY_2019", master_data)
 
 # Auto-detection (si la classification n'est pas connue a l'avance)
-diagnose_classification(rc_dirty_municipalities_2019, "cd_commune", master_data)
+diagnose_classification(rc_dirty_municipalities_2019, "code_nis_municipality_2019", master_data)
 ```
 
 ### Regeneration

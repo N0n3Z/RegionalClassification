@@ -55,8 +55,15 @@
   | `fuzzy_match_names()`, `identify_from_names()` | `input_name`, `matched_name`, `matched_code` | `label_input`, `label_matched`, `code_matched` |
   | example datasets `rc_*` | `cd_commune`, `cd_arr`, `cd_region`, `cd_nuts3`, `cd_nuts3_2027`, `cd_postal`; `nom_fr` / `nom_nl` | `code_nis_municipality_2019` / `_2025`, `code_nis_district_2019`, `code_nis_region_2019`, `code_nuts_district_2021`, `code_nuts_district_2027`, `code_postal`; `label_fr` / `label_nl` |
 
-  The code columns of `rc_communes_2019`, `rc_communes_2025`,
-  `rc_arrondissements_2019` and `rc_postal` are now character (they were still
+  Example datasets renamed after the graph levels: `rc_communes_2019` ->
+  `rc_municipalities_2019`, `rc_communes_2025` -> `rc_municipalities_2025`,
+  `rc_arrondissements_2019` -> `rc_districts_2019`, `rc_nuts3_2021` ->
+  `rc_nuts_districts_2021`, `rc_full_nuts3_2021` -> `rc_full_nuts_districts_2021`,
+  `rc_full_nuts3_2027` -> `rc_full_nuts_districts_2027` (update your
+  `data(...)` calls).
+
+  The code columns of `rc_municipalities_2019`, `rc_municipalities_2025`,
+  `rc_districts_2019` and `rc_postal` are now character (they were still
   integer). Measure columns (`population`, `emplois`, ...) are unchanged.
 
 ## Dependencies

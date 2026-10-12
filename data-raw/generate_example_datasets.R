@@ -42,10 +42,10 @@ rc_full_districts_2019 <- fake(
 rc_full_regions_2019 <- fake(
   codes_for("NIS_REGION_2019"), 500000, 3700000, "code_nis_region_2019")
 
-rc_full_nuts3_2021 <- fake(
+rc_full_nuts_districts_2021 <- fake(
   codes_for("NUTS_DISTRICT_2021"), 10000, 700000, "code_nuts_district_2021")
 
-rc_full_nuts3_2027 <- fake(
+rc_full_nuts_districts_2027 <- fake(
   codes_for("NUTS_DISTRICT_2027"), 10000, 700000, "code_nuts_district_2027")
 
 rc_full_postal <- fake(
@@ -115,8 +115,8 @@ usethis::use_data(
   rc_full_municipalities_2025,
   rc_full_districts_2019,
   rc_full_regions_2019,
-  rc_full_nuts3_2021,
-  rc_full_nuts3_2027,
+  rc_full_nuts_districts_2021,
+  rc_full_nuts_districts_2027,
   rc_full_postal,
   rc_dirty_municipalities_2019,
   overwrite = TRUE
@@ -125,7 +125,7 @@ usethis::use_data(
 cat("\nDataset sizes:\n")
 for (nm in c("rc_full_municipalities_2019", "rc_full_municipalities_2025",
              "rc_full_districts_2019", "rc_full_regions_2019",
-             "rc_full_nuts3_2021", "rc_full_nuts3_2027",
+             "rc_full_nuts_districts_2021", "rc_full_nuts_districts_2027",
              "rc_full_postal", "rc_dirty_municipalities_2019")) {
   dt <- get(nm)
   cat(sprintf("  %-38s %d rows x %d cols\n", nm, nrow(dt), ncol(dt)))

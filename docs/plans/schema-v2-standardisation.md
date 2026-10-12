@@ -1,6 +1,6 @@
 # Plan — Standardisation du modèle de données de `nbbbenuts` (v2.0.0)
 
-> **Statut** : étape 1 réalisée sur la branche `claude/schema-v2` (renommage + migration v1, 387 tests verts). Étape 2 à faire.
+> **Statut** : étape 1 réalisée sur la branche `claude/schema-v2` (renommage + migration v1), étendue aux sorties utilisateur et aux jeux d'exemple `rc_*` (renommés d'après les niveaux du graphe). Étape 2 à faire.
 
 ## Contexte
 Les tables de `master_data` (`communes`, `postal`, `nis_changes`, `entities`,
