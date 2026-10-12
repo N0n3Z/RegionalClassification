@@ -143,13 +143,13 @@ normalize_classification_id <- function(class_id) {
 # Crosswalk-based hop executor (Phase 2 engine core)
 # ------------------------------------------------------------------------------
 
-# Generic single hop: looks up the (from_id, to_id) rows in md$crosswalks and
+# Generic single hop: looks up the (classification_from, classification_to) rows in md$crosswalks and
 # joins input codes against them.  Overlap edges (Verviers 1:N, the
 # 3 cross-NUTS3 NIS 2025 fusions) are handled natively via allow.cartesian.
 # Returns a data.table(code_from chr, code_to chr, nature chr) so that the
 # caller can re-coerce to the canonical node type after the lookup.
 .crosswalk_hop <- function(input_dt, from, to, md) {
-  lkp <- md$crosswalks[from_id == from & to_id == to,
+  lkp <- md$crosswalks[classification_from == from & classification_to == to,
                         .(code_from, code_to, nature)]
   ic  <- data.table(code_from = as.character(input_dt$code_from))
   res <- merge(ic, lkp, by = "code_from", all.x = TRUE,
@@ -249,7 +249,7 @@ route_conversion <- function(input_dt, from, to, md) {
 
   # Direct hop: single crosswalk-table lookup
   if (!is.null(md$crosswalks) &&
-      nrow(md$crosswalks[from_id == from & to_id == to]) > 0L) {
+      nrow(md$crosswalks[classification_from == from & classification_to == to]) > 0L) {
     res <- .crosswalk_hop(input_dt, from, to, md)
     res[, code_to   := .node_coerce(code_to,   to)]
     res[, code_from := .node_coerce(code_from, from)]
@@ -324,7 +324,7 @@ route_conversion <- function(input_dt, from, to, md) {
   !is.na(ec) && ec <= 1L
 }
 
-# Adjacency built exclusively from md$crosswalks unique (from_id, to_id) pairs.
+# Adjacency built exclusively from md$crosswalks unique (classification_from, classification_to) pairs.
 # Every edge in this graph is directly executable via .crosswalk_hop().
 # Used by .compose_via_handlers() to find valid multi-hop execution paths.
 #
@@ -342,15 +342,15 @@ route_conversion <- function(input_dt, from, to, md) {
     return(get(key, envir = .route_cache))
   g_all    <- list()
   g_simple <- list()
-  pairs    <- unique(md$crosswalks[, .(from_id, to_id)])
+  pairs    <- unique(md$crosswalks[, .(classification_from, classification_to)])
   for (i in seq_len(nrow(pairs))) {
-    a <- pairs$from_id[i]; b <- pairs$to_id[i]
+    a <- pairs$classification_from[i]; b <- pairs$classification_to[i]
     g_all[[a]] <- unique(c(g_all[[a]], b))
     # An edge is "simple" when it does not fan out: every source code maps to at
     # most one distinct (non-NA) target.  Overlap edges (Verviers 1:N, the 3
     # cross-NUTS3 fusions, the NUTS3 2021->2027 aggregate) fan out and are
     # excluded from the simple graph.
-    sub      <- unique(md$crosswalks[from_id == a & to_id == b, .(code_from, code_to)])
+    sub      <- unique(md$crosswalks[classification_from == a & classification_to == b, .(code_from, code_to)])
     fans_out <- sub[!is.na(code_to), .N, by = code_from][, any(N > 1L)]
     if (!isTRUE(fans_out))
       g_simple[[a]] <- unique(c(g_simple[[a]], b))
@@ -475,15 +475,19 @@ list_available_conversions <- function() {
   if (!is.list(master_data))
     abort("master_data must be a list produced by load_master_data() or build_master_table().",
           class = "rcl_invalid_input")
-  missing <- setdiff(c("communes", "postal", "nis_changes"), names(master_data))
+  if (!is.null(master_data$communes) && is.null(master_data$municipalities))
+    abort(paste0("master_data uses the schema v1 table names (nbbbenuts < 2.0.0). ",
+                 "Reload it with load_master_data(), which migrates v1 snapshots."),
+          class = "rcl_legacy_schema")
+  missing <- setdiff(c("municipalities", "postal", "nis_changes"), names(master_data))
   if (length(missing) > 0L)
     abort(
       sprintf("master_data is missing required tables: %s. Run load_master_data() to rebuild.",
               paste(missing, collapse = ", ")),
       class = "rcl_data_missing", tables = missing
     )
-  if (is.null(master_data$communes) || nrow(master_data$communes) == 0L)
-    abort("master_data$communes is empty. Run load_master_data() to rebuild.",
+  if (is.null(master_data$municipalities) || nrow(master_data$municipalities) == 0L)
+    abort("master_data$municipalities is empty. Run load_master_data() to rebuild.",
           class = "rcl_data_missing")
   if (is.null(master_data$crosswalks))
     abort(paste0("master_data$crosswalks is required for conversion but is NULL.\n",

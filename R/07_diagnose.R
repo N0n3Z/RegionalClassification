@@ -230,20 +230,20 @@ diagnose_classification <- function(
 
 .annotate_codes <- function(codes, ref) {
   if (length(codes) == 0) {
-    return(data.table(code = character(0), name_fr = character(0),
-                      name_nl = character(0)))
+    return(data.table(code = character(0), label_fr = character(0),
+                      label_nl = character(0)))
   }
   ref_sub <- ref[as.character(ref$code) %in% as.character(codes)]
   if (nrow(ref_sub) == 0) {
-    return(data.table(code = codes, name_fr = NA_character_, name_nl = NA_character_))
+    return(data.table(code = codes, label_fr = NA_character_, label_nl = NA_character_))
   }
   # codes not in ref (truly unknown)
   not_in_ref <- setdiff(as.character(codes), as.character(ref_sub$code))
   extra <- if (length(not_in_ref) > 0)
-    data.table(code = not_in_ref, name_fr = NA_character_, name_nl = NA_character_)
+    data.table(code = not_in_ref, label_fr = NA_character_, label_nl = NA_character_)
   else
     NULL
-  result <- rbindlist(list(ref_sub[, .(code = as.character(code), name_fr, name_nl)],
+  result <- rbindlist(list(ref_sub[, .(code = as.character(code), label_fr, label_nl)],
                            extra), use.names = TRUE, fill = TRUE)
   result[order(code)]
 }
@@ -298,7 +298,7 @@ diagnose_classification <- function(
       cat(sprintf("    %-10s  n=%d  %s\n",
                   dup$code[i],
                   if ("n_occurrences" %in% names(dup)) dup$n_occurrences[i] else NA,
-                  .fmt_names(dup$name_fr[i], dup$name_nl[i])))
+                  .fmt_names(dup$label_fr[i], dup$label_nl[i])))
     }
     cat("\n")
   }
@@ -366,7 +366,7 @@ diagnose_classification <- function(
   for (i in seq_len(nrow(show))) {
     cat(sprintf("    %-12s  %s\n",
                 show$code[i],
-                .fmt_names(show$name_fr[i], show$name_nl[i])))
+                .fmt_names(show$label_fr[i], show$label_nl[i])))
   }
   if (nrow(dt) > max_rows) {
     cat(sprintf("    ... (%d more)\n", nrow(dt) - max_rows))

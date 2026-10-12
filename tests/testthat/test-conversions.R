@@ -154,7 +154,7 @@ test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 supports weighted splitting"
 
 # -- Test 12: diagnose_classification() -- check mode --------------------------
 test_that("diagnose_classification check mode: full dataset is COMPLETE", {
-  nuts3_codes <- unique(master_data$communes[nis_version == VER_2019 & !is.na(cd_nuts3), cd_nuts3])
+  nuts3_codes <- unique(master_data$municipalities[version == VER_2019 & !is.na(code_nuts_district_2021), code_nuts_district_2021])
   dt_full <- data.table(nuts3 = nuts3_codes, val = seq_along(nuts3_codes))
   r <- diagnose_classification(dt_full, "nuts3", master_data,
                                classification = CLS_NUTS_DISTRICT_2021, verbose = FALSE)
@@ -184,7 +184,7 @@ test_that("diagnose_classification check mode: unknown codes detected", {
 
 # -- Test 13: diagnose_classification() detect mode + split_ambiguous() --------
 test_that("diagnose_classification auto-detects NIS_MUNICIPALITY_2019", {
-  comm_dt <- data.table(code = master_data$communes[nis_version == VER_2019, cd_commune])
+  comm_dt <- data.table(code = master_data$municipalities[version == VER_2019, code_nis_municipality])
   r <- diagnose_classification(comm_dt, "code", master_data, verbose = FALSE)
   expect_equal(r$mode, "detect")
   expect_equal(r$recommendation, CLS_NIS_MUNICIPALITY_2019)

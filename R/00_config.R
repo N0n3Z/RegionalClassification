@@ -25,7 +25,7 @@
 #
 # Naming:
 #   CLS_*  -- classification node identifiers (match names(CLASSIFICATION_NODES))
-#   VER_*  -- version strings stored in data columns (nis_version, from_version)
+#   VER_*  -- version strings stored in data columns (version, version_from, version_to)
 # ==============================================================================
 
 # --- Version strings ---
@@ -243,7 +243,7 @@ CONVERSION_GRAPH_EDGES <- list(
   # Forward N:1: each BEFORE_2019 commune maps to exactly one 2019 commune.
   # Belgian commune reforms only involve mergers (multiple old -> one new), never
   # splits.  Empirically confirmed: 0 old communes with multiple new codes in
-  # nis_changes[from_version=="BEFORE_2019"].
+  # nis_changes[version_from == "BEFORE_2019"].
   # Reverse (2019->BEFORE_2019) is auto-generated as 1:N.
   list(from = CLS_NIS_MUNICIPALITY_BEFORE_2019, to = CLS_NIS_MUNICIPALITY_2019,
        relation = "N:1", via = "REFNIS_CHANGE_BEFORE2019",
@@ -370,7 +370,7 @@ CONVERSION_GRAPH_EDGES <- list(
 
   # --- NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (derived, 1:N) ---
   # Derived at commune level (NUTS 2021 is keyed to the 2019 commune perimeter):
-  #   2019 commune -> cd_nuts3 (2021)  AND  -> NIS 2025 commune -> cd_nuts3_2027.
+  #   2019 commune -> code_nuts_district_2021  AND  -> NIS 2025 commune -> code_nuts_district_2027.
   # 3 cross-province fusions (46029/46030/71072) make some 2021 NUTS3 codes map
   # to >1 2027 NUTS3 (1:N) -- e.g. commune 11056: BE211 -> {BE261, BE276}.
   # Intended for AGGREGATE NUTS3 2021 data only; if you still have the underlying
@@ -381,7 +381,7 @@ CONVERSION_GRAPH_EDGES <- list(
        ambiguous_codes = c("BE211", "BE223", "BE234"),
        coverage = "44/44",
        notes = paste0(
-         "Derived at commune level (2019 -> cd_nuts3 2021 AND -> NIS 2025 -> cd_nuts3_2027). ",
+         "Derived at commune level (2019 -> NUTS3 2021 AND -> NIS 2025 -> NUTS3 2027). ",
          "3 cross-province fusions (46029/46030/71072) make some 2021 NUTS3 map to >1 2027 NUTS3 ",
          "(1:N, e.g. BE211 -> {BE261, BE276}). Use allow_ambiguous = TRUE; register weights via ",
          "register_split_weights(). no_reverse = TRUE: the reverse 2027 -> 2021 is also 1:N and ",
@@ -423,7 +423,7 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = "Via NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2027 -> NUTS_REGION_2027"),
 
   # --- NIS 2025 -> NUTS 2021 (Phase 4) ---
-  # cd_nuts3 / cd_nuts_lau / cd_arr_internal backfilled onto the 2025 master via
+  # code_nuts_district_2021 / code_nuts_municipality_2021 / code_nbb_district_2021 backfilled onto the 2025 master via
   # add_nuts2021_columns_2025(): unchanged communes inherit from 2019; fused communes
   # are unambiguous when all constituents share the same NUTS3.
   # 3 communes (46029, 46030, 71072) fuse localities from *different* NUTS_DISTRICT_2021
@@ -455,7 +455,7 @@ CONVERSION_GRAPH_EDGES <- list(
   # filter for unchanged communes.
   list(from = CLS_NIS_MUNICIPALITY_2025, to = CLS_NBB_DISTRICT_2021,
        relation = "N:1", via = "derived",
-       notes = paste0("cd_arr_internal backfilled onto 2025 master from constituent 2019 communes. ",
+       notes = paste0("code_nbb_district_2021 backfilled onto 2025 master from constituent 2019 communes. ",
                       "Same uniqueness logic as NUTS_DISTRICT_2021 backfill."))
 )
 
@@ -530,43 +530,112 @@ NIS_PROVINCE_TO_REGION <- c(
 )
 
 # --- Flat tables persisted in inst/extdata/ ---
-# Three unified tables replace the previous 13 separate tables.
-# Each is keyed by a version discriminator column (nis_version / from_version).
+# Each is keyed by a version discriminator column (version / version_from).
 # Hierarchy lists (nis_hierarchy_*, nuts_hierarchy_*, nuts_arrondissement_mapping)
 # are intentionally excluded: they are build-time intermediates not needed at runtime.
 MASTER_FLAT_TABLES <- c(
-  "communes",    # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
-  "postal",      # postal -> NIS mappings for all versions (nis_version discriminator)
-  "nis_changes", # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (from_version)
-  "entities",    # one row per (classification_id, code) -- flat enumeration of all nodes
-  "crosswalks"   # one row per primitive code link (from_id, to_id, code_from, code_to, relation, nature)
+  "municipalities", # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
+  "postal",         # postal -> NIS mappings for all versions (version discriminator)
+  "nis_changes",    # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (version_from)
+  "entities",       # one row per (classification, code) -- flat enumeration of all nodes
+  "crosswalks"      # one row per primitive code link (classification_from/to, code_from/to, relation, nature)
 )
 
-# --- Schema of the unified `communes` table ---
-# The communes table is the rbindlist() of one sub-table per NIS version, which
-# do NOT all carry the same columns (e.g. NIS 2025 carries only the 2027 NUTS
+# --- Column naming convention (schema v2, nbbbenuts >= 2.0.0) ---
+# Every column of a persisted table is named <role>_<subject>[_<qualifier>][_<lang>]:
+#   code_*            a classification code (always character)
+#   label_*_fr / _nl  a label; the language suffix always comes last
+#   version*          version discriminator (version, version_from, version_to)
+#   classification*   a classification node id (classification, classification_from/to)
+#   relation, nature, weight   kept as-is
+# The subject of a code/label column is the lower-cased node id of the graph
+# (CLASSIFICATION_NODES): NIS columns drop the NIS version (carried by the row's
+# `version`), NUTS / NBB columns keep theirs because they live as attributes on a
+# NIS row (e.g. NIS_DISTRICT_2019 -> code_nis_district,
+# NUTS_DISTRICT_2021 -> code_nuts_district_2021). tests/testthat/test-schema.R
+# enforces the convention.
+#
+# Build-time intermediates (raw parsing in 01_load_data.R, per-version sub-tables
+# in 02_build_master_table.R) still use the source-oriented v1 names; they are
+# renamed to v2 once, via SCHEMA_V1_TO_V2, before the tables are stacked.
+# The same map migrates a v1 snapshot in load_master_data() (.migrate_schema_v1).
+SCHEMA_V1_TO_V2 <- list(
+  municipalities = c(
+    cd_commune     = "code_nis_municipality",
+    tx_commune_fr  = "label_nis_municipality_fr",
+    tx_commune_nl  = "label_nis_municipality_nl",
+    cd_arr         = "code_nis_district",
+    tx_arr_fr      = "label_nis_district_fr",
+    tx_arr_nl      = "label_nis_district_nl",
+    cd_province    = "code_nis_province",
+    tx_prov_fr     = "label_nis_province_fr",
+    tx_prov_nl     = "label_nis_province_nl",
+    cd_region      = "code_nis_region",
+    tx_region_fr   = "label_nis_region_fr",
+    tx_region_nl   = "label_nis_region_nl",
+    cd_nis_country = "code_nis_country",
+    cd_nuts_lau    = "code_nuts_municipality_2021",
+    cd_nuts3       = "code_nuts_district_2021",
+    cd_nuts2       = "code_nuts_province_2021",
+    cd_nuts1       = "code_nuts_region_2021",
+    cd_nuts0       = "code_nuts_country",
+    tx_nuts3_fr    = "label_nuts_district_2021_fr",
+    tx_nuts3_nl    = "label_nuts_district_2021_nl",
+    cd_nuts3_2027  = "code_nuts_district_2027",
+    cd_nuts2_2027  = "code_nuts_province_2027",
+    cd_nuts1_2027  = "code_nuts_region_2027",
+    cd_nuts0_2027  = "code_nuts_country_2027",
+    cd_arr_internal = "code_nbb_district_2021",
+    nis_version    = "version"
+  ),
+  postal = c(
+    cd_postal         = "code_postal",
+    cd_commune_nis    = "code_nis_municipality",
+    tx_postal_name_fr = "label_postal_fr",
+    tx_postal_name_nl = "label_postal_nl",
+    nis_version       = "version"
+  ),
+  nis_changes = c(
+    cd_refnis_old = "code_from",
+    cd_refnis_new = "code_to",
+    from_version  = "version_from"
+  ),
+  entities = c(
+    classification_id = "classification",
+    name_fr           = "label_fr",
+    name_nl           = "label_nl"
+  ),
+  crosswalks = c(
+    from_id = "classification_from",
+    to_id   = "classification_to"
+  )
+)
+
+# v1 tables renamed in v2 (old name -> new name).
+SCHEMA_V1_TABLE_RENAMES <- c(communes = "municipalities")
+
+# v1 columns dropped in v2 (no consumer).
+SCHEMA_V1_DROPPED_COLS <- list(municipalities = "cd_arr_2digit")
+
+# NIS version a nis_changes row converts TO, keyed by version_from.
+NIS_CHANGE_VERSION_TO <- c(BEFORE_2019 = "2019", "2019" = "2025")
+
+# --- Schema of the unified `municipalities` table ---
+# The municipalities table is the rbindlist() of one sub-table per NIS version,
+# which do NOT all carry the same columns (e.g. NIS 2025 carries only the 2027 NUTS
 # columns, not the 2021 ones). rbindlist(fill = TRUE) tolerates that by design,
 # but it would also silently mask a renamed or dropped column with all-NA.
-# .validate_commune_schema() (02_build_master_table.R) uses the two sets below
+# .validate_municipality_schema() (02_build_master_table.R) uses the two sets below
 # to turn such silent drift into an explicit build-time error:
 #   - CORE: columns every per-version sub-table MUST provide.
 #   - KNOWN: the full set a sub-table is ALLOWED to contain (a version may omit
 #     version-specific columns, but may not introduce an unknown one).
-MASTER_COMMUNE_CORE_COLS <- c(
-  "cd_commune", "tx_commune_fr", "tx_commune_nl",
-  "cd_arr", "cd_province", "cd_region", "nis_version"
+MASTER_MUNICIPALITY_CORE_COLS <- c(
+  "code_nis_municipality", "label_nis_municipality_fr", "label_nis_municipality_nl",
+  "code_nis_district", "code_nis_province", "code_nis_region", "version"
 )
 
-MASTER_COMMUNE_KNOWN_COLS <- c(
-  MASTER_COMMUNE_CORE_COLS,
-  "tx_arr_fr", "tx_arr_nl", "cd_arr_2digit",
-  "tx_prov_fr", "tx_prov_nl", "tx_region_fr", "tx_region_nl",
-  "cd_nis_country",
-  "cd_nuts_lau", "cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
-  "tx_nuts3_fr", "tx_nuts3_nl",
-  "cd_nuts3_2027", "cd_nuts2_2027", "cd_nuts1_2027", "cd_nuts0_2027",
-  "cd_arr_internal"
-)
+MASTER_MUNICIPALITY_KNOWN_COLS <- unname(SCHEMA_V1_TO_V2$municipalities)
 
 # --- Helper: get data directory path ---
 get_raw_data_path <- function() {

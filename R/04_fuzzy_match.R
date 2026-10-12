@@ -83,7 +83,7 @@ fuzzy_match_names <- function(names, target_classification, master_data,
 #'
 #' Phase 3: driven entirely by the registry (.node_reference_codes) instead of
 #' a hardcoded switch over source-table columns.  Any classification that has
-#' at least one non-NA label (name_fr or name_nl) in the entities table is
+#' at least one non-NA label (label_fr or label_nl) in the entities table is
 #' now supported automatically.  An abort is raised only when no labels are
 #' available (e.g. NUTS2, NUTS1, NUTS_COUNTRY which carry no names).
 #'
@@ -103,14 +103,14 @@ build_name_reference <- function(target, md, language = "both") {
     )
   }
 
-  has_fr <- !all(is.na(ref_codes$name_fr))
-  has_nl <- !all(is.na(ref_codes$name_nl))
+  has_fr <- !all(is.na(ref_codes$label_fr))
+  has_nl <- !all(is.na(ref_codes$label_nl))
 
   if (!has_fr && !has_nl) {
     abort(
       sprintf(
         paste0("Fuzzy matching not supported for classification '%s': ",
-               "no names (name_fr / name_nl) available in the reference table."),
+               "no names (label_fr / label_nl) available in the reference table."),
         target
       ),
       class = "rcl_invalid_input", classification = target
@@ -119,14 +119,14 @@ build_name_reference <- function(target, md, language = "both") {
 
   ref_list <- list()
   if (language %in% c("fr", "both") && has_fr) {
-    ref_list[["fr"]] <- ref_codes[!is.na(name_fr),
-                                   .(ref_name    = name_fr,
+    ref_list[["fr"]] <- ref_codes[!is.na(label_fr),
+                                   .(ref_name    = label_fr,
                                      ref_code    = as.character(code),
                                      ref_language = "fr")]
   }
   if (language %in% c("nl", "both") && has_nl) {
-    ref_list[["nl"]] <- ref_codes[!is.na(name_nl),
-                                   .(ref_name    = name_nl,
+    ref_list[["nl"]] <- ref_codes[!is.na(label_nl),
+                                   .(ref_name    = label_nl,
                                      ref_code    = as.character(code),
                                      ref_language = "nl")]
   }

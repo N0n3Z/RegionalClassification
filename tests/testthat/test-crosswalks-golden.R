@@ -20,13 +20,13 @@ if (!file.exists(golden_path)) {
   md     <- load_master_data()
 
   # --- Per-hop tests ---
-  edge_keys <- unique(paste0(golden$per_edge$from_id, "__", golden$per_edge$to_id))
+  edge_keys <- unique(paste0(golden$per_edge$classification_from, "__", golden$per_edge$classification_to))
 
   for (key in edge_keys) {
     parts <- strsplit(key, "__", fixed = TRUE)[[1]]
     from  <- parts[1L]
     to    <- parts[2L]
-    ref   <- golden$per_edge[from_id == from & to_id == to]
+    ref   <- golden$per_edge[classification_from == from & classification_to == to]
 
     local({
       .from <- from; .to <- to; .ref <- ref
@@ -46,13 +46,13 @@ if (!file.exists(golden_path)) {
   }
 
   # --- Multi-hop tests ---
-  mh_keys <- unique(paste0(golden$multihop$from_id, "__", golden$multihop$to_id))
+  mh_keys <- unique(paste0(golden$multihop$classification_from, "__", golden$multihop$classification_to))
 
   for (key in mh_keys) {
     parts <- strsplit(key, "__", fixed = TRUE)[[1]]
     from  <- parts[1L]
     to    <- parts[2L]
-    ref   <- golden$multihop[from_id == from & to_id == to]
+    ref   <- golden$multihop[classification_from == from & classification_to == to]
 
     local({
       .from <- from; .to <- to; .ref <- ref

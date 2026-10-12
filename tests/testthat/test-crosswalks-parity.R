@@ -44,8 +44,8 @@ if (is.null(md$crosswalks)) {
   # .list_codes_for(CLS_POSTAL, md)).  This is valid only if every p25 postal
   # code already appears in p19.
   test_that("all p25 postal codes are present in p19 (POSTAL universe assumption)", {
-    p19_codes  <- md$postal[nis_version == VER_2019, unique(cd_postal)]
-    p25_codes  <- md$postal[nis_version == VER_2025, unique(cd_postal)]
+    p19_codes  <- md$postal[version == VER_2019, unique(code_postal)]
+    p25_codes  <- md$postal[version == VER_2025, unique(code_postal)]
     new_in_p25 <- setdiff(p25_codes, p19_codes)
     expect_true(
       length(new_in_p25) == 0L,
@@ -62,7 +62,7 @@ if (is.null(md$crosswalks)) {
               CONVERSION_GRAPH_EDGES)
     skip_if(is.null(e), "NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 edge not found in graph")
 
-    xw <- md$crosswalks[from_id == CLS_NIS_MUNICIPALITY_2025 & to_id == CLS_NUTS_DISTRICT_2021]
+    xw <- md$crosswalks[classification_from == CLS_NIS_MUNICIPALITY_2025 & classification_to == CLS_NUTS_DISTRICT_2021]
     real_ambig <- xw[, .N, by = code_from][N > 1L, sort(as.integer(code_from))]
 
     expect_setequal(e$ambiguous_codes, real_ambig)
@@ -77,7 +77,7 @@ if (is.null(md$crosswalks)) {
               CONVERSION_GRAPH_EDGES)
     skip_if(is.null(e), "NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 edge not found in graph")
 
-    xw <- md$crosswalks[from_id == CLS_NUTS_DISTRICT_2021 & to_id == CLS_NUTS_DISTRICT_2027]
+    xw <- md$crosswalks[classification_from == CLS_NUTS_DISTRICT_2021 & classification_to == CLS_NUTS_DISTRICT_2027]
     real_ambig <- xw[, .N, by = code_from][N > 1L, sort(code_from)]   # character NUTS3 codes
 
     expect_setequal(e$ambiguous_codes, real_ambig)

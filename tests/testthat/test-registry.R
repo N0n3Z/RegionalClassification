@@ -40,10 +40,10 @@ test_that("every node has code_type 'integer' or 'character'", {
 test_that("code_type matches the real column class in master_data", {
   for (id in names(CLASSIFICATION_NODES)) {
     n   <- CLASSIFICATION_NODES[[id]]
-    tbl <- if (n$source_table == "communes") master_data$communes
+    tbl <- if (n$source_table == "municipalities") master_data$municipalities
            else                               master_data$postal
     # Use the version-filtered slice (some columns only exist in one version)
-    slice <- tbl[get("nis_version") == n$version_filter]
+    slice <- tbl[get("version") == n$version_filter]
     if (nrow(slice) == 0L) next  # BEFORE_2019 optional
     col <- slice[[n$code_col]]
     if (is.null(col)) next
@@ -58,7 +58,7 @@ test_that("code_type matches the real column class in master_data", {
 test_that("non-NA label columns exist in the source table", {
   for (id in names(CLASSIFICATION_NODES)) {
     n   <- CLASSIFICATION_NODES[[id]]
-    tbl <- if (n$source_table == "communes") master_data$communes
+    tbl <- if (n$source_table == "municipalities") master_data$municipalities
            else                               master_data$postal
     if (!is.na(n$label_fr_col))
       expect_true(n$label_fr_col %in% names(tbl), info = paste(id, "fr"))
@@ -98,9 +98,9 @@ test_that(".node_parse() spot-checks match legacy .parse_classification_id()", {
 test_that(".node_label_meta() returns the five expected fields", {
   meta <- nbbbenuts:::.node_label_meta(CLS_NUTS_DISTRICT_2021)
   expect_equal(sort(names(meta)), sort(c("ver","code","fr","nl","src")))
-  expect_equal(meta$code, "cd_nuts3")
-  expect_equal(meta$src,  "communes")
-  expect_equal(meta$fr,   "tx_nuts3_fr")
+  expect_equal(meta$code, "code_nuts_district_2021")
+  expect_equal(meta$src,  "municipalities")
+  expect_equal(meta$fr,   "label_nuts_district_2021_fr")
 })
 
 test_that(".node_label_meta() returns correct values for all 23 nodes", {
@@ -113,17 +113,17 @@ test_that(".node_label_meta() returns correct values for all 23 nodes", {
     expect_equal(m$nl,   exp_nl,   info = id)
     expect_equal(m$src,  exp_src,  info = id)
   }
-  check(CLS_NIS_MUNICIPALITY_2019,    "2019",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
-  check(CLS_NIS_MUNICIPALITY_2025,    "2025",        "cd_commune",    "tx_commune_fr", "tx_commune_nl", "communes")
-  check(CLS_NIS_MUNICIPALITY_BEFORE_2019, "BEFORE_2019", "cd_commune","tx_commune_fr","tx_commune_nl", "communes")
-  check(CLS_NIS_DISTRICT_2019, "2019",    "cd_arr",        "tx_arr_fr",    "tx_arr_nl",     "communes")
-  check(CLS_NUTS_DISTRICT_2021,          "2019",        "cd_nuts3",      "tx_nuts3_fr",  "tx_nuts3_nl",   "communes")
-  check(CLS_NUTS_PROVINCE_2021,          "2019",        "cd_nuts2",      NA_character_,  NA_character_,   "communes")
-  check(CLS_NUTS_MUNICIPALITY_2021,       "2019",        "cd_nuts_lau",   "tx_commune_fr","tx_commune_nl", "communes")
-  check(CLS_NUTS_COUNTRY,               "2019",        "cd_nuts0",      NA_character_,  NA_character_,   "communes")
-  check(CLS_NUTS_DISTRICT_2027,          "2025",        "cd_nuts3_2027", NA_character_,  NA_character_,   "communes")
-  check(CLS_POSTAL,              "2019",        "cd_postal",     "tx_postal_name_fr","tx_postal_name_nl","postal")
-  check(CLS_NBB_DISTRICT_2021,"2019",     "cd_arr_internal","tx_arr_fr",   "tx_arr_nl",     "communes")
+  check(CLS_NIS_MUNICIPALITY_2019,    "2019",        "code_nis_municipality",    "label_nis_municipality_fr", "label_nis_municipality_nl", "municipalities")
+  check(CLS_NIS_MUNICIPALITY_2025,    "2025",        "code_nis_municipality",    "label_nis_municipality_fr", "label_nis_municipality_nl", "municipalities")
+  check(CLS_NIS_MUNICIPALITY_BEFORE_2019, "BEFORE_2019", "code_nis_municipality","label_nis_municipality_fr","label_nis_municipality_nl", "municipalities")
+  check(CLS_NIS_DISTRICT_2019, "2019",    "code_nis_district",        "label_nis_district_fr",    "label_nis_district_nl",     "municipalities")
+  check(CLS_NUTS_DISTRICT_2021,          "2019",        "code_nuts_district_2021",      "label_nuts_district_2021_fr",  "label_nuts_district_2021_nl",   "municipalities")
+  check(CLS_NUTS_PROVINCE_2021,          "2019",        "code_nuts_province_2021",      NA_character_,  NA_character_,   "municipalities")
+  check(CLS_NUTS_MUNICIPALITY_2021,       "2019",        "code_nuts_municipality_2021",   "label_nis_municipality_fr","label_nis_municipality_nl", "municipalities")
+  check(CLS_NUTS_COUNTRY,               "2019",        "code_nuts_country",      NA_character_,  NA_character_,   "municipalities")
+  check(CLS_NUTS_DISTRICT_2027,          "2025",        "code_nuts_district_2027", NA_character_,  NA_character_,   "municipalities")
+  check(CLS_POSTAL,              "2019",        "code_postal",     "label_postal_fr","label_postal_nl","postal")
+  check(CLS_NBB_DISTRICT_2021,"2019",     "code_nbb_district_2021","label_nis_district_fr",   "label_nis_district_nl",     "municipalities")
   # All 23 nodes resolvable without error
   for (id in VALID_CLASSIFICATIONS) {
     m <- nbbbenuts:::.node_label_meta(id)
@@ -132,10 +132,10 @@ test_that(".node_label_meta() returns correct values for all 23 nodes", {
 })
 
 # -- .node_reference_codes() returns the right structure ----------------------
-test_that(".node_reference_codes() returns data.table(code, name_fr, name_nl)", {
+test_that(".node_reference_codes() returns data.table(code, label_fr, label_nl)", {
   ref <- nbbbenuts:::.node_reference_codes(CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(is.data.table(ref))
-  expect_true(all(c("code","name_fr","name_nl") %in% names(ref)))
+  expect_true(all(c("code","label_fr","label_nl") %in% names(ref)))
   expect_gt(nrow(ref), 0L)
   expect_type(ref$code, "character")
 })
@@ -145,7 +145,7 @@ test_that(".node_reference_codes() returns NULL for absent BEFORE_2019 data", {
   # classification from entities (not just from communes) to simulate data absence.
   empty_md <- master_data
   empty_md$entities <- master_data$entities[
-    !classification_id %in% grep("BEFORE_2019", names(CLASSIFICATION_NODES), value = TRUE)
+    !classification %in% grep("BEFORE_2019", names(CLASSIFICATION_NODES), value = TRUE)
   ]
   result <- nbbbenuts:::.node_reference_codes(CLS_NIS_MUNICIPALITY_BEFORE_2019, empty_md)
   expect_null(result)

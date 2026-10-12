@@ -281,10 +281,10 @@ visualize_hierarchy <- function(classification, master_data,
   cls <- toupper(trimws(classification))
 
   if (cls %in% c("NIS_2019", "NIS2019")) {
-    return(print_nis_tree(master_data$communes[nis_version == VER_2019], max_communes))
+    return(print_nis_tree(master_data$municipalities[version == VER_2019], max_communes))
   }
   if (cls %in% c("NIS_2025", "NIS2025")) {
-    return(print_nis_tree(master_data$communes[nis_version == VER_2025], max_communes))
+    return(print_nis_tree(master_data$municipalities[version == VER_2025], max_communes))
   }
   if (cls %in% c("NUTS_2021", "NUTS2021")) {
     return(print_nuts_tree(master_data, max_communes))
@@ -298,23 +298,23 @@ visualize_hierarchy <- function(classification, master_data,
 }
 
 #' Print NIS tree structure
-#' @param communes data.table of communes (filtered to one nis_version)
+#' @param communes data.table of communes (filtered to one version)
 #' @param max_communes Maximum communes to show per arrondissement
 #' @noRd
 print_nis_tree <- function(communes, max_communes = 3) {
 
   cat("\n")
 
-  regions <- unique(communes[, .(cd_region, tx_region_fr)])
-  regions <- regions[!is.na(cd_region)]
+  regions <- unique(communes[, .(code_nis_region, label_nis_region_fr)])
+  regions <- regions[!is.na(code_nis_region)]
 
   for (r in seq_len(nrow(regions))) {
     reg <- regions[r]
-    cat(sprintf("Region: %s (%s)\n", reg$tx_region_fr, reg$cd_region))
+    cat(sprintf("Region: %s (%s)\n", reg$label_nis_region_fr, reg$code_nis_region))
 
-    provs <- unique(communes[cd_region == reg$cd_region,
-                              .(cd_province, tx_prov_fr)])
-    provs <- provs[!is.na(cd_province)]
+    provs <- unique(communes[code_nis_region == reg$code_nis_region,
+                              .(code_nis_province, label_nis_province_fr)])
+    provs <- provs[!is.na(code_nis_province)]
 
     for (p in seq_len(nrow(provs))) {
       prov <- provs[p]
@@ -322,12 +322,12 @@ print_nis_tree <- function(communes, max_communes = 3) {
       prefix_p <- ifelse(is_last_prov, "  +-- ", "  |-- ")
       prefix_p_child <- ifelse(is_last_prov, "      ", "  |   ")
 
-      prov_label <- if (!is.na(prov$tx_prov_fr)) prov$tx_prov_fr else "(pas de province)"
-      cat(sprintf("%sProvince: %s (%s)\n", prefix_p, prov_label, prov$cd_province))
+      prov_label <- if (!is.na(prov$label_nis_province_fr)) prov$label_nis_province_fr else "(pas de province)"
+      cat(sprintf("%sProvince: %s (%s)\n", prefix_p, prov_label, prov$code_nis_province))
 
-      arrs <- unique(communes[cd_province == prov$cd_province & cd_region == reg$cd_region,
-                               .(cd_arr, tx_arr_fr)])
-      arrs <- arrs[!is.na(cd_arr)]
+      arrs <- unique(communes[code_nis_province == prov$code_nis_province & code_nis_region == reg$code_nis_region,
+                               .(code_nis_district, label_nis_district_fr)])
+      arrs <- arrs[!is.na(code_nis_district)]
 
       for (a in seq_len(nrow(arrs))) {
         arr <- arrs[a]
@@ -337,10 +337,10 @@ print_nis_tree <- function(communes, max_communes = 3) {
         prefix_a_child <- paste0(prefix_p_child,
                                  ifelse(is_last_arr, "    ", "|   "))
 
-        cat(sprintf("%sArr: %s (%s)\n", prefix_a, arr$tx_arr_fr, arr$cd_arr))
+        cat(sprintf("%sArr: %s (%s)\n", prefix_a, arr$label_nis_district_fr, arr$code_nis_district))
 
-        comms <- communes[cd_arr == arr$cd_arr,
-                           .(cd_commune, tx_commune_fr)]
+        comms <- communes[code_nis_district == arr$code_nis_district,
+                           .(code_nis_municipality, label_nis_municipality_fr)]
         n_comms <- nrow(comms)
         show_n <- min(max_communes, n_comms)
 
@@ -350,7 +350,7 @@ print_nis_tree <- function(communes, max_communes = 3) {
           prefix_c <- paste0(prefix_a_child,
                              ifelse(is_last_comm, "+-- ", "|-- "))
           cat(sprintf("%s%s (%s)\n", prefix_c,
-                      comm$tx_commune_fr, comm$cd_commune))
+                      comm$label_nis_municipality_fr, comm$code_nis_municipality))
         }
         if (show_n < n_comms) {
           cat(sprintf("%s+-- ... et %d autres communes\n",
@@ -369,42 +369,42 @@ print_nis_tree <- function(communes, max_communes = 3) {
 #' @noRd
 print_nuts_tree <- function(master_data, max_communes = 3) {
 
-  master <- master_data$communes[nis_version == VER_2019]
+  master <- master_data$municipalities[version == VER_2019]
 
   cat("\nNUTS 2021 Hierarchy (Belgium)\n")
   cat("BE (Belgique/Belgie)\n")
 
   # NUTS1
-  nuts1_list <- sort(unique(master[!is.na(cd_nuts1), cd_nuts1]))
+  nuts1_list <- sort(unique(master[!is.na(code_nuts_region_2021), code_nuts_region_2021]))
 
   for (n1 in nuts1_list) {
     cat(sprintf("  |-- %s\n", n1))
 
     # NUTS2
-    nuts2_list <- sort(unique(master[cd_nuts1 == n1 & !is.na(cd_nuts2), cd_nuts2]))
+    nuts2_list <- sort(unique(master[code_nuts_region_2021 == n1 & !is.na(code_nuts_province_2021), code_nuts_province_2021]))
 
     for (n2 in nuts2_list) {
       cat(sprintf("  |   |-- %s\n", n2))
 
       # NUTS3
-      nuts3_list <- sort(unique(master[cd_nuts2 == n2 & !is.na(cd_nuts3), cd_nuts3]))
+      nuts3_list <- sort(unique(master[code_nuts_province_2021 == n2 & !is.na(code_nuts_district_2021), code_nuts_district_2021]))
 
       for (n3 in nuts3_list) {
         # Get NUTS3 name from embedded column
-        n3_name <- master[cd_nuts3 == n3 & !is.na(tx_nuts3_fr), tx_nuts3_fr][1L]
+        n3_name <- master[code_nuts_district_2021 == n3 & !is.na(label_nuts_district_2021_fr), label_nuts_district_2021_fr][1L]
         if (is.na(n3_name)) n3_name <- ""
         cat(sprintf("  |   |   |-- %s %s\n", n3, n3_name))
 
         # Communes
-        comms  <- master[cd_nuts3 == n3, .(cd_commune, tx_commune_fr, cd_nuts_lau)]
+        comms  <- master[code_nuts_district_2021 == n3, .(code_nis_municipality, label_nis_municipality_fr, code_nuts_municipality_2021)]
         n_comms <- nrow(comms)
         show_n  <- min(max_communes, n_comms)
 
         for (c_i in seq_len(show_n)) {
           cat(sprintf("  |   |   |   |-- %s %s (NIS: %s)\n",
-                      comms$cd_nuts_lau[c_i],
-                      comms$tx_commune_fr[c_i],
-                      comms$cd_commune[c_i]))
+                      comms$code_nuts_municipality_2021[c_i],
+                      comms$label_nis_municipality_fr[c_i],
+                      comms$code_nis_municipality[c_i]))
         }
         if (show_n < n_comms) {
           cat(sprintf("  |   |   |   +-- ... et %d autres\n",

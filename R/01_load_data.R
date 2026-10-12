@@ -1,6 +1,10 @@
 # ==============================================================================
 # 01_load_data.R - Load and parse all raw input data files
 # ==============================================================================
+# Parsed tables keep source-oriented names (cd_refnis, tx_descr_fr, cd_nuts3,
+# ...) that mirror the Statbel / Eurostat files. They are build-time
+# intermediates only: build_master_table() renames everything it persists to the
+# schema v2 convention (SCHEMA_V1_TO_V2, R/00_config.R).
 
 
 #' Load all raw data files and return a named list of data.tables

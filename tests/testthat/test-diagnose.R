@@ -78,7 +78,7 @@ test_that("diagnose_classification detect mode recommends correct classification
 
 # -- Test D8: now covers all VALID_CLASSIFICATIONS (no NULL ref for any) --------
 test_that("diagnose_classification covers every VALID_CLASSIFICATION", {
-  skip_if(is.null(master_data$communes))
+  skip_if(is.null(master_data$municipalities))
 
   for (cls in VALID_CLASSIFICATIONS) {
     ref <- nbbbenuts:::.get_reference_codes(cls, master_data)

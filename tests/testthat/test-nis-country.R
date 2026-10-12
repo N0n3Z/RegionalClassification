@@ -15,7 +15,7 @@ test_that("NIS_COUNTRY is in CLASSIFICATION_NODES and has correct metadata", {
   expect_equal(n$level,      "country")
   expect_true(is.na(n$version))
   expect_equal(n$code_type,  "character")
-  expect_equal(n$code_col,   "cd_nis_country")
+  expect_equal(n$code_col,   "code_nis_country")
 })
 
 test_that("nomenclature('NIS', 'country') resolves to NIS_COUNTRY", {

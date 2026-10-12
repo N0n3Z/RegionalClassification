@@ -46,11 +46,11 @@
   result
 }
 
-#' Validate a per-version communes sub-table against the expected schema
+#' Validate a per-version municipalities sub-table against the expected schema
 #'
-#' Guards the unified communes table against silent column drift before the
-#' version sub-tables are stacked. See MASTER_COMMUNE_CORE_COLS /
-#' MASTER_COMMUNE_KNOWN_COLS in 00_config.R.
+#' Guards the unified municipalities table against silent column drift before
+#' the version sub-tables are stacked. See MASTER_MUNICIPALITY_CORE_COLS /
+#' MASTER_MUNICIPALITY_KNOWN_COLS in 00_config.R.
 #'
 # Assert that `keys` uniquely identify rows of `dt`; abort otherwise (audit M7).
 # Run after unique() has collapsed fully-identical rows, so any remaining
@@ -69,8 +69,8 @@
 }
 
 # Assert a built table carries its required columns (RDS-contract guard, audit
-# M8). .validate_commune_schema() covered only `communes`; the other saved tables
-# (postal, nis_changes, crosswalks) were unchecked.
+# M8). .validate_municipality_schema() covers only `municipalities`; the other
+# saved tables (postal, nis_changes, crosswalks) are checked with this helper.
 #' @noRd
 .assert_cols <- function(dt, required, label) {
   missing <- setdiff(required, names(dt))
@@ -83,27 +83,27 @@
   invisible(dt)
 }
 
-#' @param tbl   A per-version communes data.table
+#' @param tbl   A per-version municipalities data.table (schema v2 names)
 #' @param label Human-readable version label used in error messages
 #' @return Invisibly TRUE; aborts with class \code{rcl_schema_error} otherwise
 #' @noRd
-.validate_commune_schema <- function(tbl, label) {
+.validate_municipality_schema <- function(tbl, label) {
   cols <- names(tbl)
 
-  missing <- setdiff(MASTER_COMMUNE_CORE_COLS, cols)
+  missing <- setdiff(MASTER_MUNICIPALITY_CORE_COLS, cols)
   if (length(missing) > 0L) {
     abort(
-      sprintf("communes sub-table '%s' is missing required column(s): %s",
+      sprintf("municipalities sub-table '%s' is missing required column(s): %s",
               label, paste(missing, collapse = ", ")),
       class = "rcl_schema_error", label = label, missing = missing
     )
   }
 
-  unknown <- setdiff(cols, MASTER_COMMUNE_KNOWN_COLS)
+  unknown <- setdiff(cols, MASTER_MUNICIPALITY_KNOWN_COLS)
   if (length(unknown) > 0L) {
     abort(
-      sprintf(paste0("communes sub-table '%s' has unexpected column(s): %s\n",
-                     "If intended, add them to MASTER_COMMUNE_KNOWN_COLS in 00_config.R."),
+      sprintf(paste0("municipalities sub-table '%s' has unexpected column(s): %s\n",
+                     "If intended, add them to SCHEMA_V1_TO_V2$municipalities in 00_config.R."),
               label, paste(unknown, collapse = ", ")),
       class = "rcl_schema_error", label = label, unknown = unknown
     )
@@ -112,12 +112,21 @@
   invisible(TRUE)
 }
 
+# Rename a build-time (v1-named) table to the schema v2 column names, in place.
+# Single rename point shared with .migrate_schema_v1() (08_load_prebuilt.R); see
+# SCHEMA_V1_TO_V2 in 00_config.R. Columns absent from `dt` are skipped.
+.rename_to_schema_v2 <- function(dt, table) {
+  map <- SCHEMA_V1_TO_V2[[table]]
+  setnames(dt, names(map), unname(map), skip_absent = TRUE)
+  invisible(dt)
+}
+
 # Convert integer/numeric code columns (cd_* / code*) of a flat table to
 # character, in place. Codes are identifiers, not quantities: as of v1.2.0 every
 # classification code is stored and returned as character (see
 # CLASSIFICATION_NODES$code_type and .node_coerce, R/00b_registry.R). This runs at
 # the END of build_master_table so the integer arithmetic used to DERIVE codes
-# (cd_arr %/% 1000L, REFNIS level classification by modulo) has already happened.
+# (REFNIS level classification by modulo, arrondissement %/% 1000L) has already happened.
 # Already-character columns (NUTS "BE100", NBB "21") are left untouched, so the
 # helper is safe to apply to any flat table. NA is preserved.
 .stringify_code_columns <- function(dt) {
@@ -132,12 +141,13 @@
 
 #' Build the master classification table from all loaded data
 #'
-#' Creates a unified table structure with three main data.tables:
-#' \code{communes} (all NIS versions), \code{postal} (both postal mappings),
-#' and \code{nis_changes} (all NIS version transitions).
+#' Creates the unified flat tables: \code{municipalities} (all NIS versions),
+#' \code{postal} (both postal mappings), \code{nis_changes} (all NIS version
+#' transitions), \code{entities} and \code{crosswalks}. Column names follow the
+#' schema v2 convention (see \code{SCHEMA_V1_TO_V2} in \file{R/00_config.R}).
 #'
 #' @param raw_data Named list of data.tables from load_all_raw_data()
-#' @return list with three unified flat tables plus build-time hierarchy intermediates
+#' @return list with the five unified flat tables plus build-time hierarchy intermediates
 #' @export
 build_master_table <- function(raw_data) {
 
@@ -261,75 +271,89 @@ build_master_table <- function(raw_data) {
   # --- 7b. Backfill NUTS 2021 columns onto NIS 2025 master ---
   master_2025 <- add_nuts2021_columns_2025(master_2025, master_2019, nis_changes)
 
-  # --- 8. NIS change mapping (2019 -> 2025) ---
-  nis_change_map <- nis_changes[, .(cd_refnis_old, cd_refnis_new, nature)]
-  nis_change_map[, from_version := VER_2019]
+  # --- 8. NIS change mapping (2019 -> 2025), schema v2 names ---
+  nis_change_map <- nis_changes[, .(code_from = cd_refnis_old, code_to = cd_refnis_new, nature)]
+  nis_change_map[, `:=`(version_from = VER_2019, version_to = VER_2025)]
 
   # --- 9. Unify into three flat tables ---
 
-  # communes: NIS 2019 + BEFORE_2019 + 2025
-  # Validate each sub-table's schema before stacking, so a renamed/dropped column
-  # fails loudly here instead of being silently NA-filled by rbindlist(fill=TRUE).
-  .validate_commune_schema(master_2019, "NIS 2019")
-  if (!is.null(master_before2019)) .validate_commune_schema(master_before2019, "NIS BEFORE_2019")
-  .validate_commune_schema(master_2025, "NIS 2025")
+  # municipalities: NIS 2019 + BEFORE_2019 + 2025
+  # The per-version sub-tables are built with source-oriented (v1) names; rename
+  # them to schema v2 here, then validate each before stacking, so a
+  # renamed/dropped column fails loudly instead of being silently NA-filled by
+  # rbindlist(fill=TRUE).
+  .rename_to_schema_v2(master_2019, "municipalities")
+  .validate_municipality_schema(master_2019, "NIS 2019")
+  if (!is.null(master_before2019)) {
+    .rename_to_schema_v2(master_before2019, "municipalities")
+    .validate_municipality_schema(master_before2019, "NIS BEFORE_2019")
+  }
+  .rename_to_schema_v2(master_2025, "municipalities")
+  .validate_municipality_schema(master_2025, "NIS 2025")
 
-  communes_list <- list(master_2019)
-  if (!is.null(master_before2019)) communes_list <- c(communes_list, list(master_before2019))
-  communes_list <- c(communes_list, list(master_2025))
+  municipalities_list <- list(master_2019)
+  if (!is.null(master_before2019)) municipalities_list <- c(municipalities_list, list(master_before2019))
+  municipalities_list <- c(municipalities_list, list(master_2025))
   # unique() collapses fully-identical duplicate rows; the assertion then catches
-  # genuine key conflicts (same commune+version carrying different attributes),
+  # genuine key conflicts (same municipality+version carrying different attributes),
   # so a duplicated source refresh fails loudly instead of multiplying through
   # merges downstream (audit M7).
-  communes_unified <- unique(rbindlist(communes_list, use.names = TRUE, fill = TRUE))
-  .assert_unique_keys(communes_unified, c("cd_commune", "nis_version"),
-                      "communes (cd_commune, nis_version)")
+  municipalities_unified <- unique(rbindlist(municipalities_list, use.names = TRUE, fill = TRUE))
+  .assert_unique_keys(municipalities_unified, c("code_nis_municipality", "version"),
+                      "municipalities (code_nis_municipality, version)")
+  # Canonical column order: version, NIS hierarchy, NUTS 2021/2027, NBB.
+  setcolorder(municipalities_unified,
+              intersect(c("version", setdiff(MASTER_MUNICIPALITY_KNOWN_COLS, "version")),
+                        names(municipalities_unified)))
 
   # postal: NIS 2019 + NIS 2025
   postal_unified <- rbindlist(list(postal_map_2019, postal_map_2025), use.names = TRUE)
+  .rename_to_schema_v2(postal_unified, "postal")
 
   # nis_changes: 2019->2025 + BEFORE_2019->2019
   nis_changes_unified <- unique(copy(nis_change_map))
   if (!is.null(nis_change_before2019)) {
     before2019_std <- data.table(
-      cd_refnis_old = nis_change_before2019$cd_refnis_before2019,
-      cd_refnis_new = nis_change_before2019$cd_refnis_2019,
-      nature        = nis_change_before2019$nature,   # from source NATURE, not hardcoded
-      from_version  = VER_BEFORE_2019
+      code_from    = nis_change_before2019$cd_refnis_before2019,
+      code_to      = nis_change_before2019$cd_refnis_2019,
+      nature       = nis_change_before2019$nature,   # from source NATURE, not hardcoded
+      version_from = VER_BEFORE_2019,
+      version_to   = VER_2019
     )
     nis_changes_unified <- unique(rbindlist(list(nis_changes_unified, before2019_std),
                                      use.names = TRUE))
   }
-  .assert_unique_keys(nis_changes_unified, c("from_version", "cd_refnis_old"),
-                      "nis_changes (from_version, cd_refnis_old)")
+  .assert_unique_keys(nis_changes_unified, c("version_from", "code_from"),
+                      "nis_changes (version_from, code_from)")
 
-  # RDS-contract column guards for the saved tables beyond communes (audit M8).
+  # RDS-contract column guards for the saved tables beyond municipalities (audit M8).
   .assert_cols(postal_unified,
-               c("cd_postal", "cd_commune_nis", "nis_version"), "postal")
+               c("code_postal", "code_nis_municipality", "version"), "postal")
   .assert_cols(nis_changes_unified,
-               c("cd_refnis_old", "cd_refnis_new", "nature", "from_version"), "nis_changes")
+               c("code_from", "code_to", "nature", "version_from", "version_to"), "nis_changes")
 
-  # --- 9b. Build normalised entities + crosswalks tables (ADDITIVE) ---
+  # --- 9b. Build normalised entities + crosswalks tables ---
   message("  Building entities table...")
-  entities   <- build_entities_table(communes_unified, postal_unified)
+  entities   <- build_entities_table(municipalities_unified, postal_unified)
   message("  Building crosswalks table...")
-  crosswalks <- build_crosswalks(communes_unified, postal_unified, nis_changes_unified)
+  crosswalks <- build_crosswalks(municipalities_unified, postal_unified, nis_changes_unified)
   .assert_cols(crosswalks,
-               c("from_id", "to_id", "code_from", "code_to", "nature"), "crosswalks")
+               c("classification_from", "classification_to", "code_from", "code_to", "nature"),
+               "crosswalks")
 
   # --- 9c. Stringify NIS/POSTAL code columns (v1.2.0) ---
   # entities$code and crosswalks$code_from/code_to are already character (they
   # stack mixed NIS/NUTS codes at build time), so only the three flat NIS/POSTAL
   # tables carry integer code columns that must be converted for the all-character
   # contract. See .stringify_code_columns() above.
-  .stringify_code_columns(communes_unified)
+  .stringify_code_columns(municipalities_unified)
   .stringify_code_columns(postal_unified)
   .stringify_code_columns(nis_changes_unified)
 
   # --- 10. Assemble result ---
   result <- list(
     # Five unified flat tables (saved to RDS by save_master_tables)
-    communes    = communes_unified,
+    municipalities = municipalities_unified,
     postal      = postal_unified,
     nis_changes = nis_changes_unified,
     entities    = entities,
@@ -362,7 +386,9 @@ build_master_table <- function(raw_data) {
 #'
 #' @param nis_parsed Output from parse_refnis_hierarchy()
 #' @param version "2019" or "2025"
-#' @return data.table with commune info and parent codes
+#' @return data.table with commune info and parent codes, using the
+#'   source-oriented (v1) build-time names; renamed to schema v2 by
+#'   \code{build_master_table()}.
 #' @keywords internal
 build_nis_commune_table <- function(nis_parsed, version) {
 
@@ -417,15 +443,12 @@ build_nis_commune_table <- function(nis_parsed, version) {
     communes[cd_region == NIS_REGION_WALLOON  & is.na(tx_region_fr),
              `:=`(tx_region_fr = wa_reg$tx_descr_fr, tx_region_nl = wa_reg$tx_descr_nl)]
 
-  # Add 2-digit arrondissement code (for internal classification link)
-  communes[, cd_arr_2digit := cd_arr %/% 1000L]
-
   # Add version tag
   communes[, nis_version := version]
 
   # Reorder columns
   desired_cols <- c("cd_commune", "tx_commune_fr", "tx_commune_nl",
-                    "cd_arr", "tx_arr_fr", "tx_arr_nl", "cd_arr_2digit",
+                    "cd_arr", "tx_arr_fr", "tx_arr_nl",
                     "cd_province", "tx_prov_fr", "tx_prov_nl",
                     "cd_region", "tx_region_fr", "tx_region_nl",
                     "nis_version")
@@ -440,7 +463,7 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #' Derives cd_nuts3, cd_nuts2, cd_nuts1, cd_nuts0, cd_nuts_lau, and
 #' cd_arr_internal for NIS 2025 communes from the NIS 2019 master:
 #' - Unchanged communes (same code in 2019 and 2025): copy directly.
-#' - Changed communes (in nis_changes[from_version=="2019"]):
+#' - Changed communes (in the 2019 -> 2025 changes from parse_nis_changes()):
 #'   collect the NUTS_DISTRICT_2021 of all constituent 2019 communes and assign it
 #'   only if all constituents share the same NUTS3; else NA +
 #'   rcl_ambiguous_backfill warning. cd_nuts_lau stays NA for fusions (LAU
@@ -452,9 +475,9 @@ build_nis_commune_table <- function(nis_parsed, version) {
 #' @param master_2025 data.table for NIS 2025 communes (from build_master_table)
 #' @param master_2019 data.table for NIS 2019 communes (fully enriched)
 #' @param nis_changes Raw output from \code{parse_nis_changes()} -- must have at
-#'   least \code{cd_refnis_old} and \code{cd_refnis_new} columns. The
-#'   \code{from_version} and \code{nature} columns are added later (step 8 of
-#'   \code{build_master_table}) and must NOT be present yet.
+#'   least \code{cd_refnis_old} and \code{cd_refnis_new} columns (build-time
+#'   names; the persisted \code{nis_changes} table is assembled later, in step 8
+#'   of \code{build_master_table}).
 #' @return data.table master_2025 with NUTS 2021 columns added in-place.
 #'   Note: \code{cd_nuts2}, \code{cd_nuts1}, and \code{cd_nuts0} may be
 #'   non-\code{NA} for communes where \code{cd_nuts3} is \code{NA} (cross-NUTS3
@@ -585,22 +608,22 @@ save_master_tables <- function(master_data, output_dir = get_processed_data_path
 
 #' Build the entities table from unified communes + postal tables
 #'
-#' Returns a \code{data.table(classification_id chr, code chr, name_fr chr,
-#' name_nl chr)} -- one row per known code for each classification node.
+#' Returns a \code{data.table(classification chr, code chr, label_fr chr,
+#' label_nl chr)} -- one row per known code for each classification node.
 #' Uses \code{.node_reference_codes()} so the logic stays in one place.
 #'
-#' @param communes Unified communes data.table (all nis_version values stacked)
-#' @param postal   Unified postal data.table
-#' @return data.table with columns classification_id, code, name_fr, name_nl
+#' @param municipalities Unified municipalities data.table (all versions stacked)
+#' @param postal         Unified postal data.table
+#' @return data.table with columns classification, code, label_fr, label_nl
 #' @noRd
-build_entities_table <- function(communes, postal) {
-  md_tmp <- list(communes = communes, postal = postal)
+build_entities_table <- function(municipalities, postal) {
+  md_tmp <- list(municipalities = municipalities, postal = postal)
   rbindlist(
     lapply(names(CLASSIFICATION_NODES), function(id) {
       rc <- .node_reference_codes(id, md_tmp)
       if (is.null(rc)) return(NULL)
-      rc[, `:=`(classification_id = id, code = as.character(code))]
-      rc[, .(classification_id, code, name_fr, name_nl)]
+      rc[, `:=`(classification = id, code = as.character(code))]
+      rc[, .(classification, code, label_fr, label_nl)]
     }),
     use.names = TRUE, fill = FALSE
   )
@@ -610,14 +633,14 @@ build_entities_table <- function(communes, postal) {
 #' Build the crosswalks table from unified flat tables
 #'
 #' Produces one row per primitive code link for every directly-executable
-#' single hop (one \code{(from_id, to_id)} edge):
-#' \code{(from_id, to_id, code_from, code_to, relation, nature)}.
+#' single hop (one \code{(classification_from, classification_to)} edge):
+#' \code{(classification_from, classification_to, code_from, code_to, relation, nature)}.
 #' All codes are stored as \strong{character}; the engine re-coerces to the
 #' canonical type on output via \code{.node_coerce()}.
 #'
 #' Key design decisions:
 #' \itemize{
-#'   \item Built from the already-assembled flat tables (communes, postal,
+#'   \item Built from the already-assembled flat tables (municipalities, postal,
 #'     nis_changes), NOT by calling the runtime engine -- so
 #'     \code{rebuild_master_data()} remains functional after the handlers are
 #'     removed in Phase 2.
@@ -627,22 +650,22 @@ build_entities_table <- function(communes, postal) {
 #'     all others carry \code{NA_character_}.
 #' }
 #'
-#' @param communes   Unified communes data.table
+#' @param municipalities Unified municipalities data.table
 #' @param postal     Unified postal data.table
 #' @param nis_changes Unified nis_changes data.table
-#' @return data.table with columns from_id, to_id, code_from, code_to,
-#'   relation, nature
+#' @return data.table with columns classification_from, classification_to,
+#'   code_from, code_to, relation, nature
 #' @noRd
-build_crosswalks <- function(communes, postal, nis_changes) {
+build_crosswalks <- function(municipalities, postal, nis_changes) {
 
   # --- Version slices ---
-  m19  <- communes[nis_version == VER_2019]
-  m25  <- communes[nis_version == VER_2025]
-  mb19 <- communes[nis_version == VER_BEFORE_2019]
+  m19  <- municipalities[version == VER_2019]
+  m25  <- municipalities[version == VER_2025]
+  mb19 <- municipalities[version == VER_BEFORE_2019]
   has_b19 <- nrow(mb19) > 0L
 
-  p19 <- postal[nis_version == VER_2019]
-  p25 <- postal[nis_version == VER_2025]
+  p19 <- postal[version == VER_2019]
+  p25 <- postal[version == VER_2025]
 
   # --- Relation lookup (forward + auto-reversed from CONVERSION_GRAPH_EDGES) ---
   .rel <- local({
@@ -665,8 +688,8 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   # --- Low-level assembler ---
   .xw <- function(from_id, to_id, from_codes, to_codes, nature = NA_character_) {
     data.table(
-      from_id   = from_id,
-      to_id     = to_id,
+      classification_from = from_id,
+      classification_to   = to_id,
       code_from = as.character(from_codes),
       code_to   = as.character(to_codes),
       relation  = .rel(from_id, to_id),
@@ -688,17 +711,17 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   # ---- POSTAL -> NIS -------------------------------------------------------
   # POSTAL -> NIS_MUNICIPALITY_2019: all p19 postal codes (universe of POSTAL codes)
   xw[["POSTAL__NIS_MUNICIPALITY_2019"]] <- .xw("POSTAL", "NIS_MUNICIPALITY_2019",
-                                            p19$cd_postal, p19$cd_commune_nis)
+                                            p19$code_postal, p19$code_nis_municipality)
 
   # POSTAL -> NIS_MUNICIPALITY_2025: universe = p19 postal codes, which is the
   # same set that .list_codes_for("POSTAL", md) and the entities table use.
   # Assumption: p25 codes <= p19 codes (i.e. no new postal codes were
   # introduced in the 2025 mapping).  Left-join so codes in p19 but absent
   # from p25 appear with code_to = NA, matching engine behaviour.
-  p25_map  <- unique(p25[, .(cd_postal, cd_commune_nis)])
+  p25_map  <- unique(p25[, .(code_postal, code_nis_municipality)])
   # The POSTAL universe is p19's postal codes. Assert p25 introduces no NEW postal
   # code, otherwise it would be silently dropped from POSTAL -> NIS_2025 (audit M8).
-  new_p25 <- setdiff(unique(p25_map$cd_postal), unique(p19$cd_postal))
+  new_p25 <- setdiff(unique(p25_map$code_postal), unique(p19$code_postal))
   if (length(new_p25) > 0L)
     abort(sprintf(
       paste0("%d postal code(s) exist in the 2025 mapping but not in 2019 and would be ",
@@ -706,40 +729,40 @@ build_crosswalks <- function(communes, postal, nis_changes) {
       length(new_p25), paste(head(sort(new_p25), 5L), collapse = ", "),
       if (length(new_p25) > 5L) ", ..." else ""),
       class = "rcl_incomplete_universe")
-  p25_full <- merge(data.table(cd_postal = unique(p19$cd_postal)),
-                    p25_map, by = "cd_postal", all.x = TRUE)
+  p25_full <- merge(data.table(code_postal = unique(p19$code_postal)),
+                    p25_map, by = "code_postal", all.x = TRUE)
   xw[["POSTAL__NIS_MUNICIPALITY_2025"]] <- .xw("POSTAL", "NIS_MUNICIPALITY_2025",
-                                            p25_full$cd_postal, p25_full$cd_commune_nis)
+                                            p25_full$code_postal, p25_full$code_nis_municipality)
 
   # ---- NIS_MUNICIPALITY_2019 -> * -----------------------------------------------
   xw[["NIS_MUNICIPALITY_2019__NIS_DISTRICT_2019"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NIS_DISTRICT_2019", m19, "cd_commune", "cd_arr")
+    "NIS_MUNICIPALITY_2019", "NIS_DISTRICT_2019", m19, "code_nis_municipality", "code_nis_district")
   xw[["NIS_MUNICIPALITY_2019__NIS_PROVINCE_2019"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NIS_PROVINCE_2019",       m19, "cd_commune", "cd_province")
+    "NIS_MUNICIPALITY_2019", "NIS_PROVINCE_2019",       m19, "code_nis_municipality", "code_nis_province")
   xw[["NIS_MUNICIPALITY_2019__NIS_REGION_2019"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NIS_REGION_2019",         m19, "cd_commune", "cd_region")
+    "NIS_MUNICIPALITY_2019", "NIS_REGION_2019",         m19, "code_nis_municipality", "code_nis_region")
   xw[["NIS_MUNICIPALITY_2019__NUTS_MUNICIPALITY_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021",           m19, "cd_commune", "cd_nuts_lau")
+    "NIS_MUNICIPALITY_2019", "NUTS_MUNICIPALITY_2021",           m19, "code_nis_municipality", "code_nuts_municipality_2021")
   xw[["NIS_MUNICIPALITY_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021",              m19, "cd_commune", "cd_nuts3")
+    "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021",              m19, "code_nis_municipality", "code_nuts_district_2021")
   xw[["NIS_MUNICIPALITY_2019__NUTS_PROVINCE_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NUTS_PROVINCE_2021",              m19, "cd_commune", "cd_nuts2")
+    "NIS_MUNICIPALITY_2019", "NUTS_PROVINCE_2021",              m19, "code_nis_municipality", "code_nuts_province_2021")
   xw[["NIS_MUNICIPALITY_2019__NUTS_REGION_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NUTS_REGION_2021",              m19, "cd_commune", "cd_nuts1")
+    "NIS_MUNICIPALITY_2019", "NUTS_REGION_2021",              m19, "code_nis_municipality", "code_nuts_region_2021")
   xw[["NIS_MUNICIPALITY_2019__NUTS_COUNTRY"]] <- .xw(
     "NIS_MUNICIPALITY_2019", "NUTS_COUNTRY",
-    unique(m19$cd_commune), rep("BE", uniqueN(m19$cd_commune)))
+    unique(m19$code_nis_municipality), rep("BE", uniqueN(m19$code_nis_municipality)))
   xw[["NIS_MUNICIPALITY_2019__NBB_DISTRICT_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", m19, "cd_commune", "cd_arr_internal")
+    "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", m19, "code_nis_municipality", "code_nbb_district_2021")
 
   # NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025 (temporal, with nature)
-  ch19 <- nis_changes[from_version == VER_2019,
-                       .(cd_refnis_old, cd_refnis_new, nature)]
-  unchanged_19 <- setdiff(unique(m19$cd_commune), ch19$cd_refnis_old)
+  ch19 <- nis_changes[version_from == VER_2019,
+                       .(code_from, code_to, nature)]
+  unchanged_19 <- setdiff(unique(m19$code_nis_municipality), ch19$code_from)
   full_19_25 <- rbindlist(list(
     ch19,
-    data.table(cd_refnis_old = unchanged_19,
-               cd_refnis_new = unchanged_19,
+    data.table(code_from = unchanged_19,
+               code_to = unchanged_19,
                nature        = "UNCHANGED")
   ), use.names = TRUE)
 
@@ -750,8 +773,8 @@ build_crosswalks <- function(communes, postal, nis_changes) {
   # would silently vanish from it (no row -> engine returns nothing). Mirror the
   # BEFORE_2019 orphan handling: emit an explicit code_to = NA row (matching the
   # runtime engine) and warn, instead of dropping it silently.
-  orphaned_25 <- setdiff(unique(m25$cd_commune),
-                         union(ch19$cd_refnis_new, unchanged_19))
+  orphaned_25 <- setdiff(unique(m25$code_nis_municipality),
+                         union(ch19$code_to, unchanged_19))
   if (length(orphaned_25) > 0L) {
     warn(
       sprintf(
@@ -766,42 +789,42 @@ build_crosswalks <- function(communes, postal, nis_changes) {
 
   xw[["NIS_MUNICIPALITY_2019__NIS_MUNICIPALITY_2025"]] <- .xw(
     "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025",
-    full_19_25$cd_refnis_old, full_19_25$cd_refnis_new, full_19_25$nature)
+    full_19_25$code_from, full_19_25$code_to, full_19_25$nature)
 
   # ---- NIS_MUNICIPALITY_2025 -> * -----------------------------------------------
   xw[["NIS_MUNICIPALITY_2025__NIS_DISTRICT_2025"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NIS_DISTRICT_2025", m25, "cd_commune", "cd_arr")
+    "NIS_MUNICIPALITY_2025", "NIS_DISTRICT_2025", m25, "code_nis_municipality", "code_nis_district")
   xw[["NIS_MUNICIPALITY_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NIS_PROVINCE_2025",       m25, "cd_commune", "cd_province")
+    "NIS_MUNICIPALITY_2025", "NIS_PROVINCE_2025",       m25, "code_nis_municipality", "code_nis_province")
   xw[["NIS_MUNICIPALITY_2025__NIS_REGION_2025"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NIS_REGION_2025",         m25, "cd_commune", "cd_region")
+    "NIS_MUNICIPALITY_2025", "NIS_REGION_2025",         m25, "code_nis_municipality", "code_nis_region")
   xw[["NIS_MUNICIPALITY_2025__NBB_DISTRICT_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NBB_DISTRICT_2021", m25, "cd_commune", "cd_arr_internal")
+    "NIS_MUNICIPALITY_2025", "NBB_DISTRICT_2021", m25, "code_nis_municipality", "code_nbb_district_2021")
 
   # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (1:N): 564 direct + 3 fusions via nis_changes
-  direct_25_n3  <- unique(m25[!is.na(cd_nuts3), .(cd_commune, cd_nuts3)])
-  na25_communes <- m25[is.na(cd_nuts3), unique(cd_commune)]
+  direct_25_n3  <- unique(m25[!is.na(code_nuts_district_2021), .(code_nis_municipality, code_nuts_district_2021)])
+  na25_communes <- m25[is.na(code_nuts_district_2021), unique(code_nis_municipality)]
   if (length(na25_communes) > 0L) {
-    ch_for_na  <- nis_changes[from_version == VER_2019 & cd_refnis_new %in% na25_communes,
-                               .(cd_refnis_old, cd_refnis_new)]
-    lkp19_n3   <- unique(m19[, .(cd_commune, cd_nuts3)])
+    ch_for_na  <- nis_changes[version_from == VER_2019 & code_to %in% na25_communes,
+                               .(code_from, code_to)]
+    lkp19_n3   <- unique(m19[, .(code_nis_municipality, code_nuts_district_2021)])
     expanded25 <- merge(ch_for_na, lkp19_n3,
-                        by.x = "cd_refnis_old", by.y = "cd_commune", all.x = TRUE)
-    expanded25 <- unique(expanded25[!is.na(cd_nuts3),
-                                    .(cd_commune = cd_refnis_new, cd_nuts3)])
+                        by.x = "code_from", by.y = "code_nis_municipality", all.x = TRUE)
+    expanded25 <- unique(expanded25[!is.na(code_nuts_district_2021),
+                                    .(code_nis_municipality = code_to, code_nuts_district_2021)])
     full_25_n3 <- rbindlist(list(direct_25_n3, expanded25), use.names = TRUE)
   } else {
     full_25_n3 <- direct_25_n3
   }
   xw[["NIS_MUNICIPALITY_2025__NUTS_DISTRICT_2021"]] <- .xw(
     "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021",
-    full_25_n3$cd_commune, full_25_n3$cd_nuts3)
+    full_25_n3$code_nis_municipality, full_25_n3$code_nuts_district_2021)
 
   # NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019 (reverse temporal, 1:N for fused
   # communes). Orphaned 2025 communes (no 2019 lineage, audit C4) get an explicit
   # code_to = NA row so they are not silently missing from the reverse crosswalk.
-  rev_from   <- c(full_19_25$cd_refnis_new, orphaned_25)
-  rev_to     <- c(full_19_25$cd_refnis_old, rep(NA_integer_,   length(orphaned_25)))
+  rev_from   <- c(full_19_25$code_to, orphaned_25)
+  rev_to     <- c(full_19_25$code_from, rep(NA_integer_,   length(orphaned_25)))
   rev_nature <- c(full_19_25$nature,        rep(NA_character_, length(orphaned_25)))
   xw[["NIS_MUNICIPALITY_2025__NIS_MUNICIPALITY_2019"]] <- .xw(
     "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019",
@@ -809,157 +832,157 @@ build_crosswalks <- function(communes, postal, nis_changes) {
 
   # NIS_MUNICIPALITY_2025 -> NUTS 2027
   xw[["NIS_MUNICIPALITY_2025__NUTS_DISTRICT_2027"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2027", m25, "cd_commune", "cd_nuts3_2027")
+    "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2027", m25, "code_nis_municipality", "code_nuts_district_2027")
   xw[["NIS_MUNICIPALITY_2025__NUTS_PROVINCE_2027"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NUTS_PROVINCE_2027", m25, "cd_commune", "cd_nuts2_2027")
+    "NIS_MUNICIPALITY_2025", "NUTS_PROVINCE_2027", m25, "code_nis_municipality", "code_nuts_province_2027")
   xw[["NIS_MUNICIPALITY_2025__NUTS_REGION_2027"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NUTS_REGION_2027", m25, "cd_commune", "cd_nuts1_2027")
+    "NIS_MUNICIPALITY_2025", "NUTS_REGION_2027", m25, "code_nis_municipality", "code_nuts_region_2027")
 
   # ---- NIS_DISTRICT_2019 -> * ----------------------------------------
   # Verviers (63000): 1:N for NUTS3 and INTERNAL (2 rows each)
   xw[["NIS_DISTRICT_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
-    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",              m19, "cd_arr", "cd_nuts3")
+    "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021",              m19, "code_nis_district", "code_nuts_district_2021")
   xw[["NIS_DISTRICT_2019__NBB_DISTRICT_2021"]] <- .pairs_xw(
-    "NIS_DISTRICT_2019", "NBB_DISTRICT_2021", m19, "cd_arr", "cd_arr_internal")
+    "NIS_DISTRICT_2019", "NBB_DISTRICT_2021", m19, "code_nis_district", "code_nbb_district_2021")
   xw[["NIS_DISTRICT_2019__NIS_PROVINCE_2019"]] <- .pairs_xw(
-    "NIS_DISTRICT_2019", "NIS_PROVINCE_2019",       m19, "cd_arr", "cd_province")
+    "NIS_DISTRICT_2019", "NIS_PROVINCE_2019",       m19, "code_nis_district", "code_nis_province")
 
   # ---- NIS_DISTRICT_2025 -> * ----------------------------------------
   xw[["NIS_DISTRICT_2025__NIS_PROVINCE_2025"]] <- .pairs_xw(
-    "NIS_DISTRICT_2025", "NIS_PROVINCE_2025",       m25, "cd_arr", "cd_province")
+    "NIS_DISTRICT_2025", "NIS_PROVINCE_2025",       m25, "code_nis_district", "code_nis_province")
 
   # ---- NIS_PROVINCE -> NIS_REGION (N:1: each province nests in one region) --
   xw[["NIS_PROVINCE_2019__NIS_REGION_2019"]] <- .pairs_xw(
-    "NIS_PROVINCE_2019", "NIS_REGION_2019",       m19, "cd_province", "cd_region")
+    "NIS_PROVINCE_2019", "NIS_REGION_2019",       m19, "code_nis_province", "code_nis_region")
   xw[["NIS_PROVINCE_2025__NIS_REGION_2025"]] <- .pairs_xw(
-    "NIS_PROVINCE_2025", "NIS_REGION_2025",       m25, "cd_province", "cd_region")
+    "NIS_PROVINCE_2025", "NIS_REGION_2025",       m25, "code_nis_province", "code_nis_region")
 
   # ---- NUTS 2021 hierarchy -------------------------------------------------
   xw[["NUTS_DISTRICT_2021__NUTS_PROVINCE_2021"]] <- .pairs_xw(
-    "NUTS_DISTRICT_2021", "NUTS_PROVINCE_2021",              m19, "cd_nuts3", "cd_nuts2")
+    "NUTS_DISTRICT_2021", "NUTS_PROVINCE_2021",              m19, "code_nuts_district_2021", "code_nuts_province_2021")
   xw[["NUTS_DISTRICT_2021__NBB_DISTRICT_2021"]] <- .pairs_xw(
-    "NUTS_DISTRICT_2021", "NBB_DISTRICT_2021", m19, "cd_nuts3", "cd_arr_internal")
+    "NUTS_DISTRICT_2021", "NBB_DISTRICT_2021", m19, "code_nuts_district_2021", "code_nbb_district_2021")
   xw[["NUTS_DISTRICT_2021__NIS_DISTRICT_2019"]] <- .pairs_xw(
-    "NUTS_DISTRICT_2021", "NIS_DISTRICT_2019", m19, "cd_nuts3", "cd_arr")
+    "NUTS_DISTRICT_2021", "NIS_DISTRICT_2019", m19, "code_nuts_district_2021", "code_nis_district")
   xw[["NUTS_PROVINCE_2021__NUTS_REGION_2021"]] <- .pairs_xw(
-    "NUTS_PROVINCE_2021", "NUTS_REGION_2021", m19, "cd_nuts2", "cd_nuts1")
+    "NUTS_PROVINCE_2021", "NUTS_REGION_2021", m19, "code_nuts_province_2021", "code_nuts_region_2021")
   xw[["NUTS_REGION_2021__NUTS_COUNTRY"]] <- .pairs_xw(
-    "NUTS_REGION_2021", "NUTS_COUNTRY",      m19, "cd_nuts1", "cd_nuts0")
+    "NUTS_REGION_2021", "NUTS_COUNTRY",      m19, "code_nuts_region_2021", "code_nuts_country")
 
   # NUTS_MUNICIPALITY_2021 bidirectional
   xw[["NUTS_MUNICIPALITY_2021__NIS_MUNICIPALITY_2019"]] <- .pairs_xw(
-    "NUTS_MUNICIPALITY_2021", "NIS_MUNICIPALITY_2019", m19, "cd_nuts_lau", "cd_commune")
+    "NUTS_MUNICIPALITY_2021", "NIS_MUNICIPALITY_2019", m19, "code_nuts_municipality_2021", "code_nis_municipality")
   xw[["NUTS_MUNICIPALITY_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
-    "NUTS_MUNICIPALITY_2021", "NUTS_DISTRICT_2021",       m19, "cd_nuts_lau", "cd_nuts3")
+    "NUTS_MUNICIPALITY_2021", "NUTS_DISTRICT_2021",       m19, "code_nuts_municipality_2021", "code_nuts_district_2021")
 
   xw[["NBB_DISTRICT_2021__NUTS_DISTRICT_2021"]] <- .pairs_xw(
-    "NBB_DISTRICT_2021", "NUTS_DISTRICT_2021", m19, "cd_arr_internal", "cd_nuts3")
+    "NBB_DISTRICT_2021", "NUTS_DISTRICT_2021", m19, "code_nbb_district_2021", "code_nuts_district_2021")
 
   # ---- NUTS 2027 hierarchy -------------------------------------------------
   xw[["NUTS_DISTRICT_2027__NUTS_PROVINCE_2027"]] <- .pairs_xw(
-    "NUTS_DISTRICT_2027", "NUTS_PROVINCE_2027", m25, "cd_nuts3_2027", "cd_nuts2_2027")
+    "NUTS_DISTRICT_2027", "NUTS_PROVINCE_2027", m25, "code_nuts_district_2027", "code_nuts_province_2027")
   xw[["NUTS_PROVINCE_2027__NUTS_REGION_2027"]] <- .pairs_xw(
-    "NUTS_PROVINCE_2027", "NUTS_REGION_2027", m25, "cd_nuts2_2027", "cd_nuts1_2027")
+    "NUTS_PROVINCE_2027", "NUTS_REGION_2027", m25, "code_nuts_province_2027", "code_nuts_region_2027")
   xw[["NUTS_REGION_2027__NUTS_COUNTRY"]] <- .pairs_xw(
-    "NUTS_REGION_2027", "NUTS_COUNTRY",      m25, "cd_nuts1_2027", "cd_nuts0_2027")
+    "NUTS_REGION_2027", "NUTS_COUNTRY",      m25, "code_nuts_region_2027", "code_nuts_country_2027")
 
   # ---- NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (derived, 1:N) --------------
   # Chain at commune level over NIS 2019 (NUTS 2021 is keyed to the 2019 commune
-  # perimeter): 2019 commune -> cd_nuts3 (2021)  AND  -> 2025 commune -> cd_nuts3_2027.
+  # perimeter): 2019 commune -> code_nuts_district_2021 (2021)  AND  -> 2025 commune -> code_nuts_district_2027.
   # The 3 cross-province fusion communes (46029, 46030, 71072) merge constituents
   # sitting in different 2021 NUTS3 regions, so a few 2021 NUTS3 codes acquire >1
   # 2027 target -> 1:N (e.g. BE211 -> {BE261, BE276}).
-  # NB: build from m19 (NOT m25 alone) -- m25's backfilled cd_nuts3 is NA for the
+  # NB: build from m19 (NOT m25 alone) -- m25's backfilled code_nuts_district_2021 is NA for the
   # ambiguous communes, which would silently drop precisely the ambiguous pairs.
-  ch19_n27 <- nis_changes[from_version == VER_2019, .(cd_refnis_old, cd_refnis_new)]
-  link2025 <- merge(data.table(cd_commune = unique(m19$cd_commune)),
-                    ch19_n27, by.x = "cd_commune", by.y = "cd_refnis_old", all.x = TRUE)
-  link2025[is.na(cd_refnis_new), cd_refnis_new := cd_commune]   # unchanged keep their code
+  ch19_n27 <- nis_changes[version_from == VER_2019, .(code_from, code_to)]
+  link2025 <- merge(data.table(code_nis_municipality = unique(m19$code_nis_municipality)),
+                    ch19_n27, by.x = "code_nis_municipality", by.y = "code_from", all.x = TRUE)
+  link2025[is.na(code_to), code_to := code_nis_municipality]   # unchanged keep their code
 
-  n3_2021 <- unique(m19[!is.na(cd_nuts3),      .(cd_commune, cd_nuts3)])
-  n3_2027 <- unique(m25[!is.na(cd_nuts3_2027), .(cd_commune, cd_nuts3_2027)])
+  n3_2021 <- unique(m19[!is.na(code_nuts_district_2021),      .(code_nis_municipality, code_nuts_district_2021)])
+  n3_2027 <- unique(m25[!is.na(code_nuts_district_2027), .(code_nis_municipality, code_nuts_district_2027)])
 
-  chain <- merge(link2025, n3_2021, by = "cd_commune", all.x = FALSE)
-  chain <- merge(chain, n3_2027, by.x = "cd_refnis_new", by.y = "cd_commune", all.x = FALSE)
-  pairs_21_27 <- unique(chain[!is.na(cd_nuts3) & !is.na(cd_nuts3_2027),
-                              .(cd_nuts3, cd_nuts3_2027)])
+  chain <- merge(link2025, n3_2021, by = "code_nis_municipality", all.x = FALSE)
+  chain <- merge(chain, n3_2027, by.x = "code_to", by.y = "code_nis_municipality", all.x = FALSE)
+  pairs_21_27 <- unique(chain[!is.na(code_nuts_district_2021) & !is.na(code_nuts_district_2027),
+                              .(code_nuts_district_2021, code_nuts_district_2027)])
 
   xw[["NUTS_DISTRICT_2021__NUTS_DISTRICT_2027"]] <- .xw(
     "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027",
-    pairs_21_27$cd_nuts3, pairs_21_27$cd_nuts3_2027)
+    pairs_21_27$code_nuts_district_2021, pairs_21_27$code_nuts_district_2027)
 
   # NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2027 (derived, N:1 for most; 1:N for the
   # 3 cross-province fusion zones whose NIS2019 constituents straddle NUTS2027 borders).
-  # Reuses the same chain built above: cd_commune (NIS2019) -> cd_nuts3_2027 (via NIS2025).
+  # Reuses the same chain built above: code_nis_municipality (NIS2019) -> code_nuts_district_2027 (via NIS2025).
   # Storing this as a direct crosswalk hop prevents the BFS from routing through
   # NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 (which would introduce spurious ambiguity
   # for communes that are in a 1:N NUTS2021 zone but have a unique NUTS2027 target).
-  pairs_19_27 <- unique(chain[!is.na(cd_nuts3_2027), .(cd_commune, cd_nuts3_2027)])
+  pairs_19_27 <- unique(chain[!is.na(code_nuts_district_2027), .(code_nis_municipality, code_nuts_district_2027)])
   xw[["NIS_MUNICIPALITY_2019__NUTS_DISTRICT_2027"]] <- .xw(
     "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2027",
-    as.character(pairs_19_27$cd_commune), pairs_19_27$cd_nuts3_2027)
+    as.character(pairs_19_27$code_nis_municipality), pairs_19_27$code_nuts_district_2027)
 
   # ---- NIS_REGION -> NIS_COUNTRY ----------------------------------------------
   xw[["NIS_REGION_2019__NIS_COUNTRY"]] <- .pairs_xw(
-    "NIS_REGION_2019", "NIS_COUNTRY", m19, "cd_region", "cd_nis_country")
+    "NIS_REGION_2019", "NIS_COUNTRY", m19, "code_nis_region", "code_nis_country")
   xw[["NIS_REGION_2025__NIS_COUNTRY"]] <- .pairs_xw(
-    "NIS_REGION_2025", "NIS_COUNTRY", m25, "cd_region", "cd_nis_country")
+    "NIS_REGION_2025", "NIS_COUNTRY", m25, "code_nis_region", "code_nis_country")
 
   # ---- NIS BEFORE_2019 (optional -- only when BEFORE_2019 slice is loaded) --
   if (has_b19) {
-    ch_b19 <- nis_changes[from_version == VER_BEFORE_2019,
-                           .(cd_refnis_old, cd_refnis_new, nature)]
-    unchanged_b19 <- intersect(unique(mb19$cd_commune), unique(m19$cd_commune))
+    ch_b19 <- nis_changes[version_from == VER_BEFORE_2019,
+                           .(code_from, code_to, nature)]
+    unchanged_b19 <- intersect(unique(mb19$code_nis_municipality), unique(m19$code_nis_municipality))
 
     # Orphaned: in BEFORE_2019 but neither in nis_changes nor in NIS 2019.
     # Engine returns code_to = NA for these; crosswalk must match.
-    orphaned_b19 <- setdiff(unique(mb19$cd_commune),
-                             union(ch_b19$cd_refnis_old, unchanged_b19))
+    orphaned_b19 <- setdiff(unique(mb19$code_nis_municipality),
+                             union(ch_b19$code_from, unchanged_b19))
 
     parts <- list(
-      data.table(cd_refnis_old = unchanged_b19,
-                 cd_refnis_new = unchanged_b19,
+      data.table(code_from = unchanged_b19,
+                 code_to = unchanged_b19,
                  nature        = "UNCHANGED")
     )
     if (nrow(ch_b19) > 0L)    parts <- c(list(ch_b19), parts)
     if (length(orphaned_b19) > 0L) {
-      parts <- c(parts, list(data.table(cd_refnis_old = orphaned_b19,
-                                        cd_refnis_new = NA_integer_,
+      parts <- c(parts, list(data.table(code_from = orphaned_b19,
+                                        code_to = NA_integer_,
                                         nature        = NA_character_)))
     }
     full_b19_19 <- rbindlist(parts, use.names = TRUE)
 
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_MUNICIPALITY_2019"]] <- .xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019",
-      full_b19_19$cd_refnis_old, full_b19_19$cd_refnis_new, full_b19_19$nature)
+      full_b19_19$code_from, full_b19_19$code_to, full_b19_19$nature)
 
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_DISTRICT_BEFORE_2019"]] <- .pairs_xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NIS_DISTRICT_BEFORE_2019",
-      mb19, "cd_commune", "cd_arr")
+      mb19, "code_nis_municipality", "code_nis_district")
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"]] <- .pairs_xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019",
-      mb19, "cd_commune", "cd_province")
+      mb19, "code_nis_municipality", "code_nis_province")
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NIS_REGION_BEFORE_2019"]] <- .pairs_xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NIS_REGION_BEFORE_2019",
-      mb19, "cd_commune", "cd_region")
+      mb19, "code_nis_municipality", "code_nis_region")
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NUTS_DISTRICT_2021"]] <- .pairs_xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NUTS_DISTRICT_2021",
-      mb19, "cd_commune", "cd_nuts3")
+      mb19, "code_nis_municipality", "code_nuts_district_2021")
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NUTS_PROVINCE_2021"]] <- .pairs_xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NUTS_PROVINCE_2021",
-      mb19, "cd_commune", "cd_nuts2")
+      mb19, "code_nis_municipality", "code_nuts_province_2021")
     xw[["NIS_MUNICIPALITY_BEFORE_2019__NBB_DISTRICT_2021"]] <- .pairs_xw(
       "NIS_MUNICIPALITY_BEFORE_2019", "NBB_DISTRICT_2021",
-      mb19, "cd_commune", "cd_arr_internal")
+      mb19, "code_nis_municipality", "code_nbb_district_2021")
 
     xw[["NIS_DISTRICT_BEFORE_2019__NIS_PROVINCE_BEFORE_2019"]] <- .pairs_xw(
       "NIS_DISTRICT_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019",
-      mb19, "cd_arr", "cd_province")
+      mb19, "code_nis_district", "code_nis_province")
     xw[["NIS_PROVINCE_BEFORE_2019__NIS_REGION_BEFORE_2019"]] <- .pairs_xw(
       "NIS_PROVINCE_BEFORE_2019", "NIS_REGION_BEFORE_2019",
-      mb19, "cd_province", "cd_region")
+      mb19, "code_nis_province", "code_nis_region")
     xw[["NIS_REGION_BEFORE_2019__NIS_COUNTRY"]] <- .pairs_xw(
-      "NIS_REGION_BEFORE_2019", "NIS_COUNTRY", mb19, "cd_region", "cd_nis_country")
+      "NIS_REGION_BEFORE_2019", "NIS_COUNTRY", mb19, "code_nis_region", "code_nis_country")
   }
 
   rbindlist(Filter(Negate(is.null), xw), use.names = TRUE, fill = FALSE)

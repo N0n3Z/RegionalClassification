@@ -8,7 +8,7 @@
 # the engine still reproduces it -- trivially green in P0/P1, a real guard in P2+.
 #
 # Phase 2 note: .ROUTE_TABLE has been removed; gen_golden() now iterates the
-# unique (from_id, to_id) pairs present in md$crosswalks instead.
+# unique (classification_from, classification_to) pairs present in md$crosswalks instead.
 # ==============================================================================
 
 #' Generate and save the golden crosswalks fixture
@@ -20,7 +20,7 @@
 gen_golden <- function() {
   md   <- load_master_data()
   # Derive edge keys from the crosswalks table (Phase 2: .ROUTE_TABLE removed)
-  keys <- unique(md$crosswalks[, paste0(from_id, "__", to_id)])
+  keys <- unique(md$crosswalks[, paste0(classification_from, "__", classification_to)])
 
   # --- Per-hop golden (one block per crosswalk edge) ---
   per_edge <- rbindlist(lapply(keys, function(key) {
@@ -36,8 +36,8 @@ gen_golden <- function() {
       convert_codes(src, from, to, md, allow_ambiguous = TRUE)
     ))
     data.table(
-      from_id   = from,
-      to_id     = to,
+      classification_from = from,
+      classification_to   = to,
       code_from = as.character(r$code_from),
       code_to   = as.character(r$code_to),
       nature    = r$nature
@@ -65,8 +65,8 @@ gen_golden <- function() {
       convert_codes(src, from, to, md, allow_ambiguous = TRUE)
     ))
     data.table(
-      from_id   = from,
-      to_id     = to,
+      classification_from = from,
+      classification_to   = to,
       code_from = as.character(r$code_from),
       code_to   = as.character(r$code_to),
       nature    = r$nature

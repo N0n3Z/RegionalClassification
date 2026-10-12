@@ -5,7 +5,7 @@ library(data.table)
 # ==============================================================================
 # In Belgium, NUTS_MUNICIPALITY_2021 (Eurostat Local Administrative Units) is in
 # near-bijection with NIS_MUNICIPALITY_2019: same geographic entities, same codes
-# (cd_nuts_lau == as.character(cd_commune) for all but one commune).
+# (code_nuts_municipality_2021 == as.character(code_nis_municipality) for all but one commune).
 # These tests lock that guarantee so a future data rebuild that breaks it is
 # caught immediately.
 # ==============================================================================
