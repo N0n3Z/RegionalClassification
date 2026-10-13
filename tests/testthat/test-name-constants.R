@@ -24,15 +24,15 @@ test_that("CLS_ALL has 23 entries (one per supported classification node)", {
 })
 
 test_that("VER_BEFORE_2019 appears in communes data", {
-  expect_true(VER_BEFORE_2019 %in% md$municipalities$version)
+  expect_true(VER_BEFORE_2019 %in% wide_md$municipalities$version)
 })
 
 test_that("VER_2019 appears in communes data", {
-  expect_true(VER_2019 %in% md$municipalities$version)
+  expect_true(VER_2019 %in% wide_md$municipalities$version)
 })
 
 test_that("VER_2025 appears in communes data", {
-  expect_true(VER_2025 %in% md$municipalities$version)
+  expect_true(VER_2025 %in% wide_md$municipalities$version)
 })
 
 test_that("all CLS_* values are recognized by normalize_classification_id()", {

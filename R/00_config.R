@@ -529,16 +529,21 @@ NIS_PROVINCE_TO_REGION <- c(
   "4000"  = 4000L   # Brussels pseudo-prov-> Brussels
 )
 
-# --- Flat tables persisted in inst/extdata/ ---
-# Each is keyed by a version discriminator column (version / version_from).
-# Hierarchy lists (nis_hierarchy_*, nuts_hierarchy_*, nuts_arrondissement_mapping)
-# are intentionally excluded: they are build-time intermediates not needed at runtime.
+# --- Tables persisted in inst/extdata/ (the long model, v3.0.0) ---
+# entities + crosswalks are the canonical master data: every runtime reader goes
+# through them. Hierarchy lists (nis_hierarchy_*, ...) are build-time only.
 MASTER_FLAT_TABLES <- c(
-  "municipalities", # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
-  "postal",         # postal -> NIS mappings for all versions (version discriminator)
-  "nis_changes",    # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (version_from)
   "entities",       # one row per (classification, code) -- flat enumeration of all nodes
   "crosswalks"      # one row per primitive code link (classification_from/to, code_from/to, relation, nature)
+)
+
+# --- Wide tables: build-time intermediates (not persisted since v3.0.0) ---
+# build_master_table() assembles them and derives entities/crosswalks from them;
+# wide_view() (R/11_wide_view.R) rebuilds them from the long model.
+MASTER_WIDE_TABLES <- c(
+  "municipalities", # all NIS versions (2019, 2025, BEFORE_2019) with NUTS 2021/2027 columns
+  "postal",         # postal -> NIS mappings for all versions (version discriminator)
+  "nis_changes"     # NIS version transitions: 2019->2025 and BEFORE_2019->2019 (version_from)
 )
 
 # --- Column naming convention (schema v2, nbbbenuts >= 2.0.0) ---

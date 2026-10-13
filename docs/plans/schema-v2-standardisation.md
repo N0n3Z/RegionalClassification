@@ -1,6 +1,6 @@
 # Plan — Standardisation du modèle de données de `nbbbenuts` (v2.0.0)
 
-> **Statut** : étape 1 réalisée sur la branche `claude/schema-v2` (renommage + migration v1), étendue aux sorties utilisateur et aux jeux d'exemple `rc_*` (renommés d'après les niveaux du graphe). **Validée en local le 2026-10-13** : 1340 tests verts (1238 sur `main` + 125 de `test-schema.R`, `test-convert-dataset.R` passe de 60 à 37 expectations car la boucle `default_col_name` fait 1 assertion par nœud au lieu de 2), `R CMD check` OK, `rebuild_master_data()` reproduit le snapshot à l'identique, le snapshot v1 de `main` se migre en tables strictement identiques avec un seul warning `rcl_legacy_schema`, vignettes et démo s'exécutent. Étape 2 à faire.
+> **Statut** : étape 1 réalisée sur la branche `claude/schema-v2` (renommage + migration v1), étendue aux sorties utilisateur et aux jeux d'exemple `rc_*` (renommés d'après les niveaux du graphe). **Validée en local le 2026-10-13** : 1340 tests verts (1238 sur `main` + 125 de `test-schema.R`, `test-convert-dataset.R` passe de 60 à 37 expectations car la boucle `default_col_name` fait 1 assertion par nœud au lieu de 2), `R CMD check` OK, `rebuild_master_data()` reproduit le snapshot à l'identique, le snapshot v1 de `main` se migre en tables strictement identiques avec un seul warning `rcl_legacy_schema`, vignettes et démo s'exécutent. **Étape 2 réalisée** sur `claude/schema-v2-long-model` (au-dessus du correctif `fix/before2019-nuts2021`) : version 3.0.0, tables larges retirées du snapshot, `wide_view()` (choix utilisateur du 2026-10-13 : retirer les tables larges, reproduction identique).
 
 ## Contexte
 Les tables de `master_data` (`communes`, `postal`, `nis_changes`, `entities`,
@@ -234,7 +234,9 @@ Les seules occurrences légitimes en fin d'étape : `R/01_load_data.R` (couche d
 
 ---
 
-## ÉTAPE 2 — Modèle long canonique (PR séparée, après merge de l'étape 1)
+## ÉTAPE 2 — Modèle long canonique (PR séparée, après merge de l'étape 1) — réalisée en 3.0.0
+
+> Écarts au plan : pas de `.parent_of()` (aucun lecteur n'en a eu besoin) ; les champs `source_table` / `code_col` / `label_*_col` du registre restent en place (la build et `.node_label_meta()` s'en servent encore) ; `wide_view(md, table, version)` couvre aussi `postal` et `nis_changes`. Correctif préalable nécessaire : les lignes BEFORE_2019 portaient des codes NUTS 2016 (voir NEWS 2.0.0, « Bug fixes »).
 
 État actuel utile : le moteur de conversion lit **déjà** uniquement `md$crosswalks`
 (`R/03_convert.R:146-400`), et `.node_reference_codes()` préfère déjà `md$entities`.

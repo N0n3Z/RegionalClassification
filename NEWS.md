@@ -1,3 +1,47 @@
+# nbbbenuts 3.0.0
+
+## Breaking changes
+
+* **The long model is the master data.** `load_master_data()` now returns
+  only `entities` (one row per code of each classification) and `crosswalks`
+  (one row per code link of each single-hop conversion), and the snapshot in
+  `inst/extdata/` only holds `entities.rds` and `crosswalks.rds`. The wide
+  tables `municipalities`, `postal` and `nis_changes` are build-time
+  intermediates of `build_master_table()`; they are no longer persisted nor
+  returned by `load_master_data()` / `rebuild_master_data()`. Code reading
+  `master_data$municipalities`, `$postal` or `$nis_changes` must switch to
+  `wide_view()`:
+
+  | 2.x | 3.0.0 |
+  |---|---|
+  | `master_data$municipalities` | `wide_view(master_data)` |
+  | `master_data$municipalities[version == "2019"]` | `wide_view(master_data, version = "2019")` |
+  | `master_data$postal` | `wide_view(master_data, "postal")` |
+  | `master_data$nis_changes` | `wide_view(master_data, "nis_changes")` |
+
+  Wide-table files left in an older snapshot directory are ignored by
+  `load_master_data()`, and `save_master_tables()` only writes the two long
+  tables.
+
+## New features
+
+* **`wide_view(master_data, table, version)`** rebuilds a wide table from the
+  long model. `"municipalities"` and `"nis_changes"` are identical, cell for
+  cell, to the 2.x tables; `"postal"` has the same rows and codes, and takes
+  its `label_postal_fr/_nl` from `entities` (one label per postal code).
+  Rows are sorted by version, then code.
+
+## Internal
+
+* Runtime readers no longer touch the wide tables: `get_label()` reads
+  `entities` only, `visualize_hierarchy()` goes through `wide_view()`, and
+  `.validate_master_data()` requires `entities` + `crosswalks` instead of the
+  wide tables. New internal accessors `.entities_of()` and `.links()`.
+* Tests: `test-wide-view.R` checks `wide_view()` against
+  `fixtures/golden_wide.rds` (the 2.0.0 wide tables); the schema-convention
+  tests also cover the wide views.
+
+
 # nbbbenuts 2.0.0
 
 ## Breaking changes

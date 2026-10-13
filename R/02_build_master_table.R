@@ -147,7 +147,9 @@
 #' schema v2 convention (see \code{SCHEMA_V1_TO_V2} in \file{R/00_config.R}).
 #'
 #' @param raw_data Named list of data.tables from load_all_raw_data()
-#' @return list with the five unified flat tables plus build-time hierarchy intermediates
+#' @return list with the five unified flat tables plus build-time hierarchy
+#'   intermediates. Only \code{entities} and \code{crosswalks} are persisted by
+#'   [save_master_tables()]; the wide tables are build-time intermediates.
 #' @export
 build_master_table <- function(raw_data) {
 
@@ -573,13 +575,16 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
   result
 }
 
-#' Save master table and all auxiliary tables to processed directory
+#' Save the long-model master tables to the processed directory
 #'
-#' Saves every flat data.table in master_data as an RDS file, preserving all
-#' R types exactly.  Call this after build_master_table() to update the
-#' pre-built snapshot used by load_master_data().
+#' Saves \code{entities} and \code{crosswalks} (\code{MASTER_FLAT_TABLES}) as
+#' RDS files, preserving all R types exactly. The wide build intermediates
+#' (\code{municipalities}, \code{postal}, \code{nis_changes}) are not saved
+#' since nbbbenuts 3.0.0; [wide_view()] rebuilds them. Call this after
+#' build_master_table() to update the pre-built snapshot used by
+#' load_master_data().
 #'
-#' @param master_data Output from build_master_table()
+#' @param master_data Output from build_master_table() or load_master_data()
 #' @param output_dir  Path to output directory (default: inst/extdata/, via
 #'   get_processed_data_path())
 #' @return Invisible NULL (called for side effect)

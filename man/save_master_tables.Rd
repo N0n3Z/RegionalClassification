@@ -2,12 +2,12 @@
 % Please edit documentation in R/02_build_master_table.R
 \name{save_master_tables}
 \alias{save_master_tables}
-\title{Save master table and all auxiliary tables to processed directory}
+\title{Save the long-model master tables to the processed directory}
 \usage{
 save_master_tables(master_data, output_dir = get_processed_data_path())
 }
 \arguments{
-\item{master_data}{Output from build_master_table()}
+\item{master_data}{Output from build_master_table() or load_master_data()}
 
 \item{output_dir}{Path to output directory (default: inst/extdata/, via
 get_processed_data_path())}
@@ -16,7 +16,10 @@ get_processed_data_path())}
 Invisible NULL (called for side effect)
 }
 \description{
-Saves every flat data.table in master_data as an RDS file, preserving all
-R types exactly.  Call this after build_master_table() to update the
-pre-built snapshot used by load_master_data().
+Saves \code{entities} and \code{crosswalks} (\code{MASTER_FLAT_TABLES}) as
+RDS files, preserving all R types exactly. The wide build intermediates
+(\code{municipalities}, \code{postal}, \code{nis_changes}) are not saved
+since nbbbenuts 3.0.0; [wide_view()] rebuilds them. Call this after
+build_master_table() to update the pre-built snapshot used by
+load_master_data().
 }

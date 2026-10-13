@@ -99,7 +99,7 @@ test_that("batch temporal conversion carries the correct nature per code", {
 
 test_that("all 2019->2025 temporal nature values are in {UNCHANGED,FUSION,CHANGE_DSTR,CHANGE_PROV}", {
   # Convert all NIS 2019 communes to 2025
-  all_2019 <- unique(master_data$municipalities[version == VER_2019, code_nis_municipality])
+  all_2019 <- unique(wide_md$municipalities[version == VER_2019, code_nis_municipality])
   r        <- convert_codes(all_2019, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   valid    <- c("UNCHANGED", "FUSION", "CHANGE_DSTR", "CHANGE_PROV")
   bad      <- setdiff(unique(r$nature), valid)
@@ -113,7 +113,7 @@ test_that("BEFORE_2019->2019 nature values are in {UNCHANGED, FUSION, CHANGE_DST
   # and 15 FUSION recodes (2019 Flemish municipal mergers); UNCHANGED is the
   # pass-through backbone. All 15 former "orphaned" fusion constituents (tracked in
   # FUSIONS_BEFORE_2019_TODO.md) are now mapped, so no NA is expected here.
-  all_b19 <- unique(master_data$municipalities[version == VER_BEFORE_2019, code_nis_municipality])
+  all_b19 <- unique(wide_md$municipalities[version == VER_BEFORE_2019, code_nis_municipality])
   r       <- convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
   valid   <- c("UNCHANGED", "FUSION", "CHANGE_DSTR")
   bad     <- setdiff(unique(r$nature), valid)
@@ -126,7 +126,7 @@ test_that("BEFORE_2019->2019 preserves the source NATURE (11 CHANGE_DSTR + 15 FU
   # Regression guard for the hardcoded-FUSION bug: the 2019 arrondissement reform
   # recodes must surface as CHANGE_DSTR, not FUSION. Requires a rebuild to take
   # effect (nature is baked into the crosswalk snapshot).
-  all_b19 <- unique(master_data$municipalities[version == VER_BEFORE_2019, code_nis_municipality])
+  all_b19 <- unique(wide_md$municipalities[version == VER_BEFORE_2019, code_nis_municipality])
   r       <- convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2019, master_data)
   expect_equal(sum(r$nature == "CHANGE_DSTR", na.rm = TRUE), 11L)
   expect_equal(sum(r$nature == "FUSION",      na.rm = TRUE), 15L)
@@ -145,9 +145,9 @@ test_that("no commune is orphaned across any adjacent NIS_VERSION pair", {
   for (pair in version_pairs) {
     from_ver <- pair[1L]
     to_ver   <- pair[2L]
-    m_from   <- unique(master_data$municipalities[version == from_ver, code_nis_municipality])
-    m_to     <- unique(master_data$municipalities[version == to_ver,   code_nis_municipality])
-    ch       <- master_data$nis_changes[version_from == from_ver, code_from]
+    m_from   <- unique(wide_md$municipalities[version == from_ver, code_nis_municipality])
+    m_to     <- unique(wide_md$municipalities[version == to_ver,   code_nis_municipality])
+    ch       <- wide_md$nis_changes[version_from == from_ver, code_from]
     orphaned <- setdiff(m_from, union(ch, m_to))
     expect_equal(length(orphaned), 0L,
                  label = sprintf("orphaned %s->%s codes", from_ver, to_ver),
@@ -158,7 +158,7 @@ test_that("no commune is orphaned across any adjacent NIS_VERSION pair", {
 test_that("composed BEFORE_2019 -> 2025 conversion has no orphaned (NA) codes", {
   # The two hops above are each orphan-free, but composition (.compose_via_handlers)
   # is a separate code path -- guard it explicitly rather than assuming transitivity.
-  all_b19 <- unique(master_data$municipalities[version == VER_BEFORE_2019, code_nis_municipality])
+  all_b19 <- unique(wide_md$municipalities[version == VER_BEFORE_2019, code_nis_municipality])
   r       <- convert_codes(all_b19, CLS_NIS_MUNICIPALITY_BEFORE_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   expect_false(anyNA(r$code_to))
 })
@@ -170,7 +170,7 @@ test_that("every NIS 2025 commune is covered by the reverse 2025->2019 crosswalk
   # row (and an rcl_orphaned_codes warning) instead. This guards that every 2025
   # commune appears as a source, so a future data refresh introducing an orphan is
   # caught rather than dropped.
-  m25       <- unique(master_data$municipalities[version == VER_2025, code_nis_municipality])
+  m25       <- unique(wide_md$municipalities[version == VER_2025, code_nis_municipality])
   rev_src   <- master_data$crosswalks[classification_from == CLS_NIS_MUNICIPALITY_2025 &
                                       classification_to   == CLS_NIS_MUNICIPALITY_2019, unique(code_from)]
   missing   <- setdiff(as.character(m25), as.character(rev_src))
@@ -194,7 +194,7 @@ test_that("every NIS 2025 commune is covered by the reverse 2025->2019 crosswalk
 # -- TN7: Nature counts match known totals ------------------------------------
 
 test_that("CHANGE_DSTR count == 2 and CHANGE_PROV count == 1 in 2019->2025 crosswalk", {
-  all_2019 <- unique(master_data$municipalities[version == VER_2019, code_nis_municipality])
+  all_2019 <- unique(wide_md$municipalities[version == VER_2019, code_nis_municipality])
   r        <- convert_codes(all_2019, CLS_NIS_MUNICIPALITY_2019, CLS_NIS_MUNICIPALITY_2025, master_data)
   expect_equal(sum(r$nature == "CHANGE_DSTR", na.rm = TRUE), 2L)
   expect_equal(sum(r$nature == "CHANGE_PROV", na.rm = TRUE), 1L)

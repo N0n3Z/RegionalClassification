@@ -44,8 +44,8 @@ if (is.null(md$crosswalks)) {
   # .list_codes_for(CLS_POSTAL, md)).  This is valid only if every p25 postal
   # code already appears in p19.
   test_that("all p25 postal codes are present in p19 (POSTAL universe assumption)", {
-    p19_codes  <- md$postal[version == VER_2019, unique(code_postal)]
-    p25_codes  <- md$postal[version == VER_2025, unique(code_postal)]
+    p19_codes  <- wide_md$postal[version == VER_2019, unique(code_postal)]
+    p25_codes  <- wide_md$postal[version == VER_2025, unique(code_postal)]
     new_in_p25 <- setdiff(p25_codes, p19_codes)
     expect_true(
       length(new_in_p25) == 0L,

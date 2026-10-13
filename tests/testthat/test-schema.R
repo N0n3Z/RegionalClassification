@@ -7,6 +7,9 @@ library(data.table)
 SCHEMA_COL_PATTERN <- "^(code|label|version|classification)(_[a-z0-9]+)*$"
 SCHEMA_PLAIN_COLS  <- c("relation", "nature", "weight")
 
+# Persisted long tables + the wide tables rebuilt by wide_view().
+schema_tables <- c(master_data[MASTER_FLAT_TABLES], wide_md)
+
 test_that("registry code_col follows the node-id naming rule", {
   for (id in names(CLASSIFICATION_NODES)) {
     expect_equal(CLASSIFICATION_NODES[[id]]$code_col,
@@ -14,9 +17,9 @@ test_that("registry code_col follows the node-id naming rule", {
   }
 })
 
-test_that("every persisted table follows the column naming convention", {
-  for (tbl in MASTER_FLAT_TABLES) {
-    cols <- names(master_data[[tbl]])
+test_that("every master and wide table follows the column naming convention", {
+  for (tbl in names(schema_tables)) {
+    cols <- names(schema_tables[[tbl]])
     expect_gt(length(cols), 0L)
     bad <- cols[!grepl(SCHEMA_COL_PATTERN, cols) & !cols %in% SCHEMA_PLAIN_COLS]
     expect_length(bad, 0L)
@@ -25,24 +28,24 @@ test_that("every persisted table follows the column naming convention", {
 })
 
 test_that("label columns end with a language suffix", {
-  for (tbl in MASTER_FLAT_TABLES) {
-    lbl <- grep("^label", names(master_data[[tbl]]), value = TRUE)
+  for (tbl in names(schema_tables)) {
+    lbl <- grep("^label", names(schema_tables[[tbl]]), value = TRUE)
     expect_true(all(grepl("_(fr|nl)$", lbl)), info = tbl)
   }
 })
 
 test_that("every code_* column is character", {
-  for (tbl in MASTER_FLAT_TABLES) {
-    dt <- master_data[[tbl]]
+  for (tbl in names(schema_tables)) {
+    dt <- schema_tables[[tbl]]
     for (col in grep("^code", names(dt), value = TRUE))
       expect_type(dt[[col]], "character")
   }
 })
 
-test_that("no persisted table carries a schema v1 column name", {
+test_that("no master or wide table carries a schema v1 column name", {
   v1_cols <- unique(unlist(lapply(SCHEMA_V1_TO_V2, names)))
-  for (tbl in MASTER_FLAT_TABLES)
-    expect_length(intersect(names(master_data[[tbl]]), v1_cols), 0L)
+  for (tbl in names(schema_tables))
+    expect_length(intersect(names(schema_tables[[tbl]]), v1_cols), 0L)
   expect_null(master_data$communes)
 })
 
@@ -52,7 +55,7 @@ test_that("SCHEMA_V1_TO_V2 targets all follow the convention", {
 })
 
 test_that("nis_changes version_to is consistent with version_from", {
-  nc <- master_data$nis_changes
+  nc <- wide_md$nis_changes
   expect_equal(nc$version_to, unname(NIS_CHANGE_VERSION_TO[nc$version_from]))
 })
 
@@ -107,7 +110,8 @@ test_that("load_master_data migrates a v1 snapshot directory", {
   v1 <- v1_fixture()
   for (nm in names(v1)) saveRDS(v1[[nm]], file.path(dir, paste0(nm, ".rds")))
   expect_warning(md <- suppressMessages(load_master_data(dir)), class = "rcl_legacy_schema")
-  expect_true("code_nis_municipality" %in% names(md$municipalities))
+  expect_equal(names(md), MASTER_FLAT_TABLES)
+  expect_equal(names(md$entities), c("classification", "code", "label_fr", "label_nl"))
 })
 
 test_that("conversion on an in-memory v1 object aborts with rcl_legacy_schema", {

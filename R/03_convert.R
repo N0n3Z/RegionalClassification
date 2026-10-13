@@ -476,22 +476,21 @@ list_available_conversions <- function() {
   if (!is.list(master_data))
     abort("master_data must be a list produced by load_master_data() or build_master_table().",
           class = "rcl_invalid_input")
-  if (!is.null(master_data$communes) && is.null(master_data$municipalities))
+  if (!is.null(master_data$communes) ||
+      any(c("classification_id", "from_id") %in%
+          c(names(master_data$entities), names(master_data$crosswalks))))
     abort(paste0("master_data uses the schema v1 table names (nbbbenuts < 2.0.0). ",
                  "Reload it with load_master_data(), which migrates v1 snapshots."),
           class = "rcl_legacy_schema")
-  missing <- setdiff(c("municipalities", "postal", "nis_changes"), names(master_data))
+  missing <- MASTER_FLAT_TABLES[vapply(MASTER_FLAT_TABLES,
+                                       function(t) is.null(master_data[[t]]), logical(1L))]
   if (length(missing) > 0L)
     abort(
       sprintf("master_data is missing required tables: %s. Run load_master_data() to rebuild.",
               paste(missing, collapse = ", ")),
       class = "rcl_data_missing", tables = missing
     )
-  if (is.null(master_data$municipalities) || nrow(master_data$municipalities) == 0L)
-    abort("master_data$municipalities is empty. Run load_master_data() to rebuild.",
-          class = "rcl_data_missing")
-  if (is.null(master_data$crosswalks))
-    abort(paste0("master_data$crosswalks is required for conversion but is NULL.\n",
-                 "Run rebuild_master_data() to regenerate it."),
+  if (nrow(master_data$entities) == 0L)
+    abort("master_data$entities is empty. Run load_master_data() to rebuild.",
           class = "rcl_data_missing")
 }

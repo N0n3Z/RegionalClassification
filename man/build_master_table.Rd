@@ -10,7 +10,9 @@ build_master_table(raw_data)
 \item{raw_data}{Named list of data.tables from load_all_raw_data()}
 }
 \value{
-list with the five unified flat tables plus build-time hierarchy intermediates
+list with the five unified flat tables plus build-time hierarchy
+  intermediates. Only \code{entities} and \code{crosswalks} are persisted by
+  [save_master_tables()]; the wide tables are build-time intermediates.
 }
 \description{
 Creates the unified flat tables: \code{municipalities} (all NIS versions),

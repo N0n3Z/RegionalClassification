@@ -223,11 +223,23 @@ renvoie `CHANGE_PROV` pour la ligne `code_to == 11056`.
 #### `load_master_data(path = NULL)`
 
 Charge la table de reference pre-construite depuis `inst/extdata/*.rds`.
-Rapide (pas de fichiers bruts). Retourne une liste nommee avec :
-`municipalities`, `postal`, `nis_changes`, `entities`, `crosswalks`.
+Rapide (pas de fichiers bruts). Retourne le modele long : une liste nommee avec
+`entities` et `crosswalks` (voir section 8).
 
 ```r
 master_data <- load_master_data()
+```
+
+#### `wide_view(master_data, table = "municipalities", version = NULL)`
+
+Reconstruit depuis le modele long une table large des versions 2.x :
+`"municipalities"` (une ligne par commune NIS et version, avec sa hierarchie NIS,
+ses codes NUTS 2021/2027 et NBB), `"postal"` ou `"nis_changes"`. `version` filtre
+les versions NIS (`"2019"`, `"2025"`, `"BEFORE_2019"`).
+
+```r
+wide_view(master_data, version = "2019")
+wide_view(master_data, "postal", version = "2025")
 ```
 
 #### `rebuild_master_data(data_dir = NULL, output_dir = NULL)`
@@ -601,6 +613,7 @@ R/
  08_load_prebuilt.R   -- load_master_data(), save_master_tables()
  09_query.R           -- validate_codes(), get_label(), get_crosswalk(), .node_reference_codes()
  10_rebase.R          -- rebase_series()
+ 11_wide_view.R       -- wide_view() : tables larges reconstruites depuis le modele long
  classifications.R    -- documentation de classification_reference (?classification_reference)
  data.R               -- documentation des datasets internes
  zzz.R                -- utils::globalVariables() (suppresser les NOTEs R CMD CHECK)
@@ -666,7 +679,12 @@ reproduisent exactement les resultats du moteur (fixture golden + parite par are
 
 ## 8. Modele de donnees `master_data`
 
-`load_master_data()` retourne une liste avec cinq tables. Toutes les colonnes suivent
+`load_master_data()` retourne le **modele long** : `entities` et `crosswalks`. Ce sont
+les seules tables persistees (`inst/extdata/`) et les seules que lit le code d'execution.
+Les tables larges `municipalities`, `postal` et `nis_changes` sont des intermediaires de
+`build_master_table()` (qui en derive `entities` et `crosswalks`) ; depuis la 3.0.0
+elles ne sont plus persistees et `wide_view()` les reconstruit a l'identique depuis le
+modele long (`postal` : libelles pris dans `entities`). Toutes les colonnes suivent
 la convention **schema v2** `<role>_<sujet>[_<qualificatif>][_<langue>]` :
 
 - roles : `code_*` (toujours character), `label_*_fr` / `label_*_nl`,
@@ -682,7 +700,7 @@ d'exemple `rc_*`) gardent la version : `code_<identifiant en minuscules>`
 (`R/00_config.R`) et `NEWS.md`. Un snapshot v1 (`communes.rds`) est migre au chargement
 avec un avertissement `rcl_legacy_schema`. `tests/testthat/test-schema.R` verifie la convention.
 
-### `municipalities` -- table large
+### `municipalities` -- table large (`wide_view(master_data)`)
 
 Une ligne par `(code_nis_municipality, version)`. Colonnes :
 
@@ -706,7 +724,7 @@ code_nuts_country_2027       chr -- "BE"
 code_nbb_district_2021       chr -- code NBB_DISTRICT_2021 (2 chiffres)
 ```
 
-### `postal` -- codes postaux
+### `postal` -- codes postaux (`wide_view(master_data, "postal")`)
 
 ```
 code_postal            chr -- code postal (4 chiffres)
@@ -715,7 +733,7 @@ label_postal_fr/nl     chr -- nom de la localite
 version                chr -- version NIS de la commune ("2019" | "2025")
 ```
 
-### `nis_changes` -- transitions de version
+### `nis_changes` -- transitions de version (`wide_view(master_data, "nis_changes")`)
 
 ```
 code_from     chr -- code source

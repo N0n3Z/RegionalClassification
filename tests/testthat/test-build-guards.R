@@ -18,11 +18,11 @@ test_that(".assert_unique_keys passes for unique keys and aborts on duplicates",
 test_that("the shipped master tables satisfy the build uniqueness invariants", {
   # Guards that a future data refresh cannot silently reintroduce duplicate keys.
   expect_silent(
-    nbbbenuts:::.assert_unique_keys(master_data$municipalities,
+    nbbbenuts:::.assert_unique_keys(wide_md$municipalities,
                                     c("code_nis_municipality", "version"), "municipalities")
   )
   expect_silent(
-    nbbbenuts:::.assert_unique_keys(master_data$nis_changes,
+    nbbbenuts:::.assert_unique_keys(wide_md$nis_changes,
                                     c("version_from", "code_from"), "nis_changes")
   )
 })
@@ -36,9 +36,9 @@ test_that(".assert_cols passes when columns present and aborts when missing", {
 })
 
 test_that("the shipped saved tables carry their required columns", {
-  nbbbenuts:::.assert_cols(master_data$postal,
+  nbbbenuts:::.assert_cols(wide_md$postal,
                            c("code_postal", "code_nis_municipality", "version"), "postal")
-  nbbbenuts:::.assert_cols(master_data$nis_changes,
+  nbbbenuts:::.assert_cols(wide_md$nis_changes,
                            c("code_from", "code_to", "nature", "version_from"),
                            "nis_changes")
   nbbbenuts:::.assert_cols(master_data$crosswalks,

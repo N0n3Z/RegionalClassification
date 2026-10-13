@@ -40,8 +40,8 @@ test_that("every node has code_type 'integer' or 'character'", {
 test_that("code_type matches the real column class in master_data", {
   for (id in names(CLASSIFICATION_NODES)) {
     n   <- CLASSIFICATION_NODES[[id]]
-    tbl <- if (n$source_table == "municipalities") master_data$municipalities
-           else                               master_data$postal
+    tbl <- if (n$source_table == "municipalities") wide_md$municipalities
+           else                               wide_md$postal
     # Use the version-filtered slice (some columns only exist in one version)
     slice <- tbl[get("version") == n$version_filter]
     if (nrow(slice) == 0L) next  # BEFORE_2019 optional
@@ -58,8 +58,8 @@ test_that("code_type matches the real column class in master_data", {
 test_that("non-NA label columns exist in the source table", {
   for (id in names(CLASSIFICATION_NODES)) {
     n   <- CLASSIFICATION_NODES[[id]]
-    tbl <- if (n$source_table == "municipalities") master_data$municipalities
-           else                               master_data$postal
+    tbl <- if (n$source_table == "municipalities") wide_md$municipalities
+           else                               wide_md$postal
     if (!is.na(n$label_fr_col))
       expect_true(n$label_fr_col %in% names(tbl), info = paste(id, "fr"))
     if (!is.na(n$label_nl_col))

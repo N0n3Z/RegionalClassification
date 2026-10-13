@@ -176,7 +176,7 @@ test_that("split_weights_template computes weighted (non-equal) shares from comm
   # Verviers arr 63000 -> {BE335, BE336}. Weights = share of the supplied
   # commune-level variable, normalised per code_from. Uniform values -> the share
   # reflects the commune partition (not necessarily 0.5/0.5), and must sum to 1.
-  comm19 <- as.character(master_data$municipalities[version == VER_2019, code_nis_municipality])
+  comm19 <- as.character(wide_md$municipalities[version == VER_2019, code_nis_municipality])
   cv  <- data.table(code = comm19, value = 1)
   tpl <- split_weights_template(CLS_NIS_DISTRICT_2019, CLS_NUTS_DISTRICT_2021,
                                 master_data, commune_values = cv)

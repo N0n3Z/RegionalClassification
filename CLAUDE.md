@@ -24,6 +24,13 @@ rebuild_master_data()       # rebuild inst/extdata/*.rds from data/raw/ (needs r
 The package normally runs off the pre-built snapshot in `inst/extdata/*.rds`
 (`load_master_data()`), so `data/raw/` is only needed when rebuilding.
 
+**Long model (v3.0.0):** the master data is `entities` + `crosswalks` only —
+the only persisted tables and the only ones runtime code reads (`.entities_of()`,
+`.links()` in `R/11_wide_view.R`). The wide tables `municipalities` / `postal` /
+`nis_changes` exist only inside `build_master_table()`; `wide_view()` rebuilds
+them from the long model and `test-wide-view.R` checks it against
+`fixtures/golden_wide.rds`. Tests read wide tables through `wide_md` (helper).
+
 ## Architecture (where things live)
 
 - `R/00_config.R` — `CONVERSION_GRAPH_EDGES` (conversion topology),

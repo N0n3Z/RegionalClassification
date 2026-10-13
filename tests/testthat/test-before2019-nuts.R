@@ -28,7 +28,7 @@ test_that("BEFORE_2019 -> NUTS_DISTRICT_2021 equals the path via NIS 2019", {
 })
 
 test_that("recoded and merged BEFORE_2019 communes get their 2021 codes", {
-  m <- md_b19$municipalities[version == VER_BEFORE_2019]
+  m <- wide_view(md_b19, version = VER_BEFORE_2019)
   # Mouscron: 54007 -> 57096 in 2019, NUTS3 BE328 (not the NUTS 2016 BE324)
   expect_identical(m[code_nis_municipality == "54007", code_nuts_district_2021], "BE328")
   expect_identical(m[code_nis_municipality == "54007", code_nuts_municipality_2021], "57096")

@@ -84,23 +84,9 @@ get_label <- function(codes, classification, master_data, lang = c("fr", "nl")) 
     return(input)
   }
 
-  # Prefer the entities table (built at snapshot time, always available after
-  # load_master_data()).  Fall back to municipalities/postal in build contexts
-  # where entities is not yet populated.
-  if (!is.null(master_data$entities)) {
-    name_col <- if (lang == "fr") "label_fr" else "label_nl"
-    ent  <- master_data$entities[classification == cls]
-    ref  <- unique(ent[!is.na(get(name_col)), .(code, label = get(name_col))])
-    return(ref[input, on = "code"])
-  }
-
-  src <- master_data[[meta$src]]
-  src <- src[get("version") == meta$ver]
-
-  ref <- unique(src[, c(meta$code, label_col), with = FALSE])
-  setnames(ref, c("code", "label"))
-  ref[, code := as.character(code)]
-
+  name_col <- if (lang == "fr") "label_fr" else "label_nl"
+  ent <- .entities_of(cls, master_data)
+  ref <- unique(ent[!is.na(get(name_col)), .(code, label = get(name_col))])
   ref[input, on = "code"]
 }
 
