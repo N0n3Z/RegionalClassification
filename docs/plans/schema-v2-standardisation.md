@@ -1,6 +1,6 @@
 # Plan — Standardisation du modèle de données de `nbbbenuts` (v2.0.0)
 
-> **Statut** : étape 1 réalisée sur la branche `claude/schema-v2` (renommage + migration v1), étendue aux sorties utilisateur et aux jeux d'exemple `rc_*` (renommés d'après les niveaux du graphe). Étape 2 à faire.
+> **Statut** : étape 1 réalisée sur la branche `claude/schema-v2` (renommage + migration v1), étendue aux sorties utilisateur et aux jeux d'exemple `rc_*` (renommés d'après les niveaux du graphe). **Validée en local le 2026-10-13** : 1340 tests verts (1238 sur `main` + 125 de `test-schema.R`, `test-convert-dataset.R` passe de 60 à 37 expectations car la boucle `default_col_name` fait 1 assertion par nœud au lieu de 2), `R CMD check` OK, `rebuild_master_data()` reproduit le snapshot à l'identique, le snapshot v1 de `main` se migre en tables strictement identiques avec un seul warning `rcl_legacy_schema`, vignettes et démo s'exécutent. Étape 2 à faire.
 
 ## Contexte
 Les tables de `master_data` (`communes`, `postal`, `nis_changes`, `entities`,
@@ -288,4 +288,4 @@ rebase_series(...)   # exemple de la doc de 10_rebase.R
 Critère de fin : les résultats de conversion sont strictement identiques avant et après
 (golden des crosswalks identique au renommage près, et suite de tests au même nombre de tests verts + `test-schema.R`).
 
-Branche : `claude/funny-einstein-7iubz9` (ne jamais pousser sur `main`).
+Branche : `claude/schema-v2` (ne jamais pousser sur `main`).

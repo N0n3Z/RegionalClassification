@@ -5,7 +5,7 @@ test_that("convert_dataset adds target column correctly", {
   dt <- data.table(code_nis_municipality_2019 = c(21004L, 11002L, 62063L), value = 1:3)
   result <- convert_dataset(dt, "code_nis_municipality_2019", to = CLS_NUTS_DISTRICT_2021, master_data)
   expect_true(is.data.table(result))
-  expect_true("code_nuts_district_2021" %in% names(result) || any(grepl("nuts3", names(result), ignore.case = TRUE)))
+  expect_true("code_nuts_district_2021" %in% names(result))
   expect_equal(nrow(result), 3L)
 })
 

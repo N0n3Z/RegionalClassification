@@ -529,7 +529,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
     warn(
       sprintf(
         paste0("%d NIS 2025 commune(s) fuse localities from multiple NUTS_DISTRICT_2021 regions; ",
-               "cd_nuts3 set to NA for: %s"),
+               "code_nuts_district_2021 set to NA for: %s"),
         nrow(ambig), paste(sort(ambig$cd_commune_2025), collapse = ", ")
       ),
       class = "rcl_ambiguous_backfill"
@@ -545,7 +545,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
     warn(
       sprintf(
         paste0("%d NIS 2025 commune(s) have no constituent 2019 commune with a known ",
-               "NUTS_DISTRICT_2021; cd_nuts3 set to NA for: %s"),
+               "NUTS_DISTRICT_2021; code_nuts_district_2021 set to NA for: %s"),
         nrow(missing_all), paste(sort(missing_all$cd_commune_2025), collapse = ", ")
       ),
       class = "rcl_ambiguous_backfill"
@@ -562,7 +562,7 @@ add_nuts2021_columns_2025 <- function(master_2025, master_2019, nis_changes) {
   result <- merge(master_2025, lookup, by = "cd_commune", all.x = TRUE)
 
   n_nuts3 <- sum(!is.na(result$cd_nuts3))
-  message(sprintf("  NIS 2025 -> NUTS 2021: %d/%d communes with cd_nuts3 (%d ambiguous)",
+  message(sprintf("  NIS 2025 -> NUTS 2021: %d/%d municipalities with a NUTS_DISTRICT_2021 code (%d ambiguous)",
                   n_nuts3, nrow(result), nrow(ambig)))
 
   result

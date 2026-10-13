@@ -28,7 +28,7 @@ The package normally runs off the pre-built snapshot in `inst/extdata/*.rds`
 
 - `R/00_config.R` — `CONVERSION_GRAPH_EDGES` (conversion topology),
   `VALID_CLASSIFICATIONS` (derived from edges), NIS code constants,
-  `MASTER_COMMUNE_*` schema, `NUTS2021_TO_NUTS2027`.
+  `MASTER_MUNICIPALITY_*` schema, `SCHEMA_V1_TO_V2`, `NUTS2021_TO_NUTS2027`.
 - `R/01_load_data.R`, `R/02_build_master_table.R` — load/parse raw files and
   build the unified `municipalities` / `postal` / `nis_changes` tables (version
   discriminator columns `version` / `version_from` / `version_to`), plus the
@@ -68,7 +68,7 @@ lock-step — `tests/testthat/test-route-parity.R` guards that.
 
 ## Conventions
 
-- Develop on the work branch `claude/vigilant-carson-zbTsd` (or a branch off it).
+- Develop on a feature branch (schema v2 work: `claude/schema-v2`).
   Never push to `main`. Commit/push only when asked.
 - Errors/warnings use typed condition classes (`rcl_*`); keep new ones consistent.
 - Internal helpers are unexported; use `#' @noRd` or plain comments so roxygen
