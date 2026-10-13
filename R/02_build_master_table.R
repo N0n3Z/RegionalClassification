@@ -205,32 +205,37 @@ build_master_table <- function(raw_data) {
                                               lang_col = "Langue")
     comm_before2019 <- build_nis_commune_table(nis_before2019, version = VER_BEFORE_2019)
 
-    nuts_nis_pre2019 <- parse_nuts_nis_conversion(
-      raw_data$CONVERSION_NIS2019_NUTS2021,
-      reference_date = as.Date("2018-12-31")
-    )
-    nuts_comm_pre2019 <- nuts_nis_pre2019$communes[, .(cd_refnis, cd_nuts_lau, cd_nuts3)]
-    nuts_arr_pre2019  <- nuts_nis_pre2019$arrondissements[, .(cd_nuts3 = cd_nuts,
-                                                               cd_nuts2 = cd_nuts_parent)]
-    nuts_prov_pre2019 <- nuts_nis_pre2019$provinces[, .(cd_nuts2 = cd_nuts,
-                                                         cd_nuts1 = cd_nuts_parent)]
-
-    nuts_comm_pre2019 <- merge(nuts_comm_pre2019, nuts_arr_pre2019, by = "cd_nuts3", all.x = TRUE)
-    nuts_comm_pre2019 <- merge(nuts_comm_pre2019, nuts_prov_pre2019, by = "cd_nuts2", all.x = TRUE)
-    nuts_comm_pre2019[, cd_nuts0 := "BE"]
-    nuts_comm_pre2019[, cd_nis_country := 1000L]
-
-    master_before2019 <- merge(comm_before2019, nuts_comm_pre2019,
-                               by.x = "cd_commune", by.y = "cd_refnis",
-                               all.x = TRUE)
-    master_before2019 <- merge(master_before2019, internal_map, by = "cd_nuts3", all.x = TRUE)
-    master_before2019 <- merge(master_before2019, nuts3_ref_2021, by = "cd_nuts3", all.x = TRUE)
-
-    message(sprintf("  NIS BEFORE_2019: %d communes", nrow(comm_before2019)))
-
     if (!is.null(raw_data$REFNIS_CHANGE_BEFORE2019)) {
       nis_change_before2019 <- parse_refnis_change_before2019(raw_data$REFNIS_CHANGE_BEFORE2019)
     }
+
+    # NUTS 2021 / NBB columns are inherited from the NIS 2019 commune each
+    # BEFORE_2019 commune maps to (N:1 via REFNIS_CHANGE_BEFORE2019, identity
+    # otherwise). Reading CONVERSION_NIS2019_NUTS2021 at a 2018 reference date
+    # instead returned the NUTS 2016 codes (BE221, BE321, ...) and the pre-2019
+    # LAU codes for the 87 Hainaut/Limburg communes recoded in 2019.
+    before_to_2019 <- data.table(cd_commune = comm_before2019$cd_commune)
+    before_to_2019[, cd_commune_2019 := cd_commune]
+    if (!is.null(nis_change_before2019))
+      before_to_2019[nis_change_before2019, on = .(cd_commune = cd_refnis_before2019),
+                     cd_commune_2019 := i.cd_refnis_2019]
+    inherited_cols <- c("cd_nuts_lau", "cd_nuts3", "cd_nuts2", "cd_nuts1", "cd_nuts0",
+                        "cd_nis_country", "cd_arr_internal", "tx_nuts3_fr", "tx_nuts3_nl")
+    nuts_from_2019 <- master_2019[, c("cd_commune", intersect(inherited_cols, names(master_2019))),
+                                  with = FALSE]
+    setnames(nuts_from_2019, "cd_commune", "cd_commune_2019")
+    before_to_2019 <- merge(before_to_2019, nuts_from_2019, by = "cd_commune_2019", all.x = TRUE)
+    unmapped <- before_to_2019[is.na(cd_nuts3), cd_commune]
+    if (length(unmapped) > 0L)
+      warn(sprintf(paste0("%d NIS BEFORE_2019 commune(s) have no NIS 2019 successor with a ",
+                          "NUTS_DISTRICT_2021 code; NUTS columns set to NA for: %s"),
+                   length(unmapped), paste(sort(unmapped), collapse = ", ")),
+           class = "rcl_ambiguous_backfill")
+    before_to_2019[, cd_commune_2019 := NULL]
+
+    master_before2019 <- merge(comm_before2019, before_to_2019, by = "cd_commune", all.x = TRUE)
+
+    message(sprintf("  NIS BEFORE_2019: %d communes", nrow(comm_before2019)))
   }
 
   # --- 6. Postal codes ---

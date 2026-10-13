@@ -77,6 +77,20 @@
   `save_master_tables()`. Passing an in-memory v1 `master_data` object to the
   conversion functions aborts with the same class.
 
+## Bug fixes
+
+* **NIS BEFORE_2019 communes now carry NUTS 2021 codes.** Their NUTS columns
+  were read from the NIS -> NUTS file at a 2018 reference date, which returned
+  the NUTS 2016 codes. For the 87 Hainaut and Limburg communes recoded in 2019,
+  `NIS_MUNICIPALITY_BEFORE_2019 -> NUTS_DISTRICT_2021` returned codes that do
+  not exist in NUTS 2021 (`BE221`, `BE222`, `BE321`-`BE327`; e.g. Mouscron
+  `54007` gave `BE324` instead of `BE328`), and `-> NBB_DISTRICT_2021` returned
+  `NA`. The 26 communes merged in 2019 also had their pre-2019 code as
+  `code_nuts_municipality_2021` (Puurs `12030` instead of `12041`). BEFORE_2019
+  communes now inherit the NUTS 2021 and NBB codes of their NIS 2019 successor.
+  A v1 snapshot migrated by `load_master_data()` keeps the old values; rebuild
+  it with `rebuild_master_data()`.
+
 
 # nbbbenuts 1.2.0
 
