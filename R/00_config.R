@@ -376,7 +376,7 @@ CONVERSION_GRAPH_EDGES <- list(
   # Intended for AGGREGATE NUTS3 2021 data only; if you still have the underlying
   # communes, convert those directly to NUTS3 2027 (exact, no weights).
   list(from = CLS_NUTS_DISTRICT_2021, to = CLS_NUTS_DISTRICT_2027,
-       relation = "1:N", via = "derived",
+       relation = "M:N", via = "derived",
        no_reverse = TRUE,
        ambiguous_codes = c("BE211", "BE223", "BE234"),
        coverage = "44/44",
@@ -431,7 +431,7 @@ CONVERSION_GRAPH_EDGES <- list(
   # (one per distinct constituent NUTS3); weights must be registered separately via
   # register_split_weights().
   list(from = CLS_NIS_MUNICIPALITY_2025, to = CLS_NUTS_DISTRICT_2021,
-       relation = "1:N", via = "derived",
+       relation = "M:N", via = "derived",
        no_reverse = TRUE,
        ambiguous_codes = c(46029L, 46030L, 71072L),
        coverage = "562/565 (99.5%)",
@@ -453,10 +453,20 @@ CONVERSION_GRAPH_EDGES <- list(
   # that silently gives NA for fused communes instead of their 2019 constituents.
   # Users who need LAU codes for 2025 communes should convert via NIS 2019 and
   # filter for unchanged communes.
+  # Declared N:1 before 3.0.0, which made NIS_MUNICIPALITY_2025 -> NUTS_PROVINCE_2021 /
+  # NUTS_REGION_2021 route "simply" through it and silently drop the 3 fused communes
+  # below (no NBB district) instead of flagging them as ambiguous.
   list(from = CLS_NIS_MUNICIPALITY_2025, to = CLS_NBB_DISTRICT_2021,
-       relation = "N:1", via = "derived",
-       notes = paste0("code_nbb_district_2021 backfilled onto 2025 master from constituent 2019 communes. ",
-                      "Same uniqueness logic as NUTS_DISTRICT_2021 backfill."))
+       relation = "M:N", via = "derived",
+       no_reverse = TRUE,
+       ambiguous_codes = c(46029L, 46030L, 71072L),
+       coverage = "565/565",
+       notes = paste0(
+         "3 NIS 2025 communes (46029, 46030, 71072) fuse localities from different ",
+         "NBB districts; each maps to one NBB district per constituent 2019 commune. ",
+         "Same rule as NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021. Use allow_ambiguous = TRUE. ",
+         "no_reverse = TRUE: the reverse is a de-aggregation the executor never materialises."
+       ))
 )
 
 # --- Valid classification identifiers ---

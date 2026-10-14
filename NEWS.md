@@ -23,6 +23,29 @@
   `load_master_data()`, and `save_master_tables()` only writes the two long
   tables.
 
+* **`NIS_MUNICIPALITY_2025 -> NBB_DISTRICT_2021` is now ambiguous (`M:N`).**
+  The 3 NIS 2025 communes that fuse localities from different NBB districts
+  (46029 Lokeren, 46030 Beveren-Kruibeke-Zwijndrecht, 71072 Hasselt) used to
+  have no NBB district at all (`code_to = NA`); they now get one link per
+  constituent district (`44`+`46`, `11`+`46`, `71`+`73`), as they already did
+  towards `NUTS_DISTRICT_2021`. The conversion therefore requires
+  `allow_ambiguous = TRUE`, like `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021`.
+
+## Bug fixes
+
+* `NIS_MUNICIPALITY_2025 -> NUTS_PROVINCE_2021` silently returned no row for
+  the 3 communes above: it was routed through the NBB edge, wrongly declared
+  `N:1`. It now returns their provinces (Lokeren `BE23`, Beveren-Kruibeke-
+  Zwijndrecht `BE21` + `BE23`, Hasselt `BE22`) and requires
+  `allow_ambiguous = TRUE`.
+* `crosswalks$relation` is filled for every pair: the shortcut pairs that are
+  not graph edges (e.g. `NIS_MUNICIPALITY_2019 -> NUTS_PROVINCE_2021`) carried
+  `NA`; they now carry their observed cardinality. The graph edges
+  `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` and
+  `NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027` are declared `M:N` instead of
+  `1:N` (several sources also share a target); both were already ambiguous,
+  so conversion results are unchanged.
+
 ## New features
 
 * **`wide_view(master_data, table, version)`** rebuilds a wide table from the

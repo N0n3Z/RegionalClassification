@@ -324,13 +324,32 @@ test_that("NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021: ambiguous fusions return
   expect_true(all(!is.na(result$code_to)))
 })
 
-test_that("NIS_MUNICIPALITY_2025 -> NBB_DISTRICT_2021 is a simple conversion", {
+test_that("NIS_MUNICIPALITY_2025 -> NBB_DISTRICT_2021 is ambiguous for the 3 cross-district fusions", {
   r <- check_conversion_path(CLS_NIS_MUNICIPALITY_2025, CLS_NBB_DISTRICT_2021)
-  expect_true(r[["is_simple"]])
-  result <- convert_codes(c(21001L, 11002L), CLS_NIS_MUNICIPALITY_2025, CLS_NBB_DISTRICT_2021,
-                          master_data)
-  expect_equal(nrow(result), 2L)
-  expect_true(all(!is.na(result$code_to)))
+  expect_false(r[["is_simple"]])
+  expect_error(convert_codes(c(21001L, 11002L), CLS_NIS_MUNICIPALITY_2025,
+                             CLS_NBB_DISTRICT_2021, master_data),
+               class = "rcl_ambiguous_conversion")
+  result <- convert_codes(c(21001L, 11002L, 46029L, 46030L, 71072L), CLS_NIS_MUNICIPALITY_2025,
+                          CLS_NBB_DISTRICT_2021, master_data, allow_ambiguous = TRUE)
+  expect_false(anyNA(result$code_to))
+  got <- result[, paste(sort(code_to), collapse = "+"), by = code_from]
+  # Lokeren (+Moerbeke, 44), Beveren-Kruibeke-Zwijndrecht (+Zwijndrecht, 11), Hasselt (+Kortessem, 73)
+  expect_identical(got[match(c("21001", "11002", "46029", "46030", "71072"), code_from), V1],
+                   c("21", "11", "44+46", "11+46", "71+73"))
+})
+
+test_that("NIS_MUNICIPALITY_2025 -> NUTS 2021 provinces keeps the cross-district fusions", {
+  # Before 3.0.0 this routed through a mislabelled N:1 NBB edge and silently
+  # returned nothing for 46029 / 46030 / 71072.
+  result <- suppressWarnings(convert_codes(c("46029", "46030", "71072"), CLS_NIS_MUNICIPALITY_2025,
+                                           CLS_NUTS_PROVINCE_2021, master_data, allow_ambiguous = TRUE))
+  got <- result[, paste(sort(unique(code_to)), collapse = "+"), by = code_from]
+  expect_identical(got[match(c("46029", "46030", "71072"), code_from), V1],
+                   c("BE23", "BE21+BE23", "BE22"))
+  region <- convert_codes(c("46029", "46030", "71072"), CLS_NIS_MUNICIPALITY_2025,
+                          CLS_NUTS_REGION_2021, master_data)
+  expect_identical(region$code_to, rep("BE2", 3L))
 })
 
 test_that("NIS_MUNICIPALITY_2025 -> NUTS_PROVINCE_2021 is reachable (multi-hop via NUTS_DISTRICT_2021)", {

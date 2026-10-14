@@ -696,13 +696,26 @@ build_crosswalks <- function(municipalities, postal, nis_changes) {
   })
 
   # --- Low-level assembler ---
+  # Observed cardinality of a set of links (code_to = NA rows ignored). Used for
+  # the shortcut pairs (e.g. NIS_MUNICIPALITY_2019 -> NUTS_PROVINCE_2021) that
+  # are not graph edges, so every crosswalk row carries a relation.
+  .observed_rel <- function(from_codes, to_codes) {
+    keep       <- !is.na(to_codes)
+    multi_to   <- anyDuplicated(from_codes[keep]) > 0L
+    multi_from <- anyDuplicated(to_codes[keep]) > 0L
+    if (multi_to && multi_from) "M:N" else if (multi_to) "1:N"
+    else if (multi_from) "N:1" else "1:1"
+  }
+
   .xw <- function(from_id, to_id, from_codes, to_codes, nature = NA_character_) {
+    rel <- .rel(from_id, to_id)
+    if (is.na(rel)) rel <- .observed_rel(from_codes, to_codes)
     data.table(
       classification_from = from_id,
       classification_to   = to_id,
       code_from = as.character(from_codes),
       code_to   = as.character(to_codes),
-      relation  = .rel(from_id, to_id),
+      relation  = rel,
       nature    = as.character(nature)
     )
   }
@@ -808,27 +821,27 @@ build_crosswalks <- function(municipalities, postal, nis_changes) {
     "NIS_MUNICIPALITY_2025", "NIS_PROVINCE_2025",       m25, "code_nis_municipality", "code_nis_province")
   xw[["NIS_MUNICIPALITY_2025__NIS_REGION_2025"]] <- .pairs_xw(
     "NIS_MUNICIPALITY_2025", "NIS_REGION_2025",         m25, "code_nis_municipality", "code_nis_region")
-  xw[["NIS_MUNICIPALITY_2025__NBB_DISTRICT_2021"]] <- .pairs_xw(
-    "NIS_MUNICIPALITY_2025", "NBB_DISTRICT_2021", m25, "code_nis_municipality", "code_nbb_district_2021")
-
-  # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (1:N): 564 direct + 3 fusions via nis_changes
-  direct_25_n3  <- unique(m25[!is.na(code_nuts_district_2021), .(code_nis_municipality, code_nuts_district_2021)])
-  na25_communes <- m25[is.na(code_nuts_district_2021), unique(code_nis_municipality)]
-  if (length(na25_communes) > 0L) {
-    ch_for_na  <- nis_changes[version_from == VER_2019 & code_to %in% na25_communes,
-                               .(code_from, code_to)]
-    lkp19_n3   <- unique(m19[, .(code_nis_municipality, code_nuts_district_2021)])
-    expanded25 <- merge(ch_for_na, lkp19_n3,
-                        by.x = "code_from", by.y = "code_nis_municipality", all.x = TRUE)
-    expanded25 <- unique(expanded25[!is.na(code_nuts_district_2021),
-                                    .(code_nis_municipality = code_to, code_nuts_district_2021)])
-    full_25_n3 <- rbindlist(list(direct_25_n3, expanded25), use.names = TRUE)
-  } else {
-    full_25_n3 <- direct_25_n3
+  # NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 / NBB_DISTRICT_2021 (M:N): the
+  # 2025 master carries the code when all constituent 2019 communes agree; the
+  # 3 cross-district fusions (NA there) get one link per constituent district.
+  .expand_25 <- function(col) {
+    direct <- unique(m25[!is.na(get(col)), .(code_nis_municipality, target = get(col))])
+    na25   <- m25[is.na(get(col)), unique(code_nis_municipality)]
+    if (length(na25) == 0L) return(direct)
+    ch     <- nis_changes[version_from == VER_2019 & code_to %in% na25, .(code_from, code_to)]
+    lkp19  <- unique(m19[, .(code_nis_municipality, target = get(col))])
+    exp25  <- merge(ch, lkp19, by.x = "code_from", by.y = "code_nis_municipality", all.x = TRUE)
+    exp25  <- unique(exp25[!is.na(target), .(code_nis_municipality = code_to, target)])
+    rbindlist(list(direct, exp25), use.names = TRUE)
   }
+  full_25_n3 <- .expand_25("code_nuts_district_2021")
   xw[["NIS_MUNICIPALITY_2025__NUTS_DISTRICT_2021"]] <- .xw(
     "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021",
-    full_25_n3$code_nis_municipality, full_25_n3$code_nuts_district_2021)
+    full_25_n3$code_nis_municipality, full_25_n3$target)
+  full_25_nbb <- .expand_25("code_nbb_district_2021")
+  xw[["NIS_MUNICIPALITY_2025__NBB_DISTRICT_2021"]] <- .xw(
+    "NIS_MUNICIPALITY_2025", "NBB_DISTRICT_2021",
+    full_25_nbb$code_nis_municipality, full_25_nbb$target)
 
   # NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019 (reverse temporal, 1:N for fused
   # communes). Orphaned 2025 communes (no 2019 lineage, audit C4) get an explicit
