@@ -115,8 +115,8 @@ Cardinalites :
 |-------------|---------------|---------|
 | `1:1` | bijection exacte | `NIS_MUNICIPALITY_2019 -> NUTS_MUNICIPALITY_2021` |
 | `N:1` | agregation (N sources -> 1 cible) | `NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021` |
-| `1:N` | eclatement (1 source -> N cibles) | `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` pour 3 fusions cross-NUTS3 |
-| `M:N` | chevauchement complet | (aucune arete M:N actuellement ; cardinalite supportee par le framework) |
+| `1:N` | eclatement (1 source -> N cibles, chaque cible a une seule source) | `NIS_DISTRICT_2019 -> NUTS_DISTRICT_2021` (Verviers) |
+| `M:N` | chevauchement (des sources eclatent et des cibles sont partagees) | `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` et `-> NBB_DISTRICT_2021` (3 fusions transfrontalieres), `NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027` |
 
 ### 3.2 Aretes inverses
 
@@ -124,8 +124,8 @@ Chaque arete est automatiquement inversee au chargement du graphe (sauf `no_reve
 avec la cardinalite symetrique (`1:1` reste `1:1`, `N:1` devient `1:N`, etc.).
 
 `no_reverse = TRUE` protege les aretes dont l'inversion serait semantiquement incorrecte.
-Exemple : l'inverse de `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` (`1:N`) est `1:N` depuis la
-perspective NUTS3 (beaucoup de communes partagent un NUTS3), pas `N:1`.
+Exemple : l'inverse de `NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021` (`M:N`) serait une
+desagregation (un NUTS3 vers ses communes), que l'executeur ne materialise jamais.
 
 ### 3.3 Recherche de chemin (BFS)
 
@@ -145,7 +145,7 @@ que pour les aretes primitives).
 
 ### 3.5 Conversions notables
 
-- **`NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027`** : **lien direct `1:N`** (sens 2021->2027 uniquement),
+- **`NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027`** : **lien direct `M:N`** (sens 2021->2027 uniquement),
   derive au build en chainant par les communes. La plupart des NUTS3 2021 -> 1 seul NUTS3 2027 ;
   quelques-uns (ceux contenant les 3 communes ayant change de province entre 2019 et 2025, ex.
   `BE211 -> {BE261, BE276}`) -> 2 cibles, d'ou `allow_ambiguous = TRUE` + splitting pondere

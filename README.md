@@ -69,7 +69,7 @@ convert_codes(c("21001", "11056"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_20
 ```r
 # Is a path simple (N:1 / 1:1) or ambiguous?
 check_conversion_path("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
-check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # 1:N
+check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")   # M:N
 check_conversion_path("POSTAL", "NIS_REGION_2019")
 
 # With master_data, two data-aware fields are added: `executable` and
@@ -89,7 +89,7 @@ list_available_conversions()
 convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
               allow_ambiguous = TRUE)
 
-# NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 is 1:N: 3 communes (46029, 46030,
+# NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (and -> NBB_DISTRICT_2021) is M:N: 3 communes (46029, 46030,
 # 71072) fuse localities from different NUTS3 regions (coverage 562/565).
 convert_codes(c("21001", "46029"), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
               allow_ambiguous = TRUE)
@@ -219,7 +219,7 @@ NUTS 2027 codes implement EU Regulation 2026/195 (applicable from 1 January 2027
 | BE22x (partial) → **BE22x / BE26x** | Vlaams-Brabant |
 | BE23x → **BE27x** | Oost-Vlaanderen |
 
-> **Note:** A direct **forward** `NUTS_DISTRICT_2021 → NUTS_DISTRICT_2027` edge exists (`1:N`), derived at build time, for **aggregate** NUTS3 2021 data — most codes map 1:1, but a few map to two 2027 codes (three communes changed province between 2019 and 2025), so it needs `allow_ambiguous = TRUE` and weighted splitting. There is **no reverse** `2027 → 2021` conversion. If you still have the underlying communes, convert them directly (exact, no weights): `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`, or route `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
+> **Note:** A direct **forward** `NUTS_DISTRICT_2021 → NUTS_DISTRICT_2027` edge exists (`M:N`), derived at build time, for **aggregate** NUTS3 2021 data — most codes map 1:1, but a few map to two 2027 codes (three communes changed province between 2019 and 2025), so it needs `allow_ambiguous = TRUE` and weighted splitting. There is **no reverse** `2027 → 2021` conversion. If you still have the underlying communes, convert them directly (exact, no weights): `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`, or route `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
 
 ## All Functions
 

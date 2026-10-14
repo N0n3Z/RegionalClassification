@@ -53,7 +53,7 @@ test_that("communes 2019 has at least 500 records (Belgian communes)", {
 # -- Test L8: toutes les regions belges sont presentes -------------------------
 test_that("communes 2019 contains all three Belgian regions", {
   regions <- unique(wide_md$municipalities[version == VER_2019, code_nis_region])
-  expect_true(2000L %in% regions || "2000" %in% as.character(regions))  # Wallonie
-  expect_true(3000L %in% regions || "3000" %in% as.character(regions))  # Flandre
+  expect_true(2000L %in% regions || "2000" %in% as.character(regions))  # Flandre
+  expect_true(3000L %in% regions || "3000" %in% as.character(regions))  # Wallonie
   expect_true(4000L %in% regions || "4000" %in% as.character(regions))  # Bruxelles
 })

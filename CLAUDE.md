@@ -31,6 +31,12 @@ the only persisted tables and the only ones runtime code reads (`.entities_of()`
 them from the long model and `test-wide-view.R` checks it against
 `fixtures/golden_wide.rds`. Tests read wide tables through `wide_md` (helper).
 
+**Tests that are not regression snapshots:** `test-invariants.R` (structural
+properties checked over every crosswalk pair -- add an entry to
+`ALLOWED_NA_LINKS` only with a reason) and `test-references.R` (facts from the
+official Statbel / Eurostat / bpost lists, never from package output). When a
+golden fixture changes, these say whether the new data is right.
+
 ## Architecture (where things live)
 
 - `R/00_config.R` — `CONVERSION_GRAPH_EDGES` (conversion topology),
