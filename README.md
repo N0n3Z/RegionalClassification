@@ -126,6 +126,13 @@ convert_dataset(dt, code_col = "commune", to = "NUTS_DISTRICT_2021", master_data
 
 # Coverage report / auto-detect the classification of a column
 diagnose_classification(dt, "commune", master_data)
+
+# A column mixing NIS versions (mostly 2019, a few 2025 / BEFORE_2019 codes):
+# one column per version (2025, 2019, BEFORE_2019), the first non-missing value,
+# and the flags conflict / no_match / ambiguous
+mixed <- data.table(commune = c("21004", "46029", "54007", "99999"))
+res <- convert_multi_version(mixed, "commune", "NIS_REGION_2019", master_data)
+res[conflict | no_match]
 ```
 
 **Longitudinal rebasing** — put a multi-version panel onto one target version.
@@ -228,6 +235,7 @@ NUTS 2027 codes implement EU Regulation 2026/195 (applicable from 1 January 2027
 | `load_master_data()` | Load the pre-built reference snapshot |
 | `convert_codes(codes, from, to, master_data)` | Convert codes between classifications |
 | `convert_dataset(dt, code_col, to, master_data)` | Convert a column in a dataset |
+| `convert_multi_version(dt, code_col, to, master_data, from)` | Convert a column that mixes several versions (one column per version + conflict / no_match / ambiguous flags) |
 | `split_ambiguous(dt, code_col, ...)` | Weighted split for 1:N / M:N conversions |
 | `split_weights_template(from, to, master_data, variable, weight_year)` | Build a weights template (equal, shipped population, or custom) |
 | `rebase_series(panel, code_col, ...)` | Rebase a time series across NIS versions |
@@ -280,6 +288,7 @@ nbbbenuts/
 │   ├── 05_conversion_check.R    # BFS path checker, conversion matrix
 │   ├── 06_visualize.R           # Visualization utilities
 │   ├── 07_dataset_convert.R     # convert_dataset()
+│   ├── 07_multi_version.R      # convert_multi_version()
 │   ├── 07_detect.R              # Auto-detection of classification from codes
 │   ├── 07_diagnose.R            # Diagnostics
 │   ├── 07_split_ambiguous.R     # Weighted M:N split engine + standard weights

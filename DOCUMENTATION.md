@@ -316,6 +316,33 @@ convert_dataset(dt, "commune", "NUTS_DISTRICT_2021", master_data, from = "NIS_MU
 # 2:   11002   530000                    BE211
 ```
 
+#### `convert_multi_version(dt, code_col, to, master_data, from = <NIS communes 2025, 2019, BEFORE_2019>, target_col = NULL, sep = "+")`
+
+Pour une colonne qui melange plusieurs versions (ex. codes NIS surtout 2019, avec quelques
+codes 2025 ou BEFORE_2019). Chaque code est converti vers `to` une fois par version de
+`from`, independamment ; un code inexistant dans une version donne `NA` pour cette version.
+Colonnes ajoutees (le dataset d'entree n'est pas modifie, l'ordre des lignes est conserve) :
+
+- `<target_col>_from_<version>` : une colonne par version de `from` ;
+- `target_col` (par defaut `code_<to en minuscules>`) : premiere valeur non vide dans l'ordre
+  de `from` (la plus recente d'abord par defaut) ;
+- `conflict` : les versions donnent des valeurs differentes ;
+- `no_match` : aucune version ne connait le code (ou code manquant) ;
+- `ambiguous` : une conversion a plusieurs candidats, joints par `sep` (`"BE234+BE236"`).
+
+Une version de `from` sans route vers `to` arrete la fonction (`rcl_no_route`) avant toute
+conversion. Pas de version connue par periode : sinon, utiliser `rebase_series()`.
+
+```r
+mixed <- data.table(commune = c("21004", "46029", "54007", "99999"))
+res <- convert_multi_version(mixed, "commune", "NIS_REGION_2019", master_data)
+#    commune ..._from_2025 ..._from_2019 ..._from_before_2019 code_nis_region_2019 conflict no_match
+# 1:   21004          4000          4000                 4000                 4000    FALSE    FALSE
+# 2:   46029          2000          <NA>                 <NA>                 2000    FALSE    FALSE
+# 3:   54007          <NA>          <NA>                 3000                 3000    FALSE    FALSE
+# 4:   99999          <NA>          <NA>                 <NA>                 <NA>    FALSE     TRUE
+```
+
 ---
 
 ### 6.4 Inspection des chemins

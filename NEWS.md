@@ -48,6 +48,16 @@
 
 ## New features
 
+* **`convert_multi_version(dt, code_col, to, master_data, from)`** converts a
+  code column that mixes several versions (e.g. NIS municipality codes mostly
+  2019 with some 2025 or BEFORE_2019 codes). Each code is converted once per
+  version of `from` (default: NIS municipalities 2025, 2019, BEFORE_2019);
+  the result has one column per version, a final column with the first
+  non-missing value in the order of `from`, and three logical flags:
+  `conflict` (the versions disagree), `no_match` (no version knows the code)
+  and `ambiguous` (several candidates, joined with `sep`, e.g.
+  `"BE234+BE236"`). The input is not modified.
+
 * **`wide_view(master_data, table, version)`** rebuilds a wide table from the
   long model. `"municipalities"` and `"nis_changes"` are identical, cell for
   cell, to the 2.x tables; `"postal"` has the same rows and codes, and takes
