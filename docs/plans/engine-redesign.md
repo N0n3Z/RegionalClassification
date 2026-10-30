@@ -167,23 +167,30 @@ servant aux poids. Mesures sur `data/raw/` (2026-10-30) :
 ferait ~13 000 lignes ; l'équivalence avec le moteur actuel a été vérifiée sur cet atome
 (section 2), elle le sera sur les codes postaux à l'étape 1.
 
-**Deux colonnes au lieu de `nature`** :
-- `change` (temporel, depuis `lineage`) : `UNCHANGED` si a et b ont exactement les mêmes
-  atomes, sinon le type publié par Statbel (`FUSION`, `CHANGE_DSTR`, `CHANGE_PROV`), ou
-  `REDRAWN` pour un niveau agrégé dont le territoire change (district 46000) ;
-- `perimeter` : `IDENTITY` (mêmes atomes), `NESTING` (a ⊂ b), `OVERLAP` (a déborde sur
-  plusieurs cibles).
+**`nature` est conservée telle quelle** (mêmes valeurs qu'aujourd'hui, recalculées depuis
+`lineage` et les atomes). Le mélange de deux axes (changement temporel / périmètre) est un
+défaut de conception, mais le scinder casserait le code des utilisateurs : ce n'est pas
+nécessaire, donc on ne le fait pas. Une description plus fine pourra être proposée plus tard
+par une **nouvelle** fonction, sans toucher à `convert_codes()`.
 
 ---
 
 ## 5. Moteur et API
 
-- `convert_codes(codes, from, to, md, allow_ambiguous)` : **signature inchangée**. Calcul :
-  atomes des codes demandés → codes cibles ; blocage si un code demandé a plusieurs cibles
-  et `allow_ambiguous = FALSE` (même règle que `effectively_simple` aujourd'hui).
-- `check_conversion_path()` : décrit la paire (cardinalité calculée, nombre de codes
-  ambigus, périmètre) au lieu d'un chemin. Le champ `path` disparaît ou devient
-  `c(from, to)` (changement d'API à documenter).
+**Contrainte (utilisateur, 2026-10-30) : le package a déjà des utilisateurs ; les fonctions,
+leurs arguments et leurs sorties ne changent que si c'est nécessaire.** La refonte est donc
+**interne** : aucune fonction exportée ne change de nom, d'arguments ni de colonnes de
+sortie, et toutes les conversions actuelles (291 paires : NIS ↔ NIS entre versions,
+NIS ↔ NUTS, NUTS 2021 ↔ 2027, codes postaux, NBB) donnent les mêmes codes. Toute exception
+est inscrite dans `docs/plans/user-facing-changes.md`.
+
+- `convert_codes(codes, from, to, md, allow_ambiguous)` : **inchangée** (signature, colonnes
+  `code_from`, `code_to`, `nature`, valeurs de `nature`). Calcul : atomes des codes demandés
+  → codes cibles ; blocage si un code demandé a plusieurs cibles et `allow_ambiguous =
+  FALSE` (même règle que `effectively_simple` aujourd'hui).
+- `check_conversion_path()` : **mêmes champs** ; `path`, `relations` et
+  `perimeter_relations` restent calculés sur le graphe déclaré (gardé comme documentation),
+  `is_simple` / `effectively_simple` / `executable` sur les données.
 - Graphe : `list_available_conversions()`, `get_conversion_matrix()` et les
   visualisations sont **dérivés des données** (cardinalité de chaque paire). Les arêtes
   déclarées deviennent de la **documentation vérifiée** : un test exige qu'elles
@@ -209,16 +216,20 @@ Le filet de sécurité existe déjà : l'invariant de précision et la photo « 
 | 1 | Construire `membership` / `lineage` au build, **en parallèle** de `crosswalks` (rien ne change pour l'utilisateur) | test : jointure par atomes = `crosswalks` sur les 197 paires |
 | 2 | Nouveau moteur derrière une option interne ; comparer les 291 paires | résultats identiques (codes) ; écarts de `nature` documentés |
 | 3 | Basculer `convert_codes()` sur le nouveau moteur ; `crosswalks` devient une vue | suite de tests verte, CI verte |
-| 4 | `nature` → `change` + `perimeter` ; `check_conversion_path()` simplifié | **changement d'API** → version 4.0.0, NEWS avec table de correspondance |
-| 5 | Supprimer le graphe déclaré du moteur (gardé comme documentation testée), les raccourcis, `.xw_path`, `CLASSIFICATION_REGISTRY` | `R CMD check` OK, code net en baisse |
+| 4 | *(abandonnée : scinder `nature` et simplifier `check_conversion_path()` casserait l'API sans nécessité)* | — |
+| 5 | Retirer du moteur les raccourcis et `.xw_path` ; le graphe déclaré reste (documentation testée, alimente `check_conversion_path()`) ; `CLASSIFICATION_REGISTRY` supprimé seulement s'il n'est pas exporté ni documenté pour les utilisateurs | `R CMD check` OK, aucune ligne ajoutée à `user-facing-changes.md` |
 | 6 | Poids par code postal (`atom_measures`) : remplace la population communale ; débloque Oudsbergen et la dé-fusion 2019 → BEFORE_2019 | poids = population livrée sur toutes les paires où les deux coexistent (au prorata des 3 codes approximés) |
 
 Préalable à l'étape 1 : obtenir (ou construire et valider) la correspondance code postal →
 commune BEFORE_2019 pour confirmer H2, et intégrer la population par code postal dans
 `data-raw/` (source, années, licence).
 
-Les étapes 1 à 3 sont **sans changement d'API** et peuvent sortir en 3.x ; l'étape 4 est la
-seule rupture.
+Toutes les étapes sont **sans changement d'API** et peuvent sortir en 3.x. Point de
+vigilance à l'étape 6 : si la population par code postal ne somme pas exactement à la
+population communale livrée, les poids `"population"` changeraient légèrement ; par défaut,
+garder les poids communaux actuels là où ils sont calculables et n'utiliser la population
+par code postal que là où la commune ne suffit pas (Oudsbergen, dé-fusion), ou en option
+explicite — à trancher, et à inscrire dans `user-facing-changes.md` si les valeurs changent.
 
 ---
 
@@ -232,7 +243,7 @@ seule rupture.
 | H2 infirmée pour quelques codes postaux (un code couvrant deux anciennes communes) | repli local : atome = intersection code postal × commune BEFORE_2019 pour ces codes |
 | Approximation H1 (3 codes à cheval) | tracée (`approximated`), documentée ; impact limité aux débords de 1040, 1050 vers Bruxelles et de 1804 vers Zemst |
 | Codes postaux modifiés par bpost | nouvelle version des atomes ; le build vérifie que chaque code de chaque fichier est connu |
-| Utilisateurs de `check_conversion_path()$path` ou de `crosswalks` directement | étape 4 seulement, avec version majeure et table de migration |
+| Utilisateurs lisant `master_data$crosswalks` directement | `crosswalks` reste disponible dans `load_master_data()` (vue calculée, mêmes colonnes) |
 | Perte de l'information « chemin » utile pédagogiquement | `print_conversion_check()` peut toujours expliquer la paire (atomes communs, unités ambiguës) |
 
 ---
@@ -243,5 +254,6 @@ seule rupture.
 2. Atome : codes postaux (recommandé, sous H1 et H2) ou communes BEFORE_2019 ?
 3. Source de la correspondance code postal → commune BEFORE_2019 pour confirmer H2, et
    source / années / licence de la population par code postal ?
-4. Accepter la rupture d'API de l'étape 4 (`nature` scindée, `check_conversion_path()`
-   simplifié) en 4.0.0, ou s'arrêter à l'étape 3 (refonte interne, API inchangée) ?
+4. Poids : population communale actuelle par défaut, population par code postal là où
+   elle est nécessaire (recommandé, résultats inchangés), ou population par code postal
+   partout ?
