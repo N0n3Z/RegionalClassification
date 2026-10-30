@@ -11,17 +11,17 @@ Tools to convert Belgian geographic codes between classification systems (NIS co
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/n0n3z/regionalclassification}
-  \item Report bugs at \url{https://github.com/n0n3z/regionalclassification/issues}
+  \item \url{https://github.com/StatHH/RegionalClassification}
+  \item Report bugs at \url{https://github.com/StatHH/RegionalClassification/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: N0n3Z \email{n0n3z@users.noreply.github.com}
+\strong{Maintainer}: Romain Grailet \email{romain.grailet@nbb.be}
 
 Authors:
 \itemize{
-  \item N0n3Z \email{n0n3z@users.noreply.github.com}
+  \item Romain Grailet \email{romain.grailet@nbb.be}
 }
 
 }

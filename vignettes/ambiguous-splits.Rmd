@@ -118,8 +118,8 @@ result_weighted <- split_ambiguous(
 )
 print(result_weighted)
 #    code_nuts_district_2021  masse_sal
-# 1:         BE335  1542600000   (85.7% de 1.8 Mrd)
-# 2:         BE336   257400000   (14.3% de 1.8 Mrd)
+# 1:         BE335  1080000000   (60 % de 1.8 Mrd)
+# 2:         BE336   720000000   (40 % de 1.8 Mrd)
 ```
 
 ### Valeurs de type taux (non-additives)

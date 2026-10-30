@@ -90,23 +90,25 @@ le type de changement :
 
 | Valeur         | Signification |
 |----------------|---------------|
-| `UNCHANGED`    | Le code commune est identique dans les deux versions (553 communes) |
-| `FUSION`       | Plusieurs communes 2019 ont fusionné en une commune 2025 (27 paires) |
+| `UNCHANGED`    | Le code commune est identique dans les deux versions (551 communes) |
+| `FUSION`       | Plusieurs communes 2019 ont fusionné en une commune 2025 (27 communes 2019 -> 14 communes 2025) |
 | `CHANGE_DSTR`  | La commune a changé d'arrondissement entre 2019 et 2025 (2 communes) |
 | `CHANGE_PROV`  | La commune a changé de province entre 2019 et 2025 (1 commune) |
 
 ```{r nis-versions}
-# FUSION : plusieurs communes 2019 -> 1 code 2025 (Beringen)
-convert_codes(c("71002", "71011"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+# FUSION : Hasselt (71022) + Kortessem (73040) -> Hasselt 2025 (71072) ;
+# Kortessem change aussi d'arrondissement (Tongeren -> Hasselt)
+convert_codes(c("71022", "73040"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from code_to      nature
-# 1:     71002   71072      FUSION
-# 2:     71011   71072      FUSION
+# 1:     71022   71072      FUSION
+# 2:     73040   71072 CHANGE_DSTR
 
-# Sens inverse : 1 code 2025 -> plusieurs codes 2019
-convert_codes("71072", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data)
+# Sens inverse : 1 code 2025 -> plusieurs codes 2019 (ambigu)
+convert_codes("71072", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
+              allow_ambiguous = TRUE)
 #    code_from code_to      nature
-# 1:     71072   71002      FUSION
-# 2:     71072   71011      FUSION
+# 1:     71072   73040 CHANGE_DSTR
+# 2:     71072   71022      FUSION
 ```
 
 ### CHANGE_DSTR et CHANGE_PROV
@@ -114,20 +116,23 @@ convert_codes("71072", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_
 Trois communes ont changé de découpage administratif en 2025 :
 
 ```{r change-dstr-prov}
-# CHANGE_DSTR : commune 44045 (Sint-Laureins) passe dans un autre arrondissement
+# CHANGE_DSTR : Moerbeke (44045) passe de l'arr. Gent à l'arr. Sint-Niklaas (Lokeren)
 convert_codes("44045", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from code_to      nature
 # 1:     44045   46029 CHANGE_DSTR
 
-# CHANGE_PROV : commune 11056 (Puurs) change de province
+# CHANGE_PROV : Zwijndrecht (11056) passe d'Anvers à la Flandre orientale
 convert_codes("11056", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from code_to      nature
 # 1:     11056   46030 CHANGE_PROV
 
 # La nature est symétrique sur le sens inverse
-convert_codes("46030", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data)
+convert_codes("46030", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
+              allow_ambiguous = TRUE)
 #    code_from code_to      nature
 # 1:     46030   11056 CHANGE_PROV
+# 2:     46030   46013      FUSION
+# 3:     46030   46003      FUSION
 ```
 
 Ces valeurs sont utiles pour auditer la stabilité longitudinale d'une série
@@ -157,15 +162,15 @@ convert_codes(commune, "NIS_MUNICIPALITY_2019", "NUTS_REGION_2021",             
 convert_codes(commune, "NIS_MUNICIPALITY_2019", "NBB_DISTRICT_2021", master_data)
 ```
 
-### Identifiants abrégés
+### Identifiants
 
-Les noms de classifications acceptent plusieurs alias :
+Les identifiants de classification ne sont pas sensibles à la casse (les anciens
+alias `CP`, `NIS_COM_2019`… ne sont plus acceptés, voir `?classification_reference`) :
 
 ```{r aliases}
 # Ces appels sont équivalents
-convert_codes("1000", "CP",           "NIS_COM_2019", master_data)
-convert_codes("1000", "CODE_POSTAL",  "COMMUNE_2019", master_data)
-convert_codes("1000", "POSTAL",       "NIS_MUNICIPALITY_2019", master_data)
+convert_codes("1000", "postal", "nis_municipality_2019", master_data)
+convert_codes("1000", "POSTAL", "NIS_MUNICIPALITY_2019", master_data)
 ```
 
 ---
@@ -208,11 +213,14 @@ nuts_data <- data.table(
   val  = c(100, 200, 300)
 )
 
-convert_dataset(nuts_data, "nuts", to = "NUTS_DISTRICT_2027", master_data)
+# NUTS3 2021 -> 2027 est ambigu (BE211 -> BE261 + BE276, Zwijndrecht)
+convert_dataset(nuts_data, "nuts", to = "NUTS_DISTRICT_2027", master_data,
+                allow_ambiguous = TRUE)
 #     nuts val code_nuts_district_2027
 # 1: BE100 100                   BE100
 # 2: BE211 200                   BE261
-# 3: BE332 300                   BE332
+# 3: BE211 200                   BE276
+# 4: BE332 300                   BE332
 ```
 
 ### Nom de colonne cible personnalisé
@@ -236,13 +244,14 @@ dt_avec_na <- data.table(
   valeur  = c(100, 200, 300)
 )
 
-# Avertissement pour NA et codes inconnus (comportement par défaut)
+# Avertissement pour NA et codes inconnus (comportement par défaut).
+# `from` est explicite : un code inconnu empêche l'auto-détection.
 convert_dataset(dt_avec_na, "code", to = "NUTS_DISTRICT_2021", master_data,
-                na_action = "warn")
+                from = "NIS_MUNICIPALITY_2019", na_action = "warn")
 
 # Supprimer les lignes NA/inconnues
 convert_dataset(dt_avec_na, "code", to = "NUTS_DISTRICT_2021", master_data,
-                na_action = "drop")
+                from = "NIS_MUNICIPALITY_2019", na_action = "drop")
 ```
 
 ---
@@ -289,14 +298,14 @@ r <- check_conversion_path("NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021")
 # $perimeter_status   "preserving"
 # $straddle_free      TRUE
 
-# Chemin ambigu et enjambant : Verviers (M:N)
+# Chemin ambigu et enjambant : Verviers (1:N)
 r2 <- check_conversion_path("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021")
 # $is_simple          FALSE
 # $perimeter_relations c("overlap")
 # $perimeter_status   "crossing"
 # $straddle_free      FALSE
 
-# Chemin NIS 2025 -> NUTS3 2021 : 1:N (3 fusions enjambent les régions NUTS3)
+# Chemin NIS 2025 -> NUTS3 2021 : M:N (3 fusions enjambent les régions NUTS3)
 r3 <- check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")
 # $perimeter_status   "crossing"
 # $straddle_free      FALSE

@@ -250,7 +250,7 @@ check_conversion_path <- function(from, to, md = NULL) {
 #' Typical results:
 #' \itemize{
 #'   \item \code{NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021}: `TRUE`  (N:1, nesting)
-#'   \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021}: `FALSE` (1:N, fused communes
+#'   \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021}: `FALSE` (M:N, fused communes
 #'     straddle NUTS3 boundaries)
 #'   \item \code{NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025}: `TRUE`  (forward temporal, N:1)
 #'   \item \code{NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019}: `FALSE` (backward temporal, 1:N)
@@ -298,7 +298,7 @@ build_conversion_graph <- function() {
 
     # Add reverse edge with flipped relation, unless no_reverse = TRUE.
     # no_reverse guards cases where the reversed cardinality would be misleading
-    # (e.g. the reverse of NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (1:N) is 1:N from
+    # (e.g. the reverse of NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021 (M:N) is M:N from
     # NUTS3's perspective, not N:1, because many communes share a NUTS3 region).
     if (!isTRUE(edge$no_reverse)) {
       reverse_relation <- switch(edge$relation,

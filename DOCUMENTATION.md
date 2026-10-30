@@ -220,14 +220,18 @@ is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")  # TRU
 | `OVERLAP`      | Conversion non temporelle avec enjambement (1:N ou M:N) | overlap |
 | `NA`           | Chemin multi-saut compose (nature intermediaire non definie) | multi-saut |
 
-**Cas BEFORE_2019 -> 2019** : seules `UNCHANGED` et `FUSION` peuvent apparaitre ;
-15 communes "orphelines" de BEFORE_2019 n'ont pas de correspondant en 2019 (`code_to = NA`).
+**Cas BEFORE_2019 -> 2019 -- comptes exacts** : les 589 communes ont toutes un
+successeur 2019 (aucun `code_to = NA`) :
+- `UNCHANGED` : 563 communes
+- `FUSION` : 15 communes source (fusions de 2019 : Puurs-Sint-Amands, Aalter, Deinze,
+  Lievegem, Kruisem, Oudsbergen, Pelt)
+- `CHANGE_DSTR` : 11 communes (reforme du Hainaut, ex. 54007 Mouscron -> 57096)
 
 **Cas 2019 -> 2025 -- comptes exacts :**
-- `UNCHANGED` : 553 communes
-- `FUSION` : 27 communes source (13 paires de fusions)
-- `CHANGE_DSTR` : 2 communes (44045 -> 46029, 73040 -> 71072)
-- `CHANGE_PROV` : 1 commune (11056 -> 46030)
+- `UNCHANGED` : 551 communes
+- `FUSION` : 27 communes source, fusionnees en 14 communes 2025
+- `CHANGE_DSTR` : 2 communes (44045 Moerbeke -> 46029, 73040 Kortessem -> 71072)
+- `CHANGE_PROV` : 1 commune (11056 Zwijndrecht -> 46030)
 
 **Symetrie temporelle** : la nature est preservee sur le chemin inverse.
 `convert_codes("46030", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", md, allow_ambiguous=TRUE)`
@@ -301,7 +305,7 @@ convert_codes(c("21004", "11002"), "NIS_MUNICIPALITY_2019", "NUTS_DISTRICT_2021"
 # Temporel avec nature
 convert_codes(c("11002", "11007"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 # code_from  code_to  nature
-#     11002    11002  UNCHANGED
+#     11002    11002  FUSION      (Antwerpen absorbe Borsbeek en 2025)
 #     11007    11002  FUSION
 
 # Ambigu -- Verviers

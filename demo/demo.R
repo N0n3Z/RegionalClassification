@@ -8,6 +8,8 @@
 # NOTE (v1.2.0): all geographic codes are CHARACTER strings ("21004", "1000", ...).
 # Integer input is still accepted and converted, but the returned code columns
 # are always character.
+# NOTE (v3.0.0): load_master_data() returns the long model (entities +
+# crosswalks); the former wide tables come from wide_view() (section 14).
 # ==============================================================================
 
 library(nbbbenuts)
@@ -61,19 +63,21 @@ is_perimeter_preserving("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025")  # TRU
 #                          crosses an overlap edge but re-converges to a single
 #                          target per source is "effectively simple")
 r <- check_conversion_path("NIS_DISTRICT_2019", "NUTS_PROVINCE_2021", master_data)
-r$is_simple            # FALSE: the path crosses the 1:N Verviers edge (topological)
-r$effectively_simple   # TRUE : BE335 and BE336 both nest in BE33 -> 1 target
+r$is_simple            # TRUE : NIS district -> NIS province -> NUTS2 (all N:1 / 1:1)
+r$effectively_simple   # TRUE : every topologically simple route is effectively simple
 r$executable           # TRUE
 
 # The full matrix with these two data-aware columns:
-get_conversion_matrix(master_data)[is_simple == FALSE & effectively_simple == TRUE]
-# -> the deterministic aggregations convert_codes() accepts without allow_ambiguous
+mtx <- get_conversion_matrix(master_data)
+mtx[is_simple == FALSE & effectively_simple == TRUE]
+# -> routes that cross an ambiguous edge but re-converge to one target per source
+#    (none left in the shipped data since v3.0.0: they all have a simple path)
 
 # All available conversions with their perimeter semantics
 la <- list_available_conversions()
 # Columns: classification_from, classification_to, relation, perimeter_relation, notes
 la[perimeter_relation == "temporal"]   # conversions between NIS versions
-la[perimeter_relation == "overlap"]    # 1:N (straddling; no M:N edge currently)
+la[perimeter_relation == "overlap"]    # 1:N / M:N (straddling: Verviers, 2025 fusions, ...)
 la[perimeter_relation == "nesting"]    # pure N:1 aggregations
 la[perimeter_relation == "identity"]   # 1:1 correspondences
 
@@ -139,11 +143,11 @@ convert_codes(c("10000", "20001", "20002", "4000"),
 #   CHANGE_DSTR -- commune moved to another district (2 communes)
 #   CHANGE_PROV -- commune moved to another province (1 commune)
 
-# NIS 2019 -> NIS 2025: commune mergers
+# NIS 2019 -> NIS 2025: commune mergers (Antwerp absorbs Borsbeek)
 convert_codes(c("11002", "11007"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
 #    code_from  code_to  nature
-# 1:     11002    11002   UNCHANGED
-# 2:     11007    11002   FUSION   (Borgerhout merged into Antwerp)
+# 1:     11002    11002   FUSION
+# 2:     11007    11002   FUSION   (Borsbeek merged into Antwerp)
 
 # NIS 2019 -> NIS 2025: CHANGE_DSTR (commune 44045 -> different district)
 convert_codes("44045", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
@@ -159,14 +163,16 @@ convert_codes("11056", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_
 convert_codes("11002", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
               allow_ambiguous = TRUE)
 #    code_from  code_to  nature
-# 1:     11002    11002   UNCHANGED
+# 1:     11002    11002   FUSION
 # 2:     11002    11007   FUSION
 
 # The nature is symmetric on the reverse path (CHANGE_PROV preserved)
 convert_codes("46030", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
               allow_ambiguous = TRUE)
 #    code_from  code_to       nature
-# ...           11056   CHANGE_PROV   (the matching row)
+# 1:     46030    11056  CHANGE_PROV   (Zwijndrecht)
+# 2:     46030    46013       FUSION   (Kruibeke)
+# 3:     46030    46003       FUSION   (Beveren)
 
 # NIS BEFORE_2019 -> NIS 2019
 convert_codes(c("55022", "56011"), "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019",
@@ -182,7 +188,7 @@ convert_codes(
 # 11002 -> BE261  (Antwerp: BE211 -> BE261)
 # 44021 -> BE274  (Ghent  : BE234 -> BE274)
 
-# NUTS3 2021 -> NUTS3 2027: direct 1:N edge (allow_ambiguous required).
+# NUTS3 2021 -> NUTS3 2027: direct M:N edge (allow_ambiguous required).
 # Most codes -> 1 target; BE211 -> {BE261, BE276} because commune 11056 changed
 # province between 2019 and 2025.
 convert_codes(c("BE100", "BE211"), "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027",
@@ -195,11 +201,14 @@ convert_codes(c("BE100", "BE211"), "NUTS_DISTRICT_2021", "NUTS_DISTRICT_2027",
 #    register_split_weights("NUTS_DISTRICT_2021","NUTS_DISTRICT_2027", tpl) + split_ambiguous(...).
 # -> If you have the communes, convert them directly to 2027 (exact, no weights).
 
-# Reverse direction 2027 -> 2021: no direct edge (expected error)
-tryCatch(
-  convert_codes("BE261", "NUTS_DISTRICT_2027", "NUTS_DISTRICT_2021", master_data),
-  error = function(e) message("Reverse direction not direct: ", conditionMessage(e))
-)
+# Reverse direction 2027 -> 2021 (v3.0.0): its own M:N edge, derived from the communes
+convert_codes(c("BE261", "BE276"), "NUTS_DISTRICT_2027", "NUTS_DISTRICT_2021",
+              master_data, allow_ambiguous = TRUE)
+#    code_from  code_to   nature
+# 1:     BE261    BE211   RECODE
+# 2:     BE276    BE211  OVERLAP   (Zwijndrecht)
+# 3:     BE276    BE234  OVERLAP   (Moerbeke)
+# 4:     BE276    BE236  OVERLAP   (Sint-Niklaas)
 
 # --- 2f. Ambiguous conversion -- Verviers district (1:N) ------------------------
 # Verviers -> NUTS3 is a TRUE split (BE335 != BE336): blocked by default.
@@ -448,7 +457,7 @@ clear_split_weights()
 # ==============================================================================
 
 # --- 9a. N:1 merger: communes that merge in 2025 -------------------------------
-# Communes 11002 (Antwerp) and 11007 (Borgerhout) merged in NIS 2025.
+# Communes 11002 (Antwerp) and 11007 (Borsbeek) merged in NIS 2025.
 panel <- data.table(
   year       = c(2022L, 2022L, 2022L, 2025L, 2025L),
   commune    = c("11002", "11007", "21004", "11002", "21004"),
@@ -622,12 +631,13 @@ fuzzy_match_names(
   max_dist = 0.3,
   language = "both"
 )
-#   label_input  label_matched  code_matched  distance  is_confident
-#   Bruxeles    Bruxelles        21004       0.037      TRUE
-#   Antwerpn    Antwerpen        11002       0.037      TRUE
-#   Liege       Liege            62063       0.150      TRUE
-#   Naemur      Namur            92094       0.167      TRUE
-#   Vervirs     Verviers         63079       0.042      TRUE
+#   label_input label_matched code_matched distance language is_confident
+#      Bruxeles     Bruxelles        21004    0.037       fr         TRUE
+#      Antwerpn     Antwerpen        11002    0.037       nl         TRUE
+#         Liege         Liège        62063    0.000       fr         TRUE   (accents ignored)
+#        Naemur         Namur        92094    0.056       fr         TRUE
+#       Vervirs      Verviers        63079    0.042       fr         TRUE
+#       Vervirs      Verviers        63079    0.042       nl         TRUE   (same name in fr and nl)
 
 
 # ==============================================================================
@@ -664,7 +674,7 @@ check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021")
 check_conversion_path("NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data)
 # $is_simple           FALSE
 # $executable          TRUE
-# $effectively_simple  FALSE   (3 mergers -> true 1:N ambiguity)
+# $effectively_simple  FALSE   (3 mergers -> true M:N ambiguity)
 
 # DECLARED but NON-executable route: the engine does not invert edges.
 tryCatch(
@@ -674,3 +684,136 @@ tryCatch(
 
 # Rebuild the snapshot from the raw files (if data/raw/ is available)
 # master_data <- rebuild_master_data()
+
+
+# ==============================================================================
+# 14. Wide tables -- wide_view() (v3.0.0)
+# ==============================================================================
+# The master data is the long model (entities + crosswalks). The former wide
+# tables are rebuilt on demand.
+
+wide_view(master_data, version = "2025")            # one row per NIS 2025 commune
+#    version code_nis_municipality label_nis_municipality_fr ... code_nuts_district_2027 ...
+# 1:    2025                 11001                Aartselaar ...                   BE261 ...
+wide_view(master_data, "postal", version = "2019")  # postal code -> NIS 2019 commune
+wide_view(master_data, "nis_changes", version = "2019")
+#    code_from code_to      nature version_from version_to
+# 1:     11002   11002      FUSION         2019       2025
+# 2:     11007   11002      FUSION         2019       2025
+# 3:     11056   46030 CHANGE_PROV         2019       2025
+# ...
+
+
+# ==============================================================================
+# 15. Aggregated levels across versions, NIS <-> NUTS (v3.0.0)
+# ==============================================================================
+
+# --- 15a. NIS districts 2025 -> 2019 (M:N) --------------------------------------
+# District 46000 (Sint-Niklaas) gained Moerbeke (from 44000) and Zwijndrecht
+# (from 11000) in 2025; 71000 (Hasselt) gained Kortessem (from 73000).
+convert_codes(c("46000", "71000", "21000"), "NIS_DISTRICT_2025", "NIS_DISTRICT_2019",
+              master_data, allow_ambiguous = TRUE)
+#    code_from  code_to       nature
+# 1:     21000    21000    UNCHANGED
+# 2:     46000    11000  CHANGE_DSTR
+# 3:     46000    44000  CHANGE_DSTR
+# 4:     46000    46000  CHANGE_DSTR
+# 5:     71000    71000  CHANGE_DSTR
+# 6:     71000    73000  CHANGE_DSTR
+
+# --- 15b. NIS districts BEFORE_2019 -> 2019 (Hainaut reform) -------------------
+convert_codes("54000", "NIS_DISTRICT_BEFORE_2019", "NIS_DISTRICT_2019", master_data,
+              allow_ambiguous = TRUE)
+#    code_from  code_to       nature
+# 1:     54000    57000  CHANGE_DSTR   (Mouscron -> Tournai-Mouscron)
+convert_codes("58000", "NIS_DISTRICT_2019", "NIS_DISTRICT_BEFORE_2019", master_data,
+              allow_ambiguous = TRUE)
+# 58000 (La Louviere, created in 2019) <- 55000 (Soignies) + 56000 (Thuin)
+
+# --- 15c. NIS provinces / regions between versions ------------------------------
+convert_codes("40000", "NIS_PROVINCE_2025", "NIS_PROVINCE_2019", master_data,
+              allow_ambiguous = TRUE)
+# 40000 (Oost-Vlaanderen 2025) -> 10000 (Zwijndrecht) + 40000
+convert_codes(c("2000", "3000", "4000"), "NIS_REGION_2025", "NIS_REGION_2019", master_data)
+# regions are identical in every version (1:1)
+
+# --- 15d. NIS <-> NUTS at the same level ----------------------------------------
+convert_codes(c("10000", "20001", "4000"), "NIS_PROVINCE_2019", "NUTS_PROVINCE_2021", master_data)
+#    code_from  code_to  nature
+# 1:     10000     BE21  RECODE   (Antwerpen)
+# 2:     20001     BE24  RECODE   (Vlaams-Brabant)
+# 3:      4000     BE10  RECODE   (Brussels pseudo-province)
+convert_codes(c("10000", "40000"), "NIS_PROVINCE_2025", "NUTS_PROVINCE_2027", master_data)
+# 10000 -> BE26, 40000 -> BE27 (renumbered in NUTS 2027)
+convert_codes("1000", "NIS_COUNTRY", "NUTS_COUNTRY", master_data)   # BE
+
+# --- 15e. NUTS 2027 -> 2021 and -> NIS -----------------------------------------
+convert_codes(c("BE26", "BE27"), "NUTS_PROVINCE_2027", "NUTS_PROVINCE_2021", master_data,
+              allow_ambiguous = TRUE)
+# BE26 -> BE21 ; BE27 -> BE21 (Zwijndrecht) + BE23
+convert_codes(c("BE261", "BE276"), "NUTS_DISTRICT_2027", "NIS_DISTRICT_2025", master_data)
+# BE261 -> 11000 ; BE276 -> 46000 (each NUTS3 2027 lies in one NIS 2025 district)
+
+# --- 15f. Population weights across versions ------------------------------------
+# 2025 <-> 2019: computed from the shipped 2019 commune population.
+split_weights_template("NIS_DISTRICT_2025", "NIS_DISTRICT_2019", master_data,
+                       variable = "population")
+#    code_from  code_to  weight
+# 1:     46000    11000   0.067   (Zwijndrecht)
+# 2:     46000    44000   0.023   (Moerbeke)
+# 3:     46000    46000   0.910
+# 4:     71000    71000   0.980
+# 5:     71000    73000   0.020   (Kortessem)
+
+# BEFORE_2019 -> 2019: real shares for the Hainaut districts, but district 71000
+# cannot be weighted (Opglabbeek is merged into Oudsbergen in the 2019 population):
+# its weights are NA (warning rcl_weights_required) and split_ambiguous() stops
+# until you supply them.
+dist_b19 <- data.table(arr = c("55000", "71000"), jobs = c(300, 100))
+tryCatch(
+  split_ambiguous(dist_b19, "arr", "jobs", "NIS_DISTRICT_BEFORE_2019", "NIS_DISTRICT_2019",
+                  master_data, weights = "population", verbose = FALSE),
+  rcl_weights_required = function(e) message("Weights required: ", conditionMessage(e))
+)
+tpl_b19 <- suppressWarnings(split_weights_template(
+  "NIS_DISTRICT_BEFORE_2019", "NIS_DISTRICT_2019", master_data, variable = "population"))
+tpl_b19[code_from == "71000", weight := c(0.97, 0.03)]   # your own shares (illustrative)
+split_ambiguous(dist_b19, "arr", "jobs", "NIS_DISTRICT_BEFORE_2019", "NIS_DISTRICT_2019",
+                master_data, weights = tpl_b19, verbose = FALSE)
+
+
+# ==============================================================================
+# 16. A code column mixing several versions -- convert_multi_version()
+# ==============================================================================
+# Codes mostly NIS 2019, with a few 2025 (46029) and BEFORE_2019 (54007) codes.
+mixed <- data.table(commune = c("21004", "46029", "54007", "11002", "99999"),
+                    value   = 1:5)
+
+res <- convert_multi_version(mixed, "commune", "NIS_REGION_2019", master_data)
+res
+# one column per version (_from_2025, _from_2019, _from_before_2019), the final
+# code_nis_region_2019 (first non-missing, 2025 first) and three flags:
+#    commune  code_nis_region_2019  conflict  no_match  ambiguous
+# 1:   21004                  4000     FALSE     FALSE      FALSE
+# 2:   46029                  2000     FALSE     FALSE      FALSE   (2025 only)
+# 3:   54007                  3000     FALSE     FALSE      FALSE   (BEFORE_2019 only)
+# 4:   11002                  2000     FALSE     FALSE      FALSE
+# 5:   99999                  <NA>     FALSE      TRUE      FALSE   (unknown everywhere)
+res[conflict | no_match]
+
+# Towards NIS 2019 communes, versions can disagree: 11002 is Antwerp in 2019
+# but Antwerp + Borsbeek in 2025.
+convert_multi_version(mixed, "commune", "NIS_MUNICIPALITY_2019", master_data)[
+  , .(commune, code_nis_municipality_2019, conflict, no_match, ambiguous)]
+#    commune  code_nis_municipality_2019  conflict  no_match  ambiguous
+# 1:   21004                       21004     FALSE     FALSE      FALSE
+# 2:   46029                 44045+46014     FALSE     FALSE       TRUE
+# 3:   54007                       57096     FALSE     FALSE      FALSE
+# 4:   11002                 11002+11007      TRUE     FALSE       TRUE
+# 5:   99999                        <NA>     FALSE      TRUE      FALSE
+
+# Other families and priorities: pass `from` explicitly
+dist_mixed <- data.table(arr = c("46000", "54000", "58000"))
+convert_multi_version(dist_mixed, "arr", "NIS_PROVINCE_2019", master_data,
+                      from = c("NIS_DISTRICT_2025", "NIS_DISTRICT_2019",
+                               "NIS_DISTRICT_BEFORE_2019"))

@@ -27,7 +27,7 @@ temporal classification: a backward temporal edge (e.g. 2025 -> 2019) has
 Typical results:
 \itemize{
   \item \code{NIS_MUNICIPALITY_2019 -> NUTS_DISTRICT_2021}: `TRUE`  (N:1, nesting)
-  \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021}: `FALSE` (1:N, fused communes
+  \item \code{NIS_MUNICIPALITY_2025 -> NUTS_DISTRICT_2021}: `FALSE` (M:N, fused communes
     straddle NUTS3 boundaries)
   \item \code{NIS_MUNICIPALITY_2019 -> NIS_MUNICIPALITY_2025}: `TRUE`  (forward temporal, N:1)
   \item \code{NIS_MUNICIPALITY_2025 -> NIS_MUNICIPALITY_2019}: `FALSE` (backward temporal, 1:N)

@@ -383,9 +383,9 @@ CONVERSION_GRAPH_EDGES <- list(
        notes = paste0(
          "Derived at commune level (2019 -> NUTS3 2021 AND -> NIS 2025 -> NUTS3 2027). ",
          "3 cross-province fusions (46029/46030/71072) make some 2021 NUTS3 map to >1 2027 NUTS3 ",
-         "(1:N, e.g. BE211 -> {BE261, BE276}). Use allow_ambiguous = TRUE; register weights via ",
-         "register_split_weights(). no_reverse = TRUE: the reverse 2027 -> 2021 is also 1:N and ",
-         "would create a declared-but-unexecutable path (the executor never inverts edges). ",
+         "(e.g. BE211 -> {BE261, BE276}). Use allow_ambiguous = TRUE; register weights via ",
+         "register_split_weights(). no_reverse = TRUE: the reverse 2027 -> 2021 is its own ",
+         "derived M:N edge. ",
          "For commune-level data, convert the communes directly to NUTS3 2027 instead (exact)."
        )),
 
@@ -437,8 +437,8 @@ CONVERSION_GRAPH_EDGES <- list(
        coverage = "562/565 (99.5%)",
        notes = paste0(
          "3 NIS 2025 communes (46029, 46030, 71072) fuse localities from different ",
-         "NUTS_DISTRICT_2021 regions; each maps to N NUTS3 targets (1:N). ",
-         "All other 564 communes are unambiguous (N:1). ",
+         "NUTS_DISTRICT_2021 regions; each maps to several NUTS3 targets (M:N overall). ",
+         "All other 562 communes are unambiguous (N:1). ",
          "Use allow_ambiguous = TRUE; register weights via register_split_weights() ",
          "for proportional splits. ",
          "no_reverse = TRUE: the reverse NUTS_DISTRICT_2021 -> NIS_MUNICIPALITY_2025 is 1:N ",

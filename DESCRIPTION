@@ -2,8 +2,8 @@ Package: nbbbenuts
 Title: Belgian Geographic Classification Converter
 Version: 3.0.0
 Authors@R:
-    person("N0n3Z", role = c("aut", "cre"),
-           email = "n0n3z@users.noreply.github.com")
+    person("Romain", "Grailet", role = c("aut", "cre"),
+           email = "romain.grailet@nbb.be")
 Description: Tools to convert Belgian geographic codes between classification
     systems (NIS communes, NUTS regions, postal codes) and across time versions
     (NIS BEFORE_2019, 2019, 2025; NUTS 2021, 2027). Includes dataset-level
@@ -12,8 +12,8 @@ Description: Tools to convert Belgian geographic codes between classification
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-URL: https://github.com/n0n3z/regionalclassification
-BugReports: https://github.com/n0n3z/regionalclassification/issues
+URL: https://github.com/StatHH/RegionalClassification
+BugReports: https://github.com/StatHH/RegionalClassification/issues
 Imports:
     data.table (>= 1.17.0),
     rlang (>= 1.0.0),

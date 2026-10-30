@@ -177,11 +177,12 @@ fuzzy_match_names(
   max_dist = 0.3,
   language = "both"   # "fr", "nl", ou "both"
 )
-#   label_input  label_matched  code_matched  distance  is_confident
-#   Bruxeles    Bruxelles        21004       0.037      TRUE
-#   Antwerpn    Antwerpen        11002       0.037      TRUE
-#   Liege       Liège            62063       0.150      TRUE
-#   Vervirs     Verviers         63079       0.042      TRUE
+#   label_input label_matched code_matched distance language is_confident
+#      Bruxeles     Bruxelles        21004    0.037       fr         TRUE
+#      Antwerpn     Antwerpen        11002    0.037       nl         TRUE
+#         Liege         Liège        62063    0.000       fr         TRUE   (accents ignored)
+#       Vervirs      Verviers        63079    0.042       fr         TRUE
+#       Vervirs      Verviers        63079    0.042       nl         TRUE   (same name in fr and nl)
 ```
 
 ### Matching contre d'autres classifications

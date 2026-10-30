@@ -50,7 +50,7 @@ master_data <- rebuild_master_data()   # requires data/raw/ files + readxl
 
 The main function is `convert_codes()`:
 
-```{r}
+```
 convert_codes(codes, from, to, master_data)
 ```
 
@@ -110,11 +110,12 @@ Temporal conversions return a `nature` column describing the type of change:
 | `CHANGE_PROV`  | Commune moved to a different province (1 commune) |
 
 ```{r}
-# NIS 2019 -> NIS 2025: nature column shows what changed
-convert_codes(c("71002", "71011"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
-#    code_from  code_to   nature
-#        71002    71072   FUSION
-#        71011    71072   FUSION
+# NIS 2019 -> NIS 2025: Hasselt (71022) + Kortessem (73040) -> Hasselt 2025 (71072);
+# Kortessem also moves arrondissement (Tongeren -> Hasselt)
+convert_codes(c("71022", "73040"), "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
+#    code_from  code_to       nature
+#        71022    71072       FUSION
+#        73040    71072  CHANGE_DSTR
 
 # CHANGE_DSTR: commune 44045 moved to a different arrondissement
 convert_codes("44045", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_data)
@@ -122,7 +123,8 @@ convert_codes("44045", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", master_
 #        44045    46029  CHANGE_DSTR
 
 # NIS 2025 -> NIS 2019 (fused commune returns multiple rows)
-convert_codes("71072", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data)
+convert_codes("71072", "NIS_MUNICIPALITY_2025", "NIS_MUNICIPALITY_2019", master_data,
+              allow_ambiguous = TRUE)
 
 # NIS BEFORE_2019 -> NIS 2019
 convert_codes(c("55022", "56011"), "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPALITY_2019", master_data)
@@ -133,8 +135,8 @@ convert_codes(c("55022", "56011"), "NIS_MUNICIPALITY_BEFORE_2019", "NIS_MUNICIPA
 ## 3. NUTS 2027
 
 NUTS 2027 codes for NIS 2025 communes come from the official Statbel file. For
-NIS 2019 and BEFORE_2019 communes, NUTS 2027 is derived by remapping NUTS 2021
-codes per EU regulation 2026/195.
+NIS 2019 and BEFORE_2019 communes, NUTS 2027 is derived through their NIS 2025
+commune (the official file again): exact, no remapping of NUTS 2021 codes.
 
 ```{r}
 convert_codes(
@@ -363,11 +365,12 @@ fuzzy_match_names(
   max_dist = 0.3,
   language = "both"
 )
-#   label_input  label_matched  code_matched  distance  is_confident
-#   Bruxeles    Bruxelles        21004       0.037      TRUE
-#   Antwerpn    Antwerpen        11002       0.037      TRUE
-#   Liege       Liège            62063       0.150      TRUE
-#   Vervirs     Verviers         63079       0.042      TRUE
+#   label_input label_matched code_matched distance language is_confident
+#      Bruxeles     Bruxelles        21004    0.037       fr         TRUE
+#      Antwerpn     Antwerpen        11002    0.037       nl         TRUE
+#         Liege         Liège        62063    0.000       fr         TRUE   (accents ignored)
+#       Vervirs      Verviers        63079    0.042       fr         TRUE
+#       Vervirs      Verviers        63079    0.042       nl         TRUE   (same name in fr and nl)
 ```
 
 ---

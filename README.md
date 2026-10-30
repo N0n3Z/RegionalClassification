@@ -26,12 +26,20 @@ All identifiers are case-insensitive. Unknown identifiers raise a typed error (`
 
 ## Installation
 
+**NBB users** — the package is available from the internal NBB repository:
+
+```r
+install.packages("nbbbenuts")
+```
+
+**From GitHub**:
+
 ```r
 # Install dependencies
 install.packages(c("data.table", "rlang"))
 
 # Install nbbbenuts from GitHub
-remotes::install_github("N0n3Z/RegionalClassification")
+remotes::install_github("StatHH/RegionalClassification")
 ```
 
 ## Quick Start
@@ -225,13 +233,15 @@ The `nature` column in `convert_codes()` output tracks how each commune changed:
 
 NUTS 2027 codes implement EU Regulation 2026/195 (applicable from 1 January 2027). For NIS 2025 communes the mapping uses the official Statbel file. Key changes for Belgium:
 
-| NUTS 2021 | NUTS 2027 | Region |
-|-----------|-----------|--------|
-| BE21x → **BE26x** | Antwerpen |
-| BE22x (partial) → **BE22x / BE26x** | Vlaams-Brabant |
-| BE23x → **BE27x** | Oost-Vlaanderen |
+| NUTS 2021 | NUTS 2027 | Province |
+|-----------|-----------|----------|
+| BE21 (BE211–BE213) | **BE26** (BE261–BE263; Zwijndrecht moves to BE276) | Antwerpen |
+| BE22 (BE223, BE224) | **BE226 / BE227** (Hasselt + Kortessem = BE227); BE225 unchanged | Limburg |
+| BE23 (BE231–BE236) | **BE27** (BE271–BE276) | Oost-Vlaanderen |
 
-> **Note:** A direct **forward** `NUTS_DISTRICT_2021 → NUTS_DISTRICT_2027` edge exists (`M:N`), derived at build time, for **aggregate** NUTS3 2021 data — most codes map 1:1, but a few map to two 2027 codes (three communes changed province between 2019 and 2025), so it needs `allow_ambiguous = TRUE` and weighted splitting. There is **no reverse** `2027 → 2021` conversion. If you still have the underlying communes, convert them directly (exact, no weights): `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`, or route `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
+Other NUTS codes are unchanged.
+
+> **Note:** A direct **forward** `NUTS_DISTRICT_2021 → NUTS_DISTRICT_2027` edge exists (`M:N`), derived at build time, for **aggregate** NUTS3 2021 data — most codes map 1:1, but a few map to two 2027 codes (three communes changed province between 2019 and 2025), so it needs `allow_ambiguous = TRUE` and weighted splitting. The reverse `NUTS_DISTRICT_2027 → NUTS_DISTRICT_2021` is its own `M:N` edge (derived from the communes). If you still have the underlying communes, convert them directly (exact, no weights): `NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`, or route `NUTS_DISTRICT_2021 → NIS_MUNICIPALITY_2019 → NIS_MUNICIPALITY_2025 → NUTS_DISTRICT_2027`.
 
 ## All Functions
 
