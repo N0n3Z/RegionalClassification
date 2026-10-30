@@ -1,7 +1,7 @@
 # Note de conception — Un moteur de conversion fondé sur des atomes
 
-> **Statut** : note de conception (2026-10-30), à discuter — aucune décision prise, aucun
-> code écrit. Base : `nbbbenuts` 3.0.0 tel que sur `claude/maintainer-docs-demo`.
+> **Statut** : étapes 0 à 2 **implémentées** sur `claude/atom-engine` (2026-10-30) ; atome
+> commune BEFORE_2019 en attendant les données postales ; étape 3 (bascule) non faite. Base : `nbbbenuts` 3.0.0 tel que sur `claude/maintainer-docs-demo`.
 > Objet : décrire l'architecture cible du moteur, le choix de l'unité atomique (dont la
 > question « les codes postaux peuvent-ils être l'atome ? »), un plan de migration et
 > ses risques, pour décider à tête reposée.
@@ -215,6 +215,18 @@ Le filet de sécurité existe déjà : l'invariant de précision et la photo « 
 | 0 | Photo de référence : toutes les paires exécutables, tous les codes, plus le golden actuel | fixture versionnée |
 | 1 | Construire `membership` / `lineage` au build, **en parallèle** de `crosswalks` (rien ne change pour l'utilisateur) | test : jointure par atomes = `crosswalks` sur les 197 paires |
 | 2 | Nouveau moteur derrière une option interne ; comparer les 291 paires | résultats identiques (codes) ; écarts de `nature` documentés |
+
+> **Avancement (2026-10-30)** — étapes 0 à 2 faites : fixture `golden_all_pairs.rds` (291
+> paires, 76 357 lignes) ; `R/12_atoms.R` (membership dérivée au chargement depuis
+> `crosswalks`, 14 134 lignes, 0,9 s ; moteur `.convert_via_atoms()` derrière
+> `options(nbbbenuts.engine = "atoms")`) ; `test-atom-engine.R` : mêmes conversions
+> offertes, mêmes liens, mêmes `nature`, même blocage d'ambiguïté sur les 291 paires, à une
+> exception documentée près (code postal 1020 → commune 2025 : NA → 21004). Toute la suite
+> passe avec le moteur par atomes hors cette exception. Atome code postal **prêt** : il
+> s'active dès que la paire `POSTAL -> NIS_MUNICIPALITY_BEFORE_2019` est dans les
+> données (testé avec une correspondance synthétique : aucun lien entre unités ne change).
+> Reste : intégrer la correspondance et la population par code postal (données
+> utilisateur), puis l'étape 3.
 | 3 | Basculer `convert_codes()` sur le nouveau moteur ; `crosswalks` devient une vue | suite de tests verte, CI verte |
 | 4 | *(abandonnée : scinder `nature` et simplifier `check_conversion_path()` casserait l'API sans nécessité)* | — |
 | 5 | Retirer du moteur les raccourcis et `.xw_path` ; le graphe déclaré reste (documentation testée, alimente `check_conversion_path()`) ; `CLASSIFICATION_REGISTRY` supprimé seulement s'il n'est pas exporté ni documenté pour les utilisateurs | `R CMD check` OK, aucune ligne ajoutée à `user-facing-changes.md` |

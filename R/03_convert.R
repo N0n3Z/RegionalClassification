@@ -240,6 +240,9 @@ normalize_classification_id <- function(class_id) {
 #' @keywords internal
 route_conversion <- function(input_dt, from, to, md) {
 
+  # Atom-based engine (opt-in during the transition, R/12_atoms.R).
+  if (.engine() == "atoms") return(.convert_via_atoms(input_dt, from, to, md))
+
   if (from == to)
     return(.normalize_conversion_result(input_dt[, .(code_from, code_to = code_from)],
                                         from, to))
@@ -284,6 +287,7 @@ route_conversion <- function(input_dt, from, to, md) {
 # separate concern, handled by check_conversion_path() (05_conversion_check.R).
 .route_is_executable <- function(from, to, md) {
   if (from == to) return(TRUE)
+  if (.engine() == "atoms") return(.atom_pair_allowed(from, to))
   !is.null(.xw_path(from, to, md))
 }
 
@@ -296,7 +300,7 @@ route_conversion <- function(input_dt, from, to, md) {
 # Returns NA when the route yields no target at all.
 .route_effective_cardinality <- function(from, to, md) {
   if (from == to) return(1L)
-  key <- paste0("effcard_", nrow(md$crosswalks), "_", from, "__", to)
+  key <- paste0("effcard_", .engine(), "_", nrow(md$crosswalks), "_", from, "__", to)
   if (exists(key, envir = .route_cache, inherits = FALSE))
     return(get(key, envir = .route_cache))
   src <- tryCatch(.list_codes_for(from, md), error = function(e) NULL)

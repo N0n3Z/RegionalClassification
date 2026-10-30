@@ -119,6 +119,13 @@
   several examples had silently gone stale); their examples, the README,
   DOCUMENTATION and `demo/demo.R` were checked against the real outputs.
   Maintainer: Romain Grailet; package URLs on `github.com/StatHH`.
+* Atom-based engine in preparation (`R/12_atoms.R`, design note
+  `docs/plans/engine-redesign.md`): every unit is a union of atoms (NIS
+  BEFORE_2019 communes for now, postal codes once their BEFORE_2019 commune is
+  known) and a conversion is one join through the atoms. Opt-in through the
+  internal option `nbbbenuts.engine = "atoms"`; the default engine is
+  unchanged. `test-atom-engine.R` checks it against a snapshot of all 291
+  conversions (`fixtures/golden_all_pairs.rds`).
 * `crosswalks` grows from ~20 000 to ~38 000 rows (exact cross-version
   shortcuts). New invariant: every conversion between commune-based nodes
   equals the commune truth (`test-invariants.R`); `test-cross-version-levels.R`

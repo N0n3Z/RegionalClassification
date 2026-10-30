@@ -45,6 +45,16 @@ conversion from one commune version to an aggregated node of another is stored
 as a direct crosswalk (exact): composing through an aggregated M:N edge is
 coarser, and the precision invariant in `test-invariants.R` fails if it happens.
 
+**Atom engine (in transition, `docs/plans/engine-redesign.md`):** `R/12_atoms.R`
+derives `membership(classification, code, atom)` from the crosswalks (atom =
+BEFORE_2019 commune; postal codes as soon as `POSTAL -> NIS_MUNICIPALITY_BEFORE_2019`
+exists) and converts by one join. Opt-in with `options(nbbbenuts.engine = "atoms")`;
+`test-atom-engine.R` pins it to `fixtures/golden_all_pairs.rds` (regenerate with
+`gen_golden_all_pairs()` only when a conversion change is intended, and list every
+known difference in `ATOM_ENGINE_EXPECTED_DIFFS`). The package has users: exported
+functions change only if necessary; log user-facing changes in
+`docs/plans/user-facing-changes.md`.
+
 ## Architecture (where things live)
 
 - `R/00_config.R` — `CONVERSION_GRAPH_EDGES` (conversion topology),
