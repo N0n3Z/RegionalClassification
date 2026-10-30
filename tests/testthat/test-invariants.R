@@ -202,12 +202,15 @@ test_that("a NIS municipality belongs to the district of its first two digits", 
   }
 })
 
-test_that("a NUTS code starts with the code of its parent", {
+test_that("a NUTS code starts with the code of its parent (same NUTS version)", {
+  # Across versions codes are renumbered (NUTS 2027: BE211 -> BE26x), so the
+  # prefix rule only holds within one version (NUTS_COUNTRY has none).
   for (i in seq_len(nrow(inv_pairs))) {
     f <- inv_pairs$classification_from[i]; t <- inv_pairs$classification_to[i]
     nf <- CLASSIFICATION_NODES[[f]]; nt <- CLASSIFICATION_NODES[[t]]
     if (nf$system != "NUTS" || nt$system != "NUTS" ||
         nf$level == "municipality" || nf$level == nt$level) next
+    if (!is.na(nt$version) && !identical(nf$version, nt$version)) next
     l <- links_of(f, t)[!is.na(code_to)]
     if (!all(nchar(l$code_to) < nchar(l$code_from))) next   # child -> parent only
     bad <- l[substr(code_from, 1L, nchar(code_to)) != code_to]
@@ -222,4 +225,59 @@ test_that("labelled classifications have a label for every code", {
     if (!is.na(n$label_fr_col)) expect_false(anyNA(e$label_fr), info = paste(id, "fr"))
     if (!is.na(n$label_nl_col)) expect_false(anyNA(e$label_nl), info = paste(id, "nl"))
   }
+})
+
+# -- precision: conversions follow the communes ---------------------------------
+# Two units are linked iff some commune belongs to both (through the commune
+# crosswalk when their commune versions differ). Any executable conversion
+# between commune-based nodes must return exactly those links: a route through
+# a coarse M:N edge (e.g. commune 2025 -> province 2025 -> provinces 2019) would
+# add spurious targets. Postal codes and LAU are commune-level aliases and the
+# countries hold a single code, so they are left out.
+
+test_that("every conversion between commune-based nodes equals the commune truth", {
+  M19 <- CLS_NIS_MUNICIPALITY_2019; M25 <- CLS_NIS_MUNICIPALITY_2025
+  MB  <- CLS_NIS_MUNICIPALITY_BEFORE_2019
+  base_of <- function(id) {
+    n <- CLASSIFICATION_NODES[[id]]
+    if (is.na(n$version) || id == CLS_NUTS_MUNICIPALITY_2021) return(NA_character_)
+    if (n$system == "NIS") return(sprintf("NIS_MUNICIPALITY_%s", n$version))
+    if (n$system == "NUTS" && n$version == VER_NUTS_2027) return(M25)
+    if (n$system %in% c("NUTS", "NBB")) return(M19)
+    NA_character_
+  }
+  lk <- function(f, t) links_of(f, t)[!is.na(code_to), .(code_from, code_to)]
+  flip <- function(l) l[, .(code_from = code_to, code_to = code_from)]
+  comp <- function(l1, l2) unique(merge(l1[, .(code_from, mid = code_to)],
+                                        l2[, .(mid = code_from, code_to)],
+                                        by = "mid", allow.cartesian = TRUE)[, .(code_from, code_to)])
+  commune_map <- function(f, t) {
+    if (f == t) return(data.table(code_from = codes_of(f), code_to = codes_of(f)))
+    if (f == M19 && t == MB) return(flip(lk(MB, M19)))
+    if (f == MB && t == M25) return(comp(lk(MB, M19), lk(M19, M25)))
+    if (f == M25 && t == MB) return(comp(lk(M25, M19), flip(lk(MB, M19))))
+    lk(f, t)
+  }
+  members <- function(id) {
+    b <- base_of(id)
+    if (id == b) data.table(c = codes_of(b), u = codes_of(b))
+    else lk(b, id)[, .(c = code_from, u = code_to)]
+  }
+  ids <- Filter(function(id) !is.na(base_of(id)), names(CLASSIFICATION_NODES))
+  n_checked <- 0L
+  for (f in ids) for (t in ids) {
+    if (f == t || !nbbbenuts:::.route_is_executable(f, t, master_data)) next
+    cm    <- commune_map(base_of(f), base_of(t))[, .(c1 = code_from, c2 = code_to)]
+    truth <- merge(cm, members(f)[, .(c1 = c, a = u)], by = "c1", allow.cartesian = TRUE)
+    truth <- unique(merge(truth, members(t)[, .(c2 = c, b = u)], by = "c2",
+                          allow.cartesian = TRUE)[, .(a, b)])
+    got <- suppressWarnings(suppressMessages(
+      convert_codes(codes_of(f), f, t, master_data, allow_ambiguous = TRUE)))
+    got <- unique(got[!is.na(code_to), .(a = as.character(code_from), b = as.character(code_to))])
+    extra <- fsetdiff(got, truth); missing <- fsetdiff(truth, got)
+    n_checked <- n_checked + 1L
+    expect_equal(nrow(extra), 0L, info = paste(pair_label(f, t), "spurious links"))
+    expect_equal(nrow(missing), 0L, info = paste(pair_label(f, t), "missing links"))
+  }
+  expect_gt(n_checked, 150L)
 })

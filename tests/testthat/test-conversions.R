@@ -115,19 +115,17 @@ test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 is a direct 1:N edge requiri
   expect_setequal(res[code_from == "BE211"]$code_to, c("BE261", "BE276"))
   expect_true(all(!is.na(res$code_to)))
 
-  # Reverse 2027 -> 2021 is a non-executable de-aggregation (no crosswalk, and the
-  # forward aggregate edge is no_reverse): convert_codes() now fails with a clear
-  # rcl_no_route dead-end rather than the old contradictory rcl_ambiguous advice
-  # that would die at execution anyway (C1). allow_ambiguous cannot rescue it.
+  # Reverse 2027 -> 2021 (v3.0.0): derived at commune level as its own M:N edge,
+  # so it is executable but ambiguous. BE261 (Antwerpen without Zwijndrecht)
+  # comes from BE211 only; BE276 also holds Zwijndrecht, formerly BE211.
   expect_error(
     convert_codes("BE261", CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021, master_data),
-    class = "rcl_no_route"
+    class = "rcl_ambiguous_conversion"
   )
-  expect_error(
-    convert_codes("BE261", CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021,
-                  master_data, allow_ambiguous = TRUE),
-    class = "rcl_no_route"
-  )
+  back <- convert_codes(c("BE261", "BE276"), CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021,
+                        master_data, allow_ambiguous = TRUE)
+  expect_identical(back[code_from == "BE261", code_to], "BE211")
+  expect_true("BE211" %in% back[code_from == "BE276", code_to])
 })
 
 test_that("NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027 supports weighted splitting", {

@@ -469,6 +469,72 @@ CONVERSION_GRAPH_EDGES <- list(
        ))
 )
 
+# --- Aggregated levels derived from the commune links (v3.0.0) ---
+# Built by build_crosswalks() (".derive_level_xw"): two units are linked when a
+# commune belongs to both. Every edge is declared in both directions explicitly
+# (no_reverse = TRUE), since each direction has its own crosswalk rows.
+.derived_level_edge <- function(from, to, relation, notes) {
+  list(from = from, to = to, relation = relation, via = "derived",
+       no_reverse = TRUE, notes = notes)
+}
+CONVERSION_GRAPH_EDGES <- c(CONVERSION_GRAPH_EDGES, list(
+  # NIS districts between versions. 2019 <-> 2025: Moerbeke 44045 (Gent ->
+  # Sint-Niklaas), Zwijndrecht 11056 (Antwerpen -> Sint-Niklaas), Kortessem 73040
+  # (Tongeren -> Hasselt): 46000 (2025) <- 11000 + 44000 + 46000, 71000 <- 71000 + 73000.
+  # BEFORE_2019 <-> 2019: Hainaut reform (54000 Mouscron gone, 58000 La Louviere
+  # created) and Oudsbergen (71047 + 72040).
+  .derived_level_edge(CLS_NIS_DISTRICT_2025, CLS_NIS_DISTRICT_2019, "M:N",
+    "46000 -> 11000/44000/46000, 71000 -> 71000/73000; others UNCHANGED."),
+  .derived_level_edge(CLS_NIS_DISTRICT_2019, CLS_NIS_DISTRICT_2025, "M:N",
+    "11000/44000 -> +46000, 73000 -> +71000; others UNCHANGED."),
+  .derived_level_edge(CLS_NIS_DISTRICT_BEFORE_2019, CLS_NIS_DISTRICT_2019, "M:N",
+    "2019 reform of Hainaut and Limburg districts (52000, 54000, 55000, 56000, 71000)."),
+  .derived_level_edge(CLS_NIS_DISTRICT_2019, CLS_NIS_DISTRICT_BEFORE_2019, "M:N",
+    "Reverse of the 2019 Hainaut / Limburg district reform."),
+  # NIS provinces: Zwijndrecht 11056 moves from Antwerpen (10000) to
+  # Oost-Vlaanderen (40000) in 2025; no province change in 2019.
+  .derived_level_edge(CLS_NIS_PROVINCE_2025, CLS_NIS_PROVINCE_2019, "M:N",
+    "40000 -> 10000 + 40000 (Zwijndrecht); others UNCHANGED."),
+  .derived_level_edge(CLS_NIS_PROVINCE_2019, CLS_NIS_PROVINCE_2025, "M:N",
+    "10000 -> 10000 + 40000 (Zwijndrecht); others UNCHANGED."),
+  .derived_level_edge(CLS_NIS_PROVINCE_BEFORE_2019, CLS_NIS_PROVINCE_2019, "1:1",
+    "Identical provinces (2019 changes stay within their province)."),
+  .derived_level_edge(CLS_NIS_PROVINCE_2019, CLS_NIS_PROVINCE_BEFORE_2019, "1:1",
+    "Identical provinces."),
+  # NIS regions: identical in every version.
+  .derived_level_edge(CLS_NIS_REGION_2025, CLS_NIS_REGION_2019, "1:1", "Identical regions."),
+  .derived_level_edge(CLS_NIS_REGION_2019, CLS_NIS_REGION_2025, "1:1", "Identical regions."),
+  .derived_level_edge(CLS_NIS_REGION_BEFORE_2019, CLS_NIS_REGION_2019, "1:1", "Identical regions."),
+  .derived_level_edge(CLS_NIS_REGION_2019, CLS_NIS_REGION_BEFORE_2019, "1:1", "Identical regions."),
+  # NIS <-> NUTS at the same level (provinces = NUTS2, regions = NUTS1, Brussels
+  # pseudo-province 4000 = BE10).
+  .derived_level_edge(CLS_NIS_PROVINCE_2019, CLS_NUTS_PROVINCE_2021, "1:1", "NIS province = NUTS2 2021."),
+  .derived_level_edge(CLS_NUTS_PROVINCE_2021, CLS_NIS_PROVINCE_2019, "1:1", "NUTS2 2021 = NIS province."),
+  .derived_level_edge(CLS_NIS_REGION_2019, CLS_NUTS_REGION_2021, "1:1", "NIS region = NUTS1 2021."),
+  .derived_level_edge(CLS_NUTS_REGION_2021, CLS_NIS_REGION_2019, "1:1", "NUTS1 2021 = NIS region."),
+  .derived_level_edge(CLS_NIS_PROVINCE_2025, CLS_NUTS_PROVINCE_2027, "1:1", "NIS province 2025 = NUTS2 2027."),
+  .derived_level_edge(CLS_NUTS_PROVINCE_2027, CLS_NIS_PROVINCE_2025, "1:1", "NUTS2 2027 = NIS province 2025."),
+  .derived_level_edge(CLS_NIS_REGION_2025, CLS_NUTS_REGION_2027, "1:1", "NIS region 2025 = NUTS1 2027."),
+  .derived_level_edge(CLS_NUTS_REGION_2027, CLS_NIS_REGION_2025, "1:1", "NUTS1 2027 = NIS region 2025."),
+  .derived_level_edge(CLS_NIS_COUNTRY, CLS_NUTS_COUNTRY, "1:1", "1000 = BE."),
+  .derived_level_edge(CLS_NUTS_COUNTRY, CLS_NIS_COUNTRY, "1:1", "BE = 1000."),
+  # NUTS 2027 <-> NIS 2025 districts and NUTS 2021 <-> 2027 (BE21 -> BE26 + BE27,
+  # BE23 -> BE27 after Zwijndrecht's move).
+  .derived_level_edge(CLS_NIS_DISTRICT_2025, CLS_NUTS_DISTRICT_2027, "1:N",
+    "Verviers 63000 -> two NUTS3 2027, as in 2019 / 2021."),
+  .derived_level_edge(CLS_NUTS_DISTRICT_2027, CLS_NIS_DISTRICT_2025, "N:1",
+    "Each NUTS3 2027 lies in one NIS 2025 district."),
+  .derived_level_edge(CLS_NUTS_DISTRICT_2027, CLS_NUTS_DISTRICT_2021, "M:N",
+    "Reverse of NUTS_DISTRICT_2021 -> NUTS_DISTRICT_2027, derived at commune level."),
+  .derived_level_edge(CLS_NUTS_PROVINCE_2021, CLS_NUTS_PROVINCE_2027, "M:N",
+    "BE21 -> BE26 + BE27, BE23 -> BE27; others 1:1."),
+  .derived_level_edge(CLS_NUTS_PROVINCE_2027, CLS_NUTS_PROVINCE_2021, "M:N",
+    "BE27 -> BE21 + BE23, BE26 -> BE21; others 1:1."),
+  .derived_level_edge(CLS_NUTS_REGION_2021, CLS_NUTS_REGION_2027, "1:1", "Identical NUTS1."),
+  .derived_level_edge(CLS_NUTS_REGION_2027, CLS_NUTS_REGION_2021, "1:1", "Identical NUTS1.")
+))
+rm(.derived_level_edge)
+
 # --- Valid classification identifiers ---
 # Derived from CONVERSION_GRAPH_EDGES: every 'from'/'to' node that appears in
 # at least one conversion edge is a valid classification identifier.

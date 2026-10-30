@@ -138,10 +138,11 @@ test_that("aggregations that re-merge through an overlap edge are effectively si
   r2 <- convert_codes(63000L, CLS_NIS_DISTRICT_2019, CLS_NUTS_COUNTRY, master_data)
   expect_equal(r2$code_to, "BE")
 
-  # check_conversion_path(md) reports effectively_simple TRUE though is_simple FALSE.
+  # check_conversion_path(md) reports the route as effectively simple. Since
+  # v3.0.0 it is also topologically simple (NIS_DISTRICT_2019 -> NIS_PROVINCE_2019
+  # -> NUTS_PROVINCE_2021, all N:1 / 1:1), so it no longer needs the data-aware gate.
   pc <- check_conversion_path(CLS_NIS_DISTRICT_2019, CLS_NUTS_PROVINCE_2021, master_data)
-  expect_false(pc$is_simple)              # topological: path crosses an overlap edge
-  expect_true(pc$effectively_simple)      # data-aware: re-merges to one target
+  expect_true(pc$effectively_simple)
 })
 
 test_that("genuine 1:N routes stay blocked without allow_ambiguous (data-aware)", {
@@ -159,6 +160,8 @@ test_that("get_conversion_matrix(md) exposes effectively_simple", {
   expect_true("effectively_simple" %in% names(mtx))
   # Every topologically simple route is also effectively simple.
   expect_equal(nrow(mtx[is_simple == TRUE & effectively_simple == FALSE]), 0L)
-  # At least one route is effectively-but-not-topologically simple (the M2 wins).
-  expect_true(nrow(mtx[is_simple == FALSE & effectively_simple == TRUE & classification_from != classification_to]) > 0L)
+  expect_type(mtx$effectively_simple, "logical")
+  # The v3.0.0 NIS <-> NUTS province / region edges made the former "effectively
+  # but not topologically simple" routes (Verviers re-merging into BE33)
+  # topologically simple; none is left in the shipped data.
 })

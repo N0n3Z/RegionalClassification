@@ -1008,5 +1008,135 @@ build_crosswalks <- function(municipalities, postal, nis_changes) {
       "NIS_REGION_BEFORE_2019", "NIS_COUNTRY", mb19, "code_nis_region", "code_nis_country")
   }
 
+  # ---- Aggregated levels derived from the commune links (v3.0.0) -------------
+  # A link between two aggregated units exists when at least one commune belongs
+  # to both: `from_id` through the communes of `mun_from`, `to_id` through the
+  # communes of `mun_to`, the two commune versions joined by their crosswalk.
+  # Covers NIS districts / provinces / regions between versions, NIS <-> NUTS at
+  # the same level, and NUTS 2027 -> 2021 / -> NIS. Every code is derived (no
+  # "unknown code maps to itself" fallback).
+  M19 <- "NIS_MUNICIPALITY_2019"; M25 <- "NIS_MUNICIPALITY_2025"
+  MB  <- "NIS_MUNICIPALITY_BEFORE_2019"
+  .commune_links <- function(f, t) {
+    x <- xw[[paste0(f, "__", t)]]
+    if (is.null(x)) return(NULL)
+    x[!is.na(code_to), .(code_from, code_to)]
+  }
+  # Commune -> commune links between any two commune versions. 2019 -> BEFORE_2019
+  # reads BEFORE_2019 -> 2019 backwards (each BEFORE_2019 commune has one 2019
+  # successor); BEFORE_2019 <-> 2025 goes through 2019. Never a conversion itself.
+  .compose_links <- function(l1, l2)
+    unique(merge(l1[, .(code_from, mid = code_to)], l2[, .(mid = code_from, code_to)],
+                 by = "mid", allow.cartesian = TRUE)[, .(code_from, code_to)])
+  .commune_map <- function(mf, mt) {
+    if (mf == mt) {
+      codes <- unique(municipalities[version == sub("NIS_MUNICIPALITY_", "", mf),
+                                     as.character(code_nis_municipality)])
+      return(data.table(code_from = codes, code_to = codes))
+    }
+    direct <- .commune_links(mf, mt)
+    if (!is.null(direct)) return(direct)
+    if (mf == M19 && mt == MB) {
+      r <- .commune_links(MB, M19); return(r[, .(code_from = code_to, code_to = code_from)])
+    }
+    if (mf == MB && mt == M25) return(.compose_links(.commune_map(MB, M19), .commune_map(M19, M25)))
+    if (mf == M25 && mt == MB) return(.compose_links(.commune_map(M25, M19), .commune_map(M19, MB)))
+    NULL
+  }
+  # Communes -> units of a node (identity for the commune node itself).
+  .members <- function(mun, id) {
+    if (id == mun) return(.commune_map(mun, mun))
+    .commune_links(mun, id)
+  }
+  .derive_level_xw <- function(from_id, to_id, mun_from, mun_to, temporal_nature = NULL) {
+    la <- .members(mun_from, from_id)
+    lb <- .members(mun_to, to_id)
+    mm <- .commune_map(mun_from, mun_to)
+    if (is.null(la) || is.null(lb) || is.null(mm))
+      abort(sprintf("Cannot derive %s -> %s: a commune crosswalk it relies on is missing.",
+                    from_id, to_id), class = "rcl_internal")
+    m <- merge(mm[, .(mun_a = code_from, mun_b = code_to)],
+               la[, .(mun_a = code_from, a = code_to)], by = "mun_a", allow.cartesian = TRUE)
+    m <- merge(m, lb[, .(mun_b = code_from, b = code_to)], by = "mun_b", allow.cartesian = TRUE)
+    p <- unique(m[, .(a, b)])
+    setorder(p, a, b)
+    nature <- NA_character_
+    if (!is.null(temporal_nature)) {
+      # UNCHANGED when the territory is identical in both versions: the unit maps
+      # to a single unit that receives from no other unit.
+      single <- p[, .N, by = a][N == 1L, a]
+      sole   <- p[, .N, by = b][N == 1L, b]
+      nature <- ifelse(p$a %in% single & p$b %in% sole, "UNCHANGED", temporal_nature)
+    }
+    .xw(from_id, to_id, p$a, p$b, nature)
+  }
+  .add_level_xw <- function(from_id, to_id, mun_from, mun_to, temporal_nature = NULL) {
+    key <- paste0(from_id, "__", to_id)
+    if (!is.null(xw[[key]])) return(invisible())   # never override a built pair
+    xw[[key]] <<- .derive_level_xw(from_id, to_id, mun_from, mun_to, temporal_nature)
+  }
+
+  version_pairs <- list(c(VER_2025, VER_2019), c(VER_2019, VER_2025))
+  if (has_b19) version_pairs <- c(version_pairs,
+                                  list(c(VER_BEFORE_2019, VER_2019), c(VER_2019, VER_BEFORE_2019)))
+  level_nature <- c(DISTRICT = "CHANGE_DSTR", PROVINCE = "CHANGE_PROV", REGION = "CHANGE_PROV")
+  for (vp in version_pairs) {
+    mf <- paste0("NIS_MUNICIPALITY_", vp[1]); mt <- paste0("NIS_MUNICIPALITY_", vp[2])
+    for (lv in names(level_nature))
+      .add_level_xw(sprintf("NIS_%s_%s", lv, vp[1]), sprintf("NIS_%s_%s", lv, vp[2]),
+                    mf, mt, level_nature[[lv]])
+  }
+
+  # NIS <-> NUTS at the same level, NUTS 2021 <-> 2027, NUTS 2027 -> NIS.
+  .add_level_xw("NIS_PROVINCE_2019", "NUTS_PROVINCE_2021", M19, M19)
+  .add_level_xw("NUTS_PROVINCE_2021", "NIS_PROVINCE_2019", M19, M19)
+  .add_level_xw("NIS_REGION_2019",   "NUTS_REGION_2021",   M19, M19)
+  .add_level_xw("NUTS_REGION_2021",  "NIS_REGION_2019",    M19, M19)
+  .add_level_xw("NIS_PROVINCE_2025", "NUTS_PROVINCE_2027", M25, M25)
+  .add_level_xw("NUTS_PROVINCE_2027", "NIS_PROVINCE_2025", M25, M25)
+  .add_level_xw("NIS_REGION_2025",   "NUTS_REGION_2027",   M25, M25)
+  .add_level_xw("NUTS_REGION_2027",  "NIS_REGION_2025",    M25, M25)
+  xw[["NIS_COUNTRY__NUTS_COUNTRY"]] <- .pairs_xw(
+    "NIS_COUNTRY", "NUTS_COUNTRY", m19, "code_nis_country", "code_nuts_country")
+  xw[["NUTS_COUNTRY__NIS_COUNTRY"]] <- .pairs_xw(
+    "NUTS_COUNTRY", "NIS_COUNTRY", m19, "code_nuts_country", "code_nis_country")
+  .add_level_xw("NIS_DISTRICT_2025", "NUTS_DISTRICT_2027", M25, M25)
+  .add_level_xw("NUTS_DISTRICT_2027", "NIS_DISTRICT_2025", M25, M25)
+  .add_level_xw("NUTS_DISTRICT_2027", "NUTS_DISTRICT_2021", M25, M19)
+  .add_level_xw("NUTS_PROVINCE_2021", "NUTS_PROVINCE_2027", M19, M25)
+  .add_level_xw("NUTS_PROVINCE_2027", "NUTS_PROVINCE_2021", M25, M19)
+  .add_level_xw("NUTS_REGION_2021",  "NUTS_REGION_2027",   M19, M25)
+  .add_level_xw("NUTS_REGION_2027",  "NUTS_REGION_2021",   M25, M19)
+
+  # ---- Exact shortcuts across commune versions --------------------------------
+  # The engine composes the shortest crosswalk path. Across commune versions a
+  # path through an aggregated M:N edge (e.g. commune 2025 -> province 2025 ->
+  # provinces 2019) is coarser than the commune truth (it would give every East
+  # Flanders commune province 10000 too). So every conversion from a node of one
+  # commune version to an aggregated node of another is stored directly, derived
+  # from the communes. Communes are never a target here (2025 -> LAU 2021 and
+  # 2019 -> BEFORE_2019 communes stay deliberately absent); countries are left
+  # out (a single code, composition is exact).
+  level_rank <- c(municipality = 1L, district = 2L, province = 3L, region = 4L)
+  base_nodes <- list(
+    NIS_MUNICIPALITY_2019 = c(M19, "NIS_DISTRICT_2019", "NIS_PROVINCE_2019", "NIS_REGION_2019",
+                              "NUTS_DISTRICT_2021", "NUTS_PROVINCE_2021", "NUTS_REGION_2021",
+                              "NBB_DISTRICT_2021"),
+    NIS_MUNICIPALITY_2025 = c(M25, "NIS_DISTRICT_2025", "NIS_PROVINCE_2025", "NIS_REGION_2025",
+                              "NUTS_DISTRICT_2027", "NUTS_PROVINCE_2027", "NUTS_REGION_2027")
+  )
+  if (has_b19) base_nodes$NIS_MUNICIPALITY_BEFORE_2019 <- c(
+    MB, "NIS_DISTRICT_BEFORE_2019", "NIS_PROVINCE_BEFORE_2019", "NIS_REGION_BEFORE_2019")
+  .rank <- function(id) level_rank[[CLASSIFICATION_NODES[[id]]$level]]
+  for (mf in names(base_nodes)) for (mt in setdiff(names(base_nodes), mf)) {
+    for (f in base_nodes[[mf]]) for (t in base_nodes[[mt]]) {
+      if (t == mt || .rank(f) > .rank(t)) next
+      nf <- CLASSIFICATION_NODES[[f]]; nt <- CLASSIFICATION_NODES[[t]]
+      tn <- if (nf$system == "NIS" && nt$system == "NIS" && nf$level == nt$level)
+        level_nature[[toupper(nf$level)]] else NULL
+      .add_level_xw(f, t, mf, mt, tn)
+    }
+  }
+
   rbindlist(Filter(Negate(is.null), xw), use.names = TRUE, fill = FALSE)
 }

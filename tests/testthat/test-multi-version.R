@@ -66,18 +66,22 @@ test_that("`from` sets the versions and their priority", {
   expect_true(res[commune == "54007", no_match])      # BEFORE_2019 not requested
 })
 
-test_that("a version without route to the target aborts before converting", {
-  # NIS districts have no cross-version edge: BEFORE_2019 districts cannot reach
-  # the 2019 provinces.
-  dt <- data.table(arr = c("63000", "54000"))
-  expect_error(
-    convert_multi_version(dt, "arr", CLS_NIS_PROVINCE_2019, master_data,
-                          from = c(CLS_NIS_DISTRICT_2019, CLS_NIS_DISTRICT_BEFORE_2019)),
-    class = "rcl_no_route", regexp = "NIS_DISTRICT_BEFORE_2019")
+test_that("works on districts mixing versions", {
+  dt <- data.table(arr = c("63000", "54000", "58000"))
+  # 54000 (arr. Mouscron) only exists before 2019, 58000 (arr. La Louviere) from 2019
   res <- convert_multi_version(dt, "arr", CLS_NIS_PROVINCE_2019, master_data,
-                               from = CLS_NIS_DISTRICT_2019)
-  expect_identical(res$code_nis_province_2019, c("60000", NA))
-  expect_identical(res$no_match, c(FALSE, TRUE))   # 54000 (arr. Mouscron) gone in 2019
+                               from = c(CLS_NIS_DISTRICT_2019, CLS_NIS_DISTRICT_BEFORE_2019))
+  expect_identical(res$code_nis_province_2019, c("60000", "50000", "50000"))
+  expect_identical(res$code_nis_province_2019_from_2019, c("60000", NA, "50000"))
+  expect_identical(res$code_nis_province_2019_from_before_2019, c("60000", "50000", NA))
+})
+
+test_that("a version without route to the target aborts before converting", {
+  # 2019 / 2025 communes -> BEFORE_2019 communes (de-fusion) has no route.
+  expect_error(
+    convert_multi_version(mv_dt, "commune", CLS_NIS_MUNICIPALITY_BEFORE_2019, master_data,
+                          from = c(CLS_NIS_MUNICIPALITY_2025, CLS_NIS_MUNICIPALITY_2019)),
+    class = "rcl_no_route", regexp = "NIS_MUNICIPALITY_2025, NIS_MUNICIPALITY_2019")
 })
 
 test_that("integer codes, data.frame input and a custom target column", {
