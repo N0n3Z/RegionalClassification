@@ -1,13 +1,16 @@
 # Plan — Conversions NIS district / province entre versions
 
-> **Statut** : plan à valider (2026-10-30). Remplace la proposition
+> **Statut** : validé par l'utilisateur (2026-10-30), complété des familles de la section 7. Remplace la proposition
 > `DISTRICT_CROSS_VERSION_EDGE.md` (branche `claude/add-regional-classification-fork-9e9yt`),
 > écrite pour la v1.2 (`.ROUTE_TABLE`, `nis_changes`, noms `cd_*`) et incomplète sur les
 > données. Branche : `claude/nis-cross-version-levels`, au-dessus de
 > `claude/multi-version-convert` (3.0.0, modèle long).
 
 Choix de l'utilisateur : **districts + provinces**, **2025 ↔ 2019 et BEFORE_2019 ↔ 2019**,
-**poids de population livrés** par défaut.
+**poids de population livrés** par défaut ; **Oudsbergen bloqué sans poids fournis** ;
+familles supplémentaires retenues (2026-10-30) : **NIS ↔ NUTS au même niveau**, **régions NIS
+entre versions**, **NUTS 2027 → 2021 et → NIS** (voir section 7). Écartée : communes 2019 →
+BEFORE_2019 (dé-fusion).
 
 ## Contexte
 
@@ -97,12 +100,14 @@ golden (`gen_golden()` : section « toutes les paires »).
   Moerbeke / population du district 46000 (version 2025).
 - **BEFORE_2019 ↔ 2019** : fonctionne pour le Hainaut (communes recodées 1:1), **mais pas
   pour 71000 → {71000, 72000}** : Oudsbergen 2019 regroupe Opglabbeek (71000) et
-  Meeuwen-Gruitrode (72000), dont la population séparée n'est pas livrée. Proposition :
-  poids égaux pour ce seul cas, avec un avertissement `rcl_unmatched_codes` explicite, et
-  documentation de la marche à suivre (`commune_values` à la version BEFORE_2019). À
-  confirmer pendant l'implémentation : `split_weights_template()` lève-t-il une erreur sur
-  la jambe ambiguë ? Si oui, il faudra un repli dans le **nouveau** code, pas une
-  modification des fonctions existantes.
+  Meeuwen-Gruitrode (72000), dont la population séparée n'est pas livrée. **Décision :
+  bloquer** — sans poids fournis par l'utilisateur pour ce code, la répartition s'arrête
+  sur une erreur explicite (classe `rcl_*` existante) qui indique comment fournir les
+  poids (`weights =` table `code_from, code_to, weight`, ou `commune_values` à la version
+  BEFORE_2019) ; jamais de poids égaux silencieux. À vérifier pendant l'implémentation :
+  comportement actuel de `split_weights_template()` sur cette jambe ambiguë ; tout
+  traitement spécifique va dans du **nouveau** code, sans modifier les fonctions
+  existantes.
 
 ### 5. Tests
 
@@ -127,10 +132,35 @@ README (exemple court), CLAUDE.md (règle : un niveau agrégé entre versions es
 communes ; raccourcis directs pour garder la précision). Supprimer la proposition
 `DISTRICT_CROSS_VERSION_EDGE.md` remplacée par ce plan (sur sa branche, avec accord).
 
+### 7. Familles supplémentaires
+
+Inventaire (2026-10-30) : 148 paires de classifications sans route vers une cible de même
+niveau ou plus grossière (les 211 désagrégations, ex. province → communes, restent absentes
+par principe). Retenues en plus des districts / provinces NIS, toutes dérivées des communes
+et vérifiées sur les données :
+
+| Famille | Paires (les deux sens) | Relation |
+|---|---|---|
+| NIS ↔ NUTS même niveau | `NIS_PROVINCE_2019` ↔ `NUTS_PROVINCE_2021` (11), `NIS_REGION_2019` ↔ `NUTS_REGION_2021` (3), `NIS_PROVINCE_2025` ↔ `NUTS_PROVINCE_2027` (11), `NIS_REGION_2025` ↔ `NUTS_REGION_2027` (3), `NIS_COUNTRY` ↔ `NUTS_COUNTRY` (1000 ↔ BE) | 1:1 |
+| Régions NIS entre versions | `NIS_REGION` BEFORE_2019 ↔ 2019 ↔ 2025 (codes identiques) | 1:1 |
+| NUTS 2027 → 2021 et → NIS | `NUTS_DISTRICT_2027` → `NIS_DISTRICT_2025` | N:1 |
+| | `NUTS_PROVINCE_2021` ↔ `NUTS_PROVINCE_2027` (BE21 → BE26 + BE27, BE23 → BE27) | M:N |
+| | `NUTS_REGION_2021` ↔ `NUTS_REGION_2027` | 1:1 |
+| | `NUTS_DISTRICT_2027` → `NUTS_DISTRICT_2021` (inverse dérivé des communes ; l'arête actuelle 2021 → 2027 garde `no_reverse`) | M:N |
+
+Correction : la version précédente de ce plan affirmait que les régions étaient « déjà
+convertibles via les provinces » ; c'est faux (région → province est une désagrégation).
+
+Les mêmes règles s'appliquent : paires ajoutées dans `crosswalks` + arêtes explicites,
+nature sur les liens temporels NIS (`UNCHANGED` pour les régions), critère bloquant
+« conversions existantes inchangées », raccourcis directs si une nouvelle arête grossière
+rendait un chemin existant moins précis. En fin d'implémentation, recalculer l'inventaire
+des paires sans route et présenter ce qui reste.
+
 ## Hors périmètre
 
-- NUTS : les révisions NUTS ont déjà leurs arêtes (2021 → 2027).
-- Régions : identiques dans toutes les versions ; déjà convertibles via les provinces.
+- Communes 2019 → BEFORE_2019 (dé-fusion 1:N, 7 communes) : écarté par l'utilisateur ;
+  POSTAL / LAU 2021 / NIS 2025 → BEFORE_2019 restent donc sans route.
 - Nouvelles données de population BEFORE_2019 (non disponibles dans `data/raw/`).
 
 ## Vérification
