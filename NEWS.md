@@ -84,8 +84,9 @@
   from one commune version to an aggregated level of another are stored as
   direct crosswalks so they stay exact; some of them now report a `nature`
   (`RECODE` / `OVERLAP`) where the former multi-hop route reported `NA`.
-  Postal code 1020 (Laeken), which has no 2025 commune, now reaches its 2025
-  district / region (21000 / 4000) instead of `NA`. Only conversions towards
+  Postal code 1020 (Laeken), which is not `KEEP_UNIQUE` in the 2025 postal
+  file, now reaches its 2025 commune / district / region (21004 / 21000 /
+  4000) instead of `NA`. Only conversions towards
   BEFORE_2019 communes (2019 -> BEFORE_2019 de-fusion) remain without route.
   Population weights work out of the box for 2025 <-> 2019 (e.g. Moerbeke =
   2.3 % of district 46000).
@@ -119,13 +120,16 @@
   several examples had silently gone stale); their examples, the README,
   DOCUMENTATION and `demo/demo.R` were checked against the real outputs.
   Maintainer: Romain Grailet; package URLs on `github.com/StatHH`.
-* Atom-based engine in preparation (`R/12_atoms.R`, design note
+* **New conversion engine based on atoms** (`R/12_atoms.R`, design note
   `docs/plans/engine-redesign.md`): every unit is a union of atoms (NIS
   BEFORE_2019 communes for now, postal codes once their BEFORE_2019 commune is
-  known) and a conversion is one join through the atoms. Opt-in through the
-  internal option `nbbbenuts.engine = "atoms"`; the default engine is
-  unchanged. `test-atom-engine.R` checks it against a snapshot of all 291
-  conversions (`fixtures/golden_all_pairs.rds`).
+  known) and a conversion is one join through the atoms, instead of composing
+  crosswalk hops. It is the default engine; functions, arguments and outputs
+  are unchanged, and it returns the same codes as the former engine on all 291
+  conversions except postal code 1020 -> NIS 2025 commune (see above).
+  `test-atom-engine.R` checks it against a snapshot of the former engine
+  (`fixtures/golden_all_pairs.rds`). The former engine stays reachable with
+  the internal option `nbbbenuts.engine = "crosswalks"` until its removal.
 * `crosswalks` grows from ~20 000 to ~38 000 rows (exact cross-version
   shortcuts). New invariant: every conversion between commune-based nodes
   equals the commune truth (`test-invariants.R`); `test-cross-version-levels.R`

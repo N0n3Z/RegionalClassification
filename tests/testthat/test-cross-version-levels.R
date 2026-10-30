@@ -130,7 +130,10 @@ test_that("BEFORE_2019 -> 2019 population weights: real shares, Oudsbergen block
   expect_equal(res[arr == "71000" & code_nis_district_2019 == "72000", v], 3)
 })
 
-test_that("postal 1020 (Laeken) reaches its 2025 district though it has no 2025 commune", {
-  expect_true(is.na(convert_codes("1020", CLS_POSTAL, CLS_NIS_MUNICIPALITY_2025, master_data)$code_to))
+test_that("postal 1020 (Laeken) reaches its 2025 commune, district and region", {
+  # not KEEP_UNIQUE in the 2025 postal file; the atom engine keeps its 2019
+  # commune (Bruxelles), consistent with its 2025 district and region
+  expect_identical(convert_codes("1020", CLS_POSTAL, CLS_NIS_MUNICIPALITY_2025, master_data)$code_to,
+                   "21004")
   expect_identical(convert_codes("1020", CLS_POSTAL, CLS_NIS_DISTRICT_2025, master_data)$code_to, "21000")
 })

@@ -5,12 +5,12 @@
 # then one join: (a, b) are linked iff they share an atom. No path search, no
 # materialised shortcut, cardinality computed from the data.
 #
-# Transition (steps 1-2 of the plan): the atom is the NIS BEFORE_2019 commune,
+# Transition (steps 1-3 of the plan): the atom is the NIS BEFORE_2019 commune,
 # the finest partition the package can build today (2019 and 2025 reforms only
 # merge communes or move whole ones). The membership table is derived from the
 # shipped crosswalks at load time and cached, so the snapshot and the output of
-# load_master_data() are unchanged. The engine is opt-in through the internal
-# option `nbbbenuts.engine = "atoms"`; the default stays the crosswalk engine.
+# load_master_data() are unchanged. It is the default engine since step 3; the
+# former crosswalk engine stays reachable with options(nbbbenuts.engine = "crosswalks").
 # Switching the atom to postal codes (once the postal -> BEFORE_2019 commune
 # correspondence and the population by postal code are available) only changes
 # .atom_membership().
@@ -164,6 +164,9 @@
   .normalize_conversion_result(res)
 }
 
-#' Which engine executes conversions (internal switch, default "crosswalks")
+#' Which engine executes conversions (internal switch)
+#'
+#' Default "atoms" since step 3 of the redesign; "crosswalks" (the former
+#' path-composition engine) stays available as a fallback until step 5.
 #' @noRd
-.engine <- function() getOption("nbbbenuts.engine", "crosswalks")
+.engine <- function() getOption("nbbbenuts.engine", "atoms")

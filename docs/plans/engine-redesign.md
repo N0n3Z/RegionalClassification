@@ -1,7 +1,7 @@
 # Note de conception — Un moteur de conversion fondé sur des atomes
 
-> **Statut** : étapes 0 à 2 **implémentées** sur `claude/atom-engine` (2026-10-30) ; atome
-> commune BEFORE_2019 en attendant les données postales ; étape 3 (bascule) non faite. Base : `nbbbenuts` 3.0.0 tel que sur `claude/maintainer-docs-demo`.
+> **Statut** : étapes 0 à 3 **implémentées** (2026-10-30) : 0–2 sur `claude/atom-engine`, bascule (3) sur `claude/atom-engine-default` ; atome
+> commune BEFORE_2019 en attendant les données postales ; étapes 5–6 à faire. Base : `nbbbenuts` 3.0.0 tel que sur `claude/maintainer-docs-demo`.
 > Objet : décrire l'architecture cible du moteur, le choix de l'unité atomique (dont la
 > question « les codes postaux peuvent-ils être l'atome ? »), un plan de migration et
 > ses risques, pour décider à tête reposée.
@@ -226,7 +226,7 @@ Le filet de sécurité existe déjà : l'invariant de précision et la photo « 
 > s'active dès que la paire `POSTAL -> NIS_MUNICIPALITY_BEFORE_2019` est dans les
 > données (testé avec une correspondance synthétique : aucun lien entre unités ne change).
 > Reste : intégrer la correspondance et la population par code postal (données
-> utilisateur), puis l'étape 3.
+> utilisateur). **Étape 3 faite (2026-10-30)** : moteur par atomes par défaut, seul écart visible 1020 → 21004 ; l'ancien moteur reste accessible (`nbbbenuts.engine = "crosswalks"`) jusqu'à l'étape 5.
 | 3 | Basculer `convert_codes()` sur le nouveau moteur ; `crosswalks` devient une vue | suite de tests verte, CI verte |
 | 4 | *(abandonnée : scinder `nature` et simplifier `check_conversion_path()` casserait l'API sans nécessité)* | — |
 | 5 | Retirer du moteur les raccourcis et `.xw_path` ; le graphe déclaré reste (documentation testée, alimente `check_conversion_path()`) ; `CLASSIFICATION_REGISTRY` supprimé seulement s'il n'est pas exporté ni documenté pour les utilisateurs | `R CMD check` OK, aucune ligne ajoutée à `user-facing-changes.md` |

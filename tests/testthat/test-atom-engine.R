@@ -8,6 +8,10 @@ with_atoms <- function(expr) {
   old <- options(nbbbenuts.engine = "atoms"); on.exit(options(old), add = TRUE)
   force(expr)
 }
+with_crosswalks <- function(expr) {
+  old <- options(nbbbenuts.engine = "crosswalks"); on.exit(options(old), add = TRUE)
+  force(expr)
+}
 
 # Links on which the atom engine knowingly differs from the crosswalk engine.
 ATOM_ENGINE_EXPECTED_DIFFS <- data.table(
@@ -19,8 +23,9 @@ ATOM_ENGINE_EXPECTED_DIFFS <- data.table(
   reason = "postal code without a 2025 commune in the source file"
 )
 
-test_that("the default engine is the crosswalk engine", {
-  expect_identical(nbbbenuts:::.engine(), "crosswalks")
+test_that("the default engine is the atom engine (step 3)", {
+  old <- options(nbbbenuts.engine = NULL); on.exit(options(old), add = TRUE)
+  expect_identical(nbbbenuts:::.engine(), "atoms")
 })
 
 test_that("membership partitions the atoms in every classification", {
@@ -41,7 +46,7 @@ test_that("the atom engine offers exactly the conversions of the crosswalk engin
   ids <- names(CLASSIFICATION_NODES)
   for (f in ids) for (t in ids) {
     expect_identical(nbbbenuts:::.atom_pair_allowed(f, t),
-                     nbbbenuts:::.route_is_executable(f, t, master_data),
+                     with_crosswalks(nbbbenuts:::.route_is_executable(f, t, master_data)),
                      info = paste(f, "->", t))
   }
 })

@@ -81,8 +81,8 @@ Objectif : **aucune ligne**. Signatures, arguments, colonnes de sortie et valeur
 |---|---|---|---|
 | `convert_codes()` | 4 conversions nouvelles vers `NIS_MUNICIPALITY_BEFORE_2019` (dé-fusion 2019 → BEFORE_2019), si l'atome code postal est retenu | non (ajout) | — |
 | poids `"population"` | **à surveiller** : inchangés si la population communale reste la référence ; changeraient si la population par code postal était utilisée partout | à décider | — |
-| `options(nbbbenuts.engine = "atoms")` (interne, non documentée) | active le nouveau moteur ; par défaut l'ancien reste utilisé. Aucun changement tant que la bascule (étape 3) n'est pas faite | non | — |
-| `convert_codes("1020", "POSTAL", "NIS_MUNICIPALITY_2025")` | **à la bascule** : NA → 21004 (Laeken rattaché à Bruxelles, cohérent avec le district / la région 2025 déjà renvoyés) | faiblement | non (cohérence) — à valider avant la bascule |
+| moteur de conversion | **basculé** (étape 3, branche `claude/atom-engine-default`) : le moteur par atomes est utilisé par défaut ; fonctions, arguments et colonnes inchangés ; mêmes codes sur les 291 conversions sauf la ligne suivante. L'ancien moteur reste accessible par `options(nbbbenuts.engine = "crosswalks")` (interne) jusqu'à l'étape 5 | non | — |
+| `convert_codes("1020", "POSTAL", "NIS_MUNICIPALITY_2025")` | NA → 21004 (Laeken rattaché à Bruxelles, cohérent avec le district / la région 2025 déjà renvoyés) — bascule demandée par l'utilisateur (2026-10-30) | faiblement | non (cohérence) |
 
 ## 3. Synthèse
 
