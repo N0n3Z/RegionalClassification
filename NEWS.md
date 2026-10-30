@@ -57,6 +57,12 @@
   (BEFORE_2019) -> 71000 + 72000, since Opglabbeek is merged into Oudsbergen
   (72042) in the 2019 population.
 
+* `identify_from_names()` returned postal codes for commune names (postal
+  labels are commune names, so both match exactly and `POSTAL` came first in
+  `possible_classifications`). The NIS communes now come first by default:
+  `identify_from_names(c("Bruxelles", "Gent"), md)` gives `21004`, `44021`
+  (`NIS_MUNICIPALITY_2019`).
+
 ## New features
 
 * **Aggregated NIS levels convert between versions, and NIS <-> NUTS at the
@@ -109,6 +115,10 @@
 * Tests: `test-wide-view.R` checks `wide_view()` against
   `fixtures/golden_wide.rds` (the 2.0.0 wide tables); the schema-convention
   tests also cover the wide views.
+* The vignettes are now evaluated when built (they were `eval = FALSE`, and
+  several examples had silently gone stale); their examples, the README,
+  DOCUMENTATION and `demo/demo.R` were checked against the real outputs.
+  Maintainer: Romain Grailet; package URLs on `github.com/StatHH`.
 * `crosswalks` grows from ~20 000 to ~38 000 rows (exact cross-version
   shortcuts). New invariant: every conversion between commune-based nodes
   equals the commune truth (`test-invariants.R`); `test-cross-version-levels.R`

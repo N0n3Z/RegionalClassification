@@ -42,6 +42,14 @@ test_that("identify_from_names returns one best match per input name", {
   expect_true("classification" %in% names(result))
 })
 
+test_that("identify_from_names prefers NIS communes over postal codes on ties", {
+  skip_if_not_installed("stringdist")
+  # postal labels are commune names, so both match exactly: NIS 2019 must win
+  result <- identify_from_names(c("Bruxelles", "Antwerpen", "Gent", "Liège"), master_data)
+  expect_identical(unique(result$classification), CLS_NIS_MUNICIPALITY_2019)
+  expect_identical(result$code_matched, c("21004", "11002", "44021", "62063"))
+})
+
 # -- Test F6: resultat NIS_MUNICIPALITY_2025 ---------------------------------------
 test_that("fuzzy_match_names works for NIS_MUNICIPALITY_2025", {
   skip_if_not_installed("stringdist")

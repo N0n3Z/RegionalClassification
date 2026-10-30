@@ -242,8 +242,9 @@ normalize_name <- function(name) {
 #'
 #' @param names Character vector of entity names
 #' @param master_data Master data from build_master_table()
-#' @param possible_classifications Vector of classifications to try
-#'   (default: all supported)
+#' @param possible_classifications Vector of classifications to try, in
+#'   priority order: when several give the same distance (postal labels are
+#'   commune names), the first one wins. The NIS communes come first by default.
 #' @param max_dist Maximum distance threshold
 #' @param language Preferred language
 #' @return data.table with results including the best-matching classification
@@ -255,7 +256,7 @@ normalize_name <- function(name) {
 #' @export
 identify_from_names <- function(names, master_data,
                                 possible_classifications = c(
-                                  "POSTAL", "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025",
+                                  "NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025", "POSTAL",
                                   "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021"
                                 ),
                                 max_dist = 0.1,

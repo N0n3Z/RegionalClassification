@@ -7,8 +7,8 @@
 identify_from_names(
   names,
   master_data,
-  possible_classifications = c("POSTAL", "NIS_MUNICIPALITY_2019",
-    "NIS_MUNICIPALITY_2025", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021"),
+  possible_classifications = c("NIS_MUNICIPALITY_2019", "NIS_MUNICIPALITY_2025",
+    "POSTAL", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021"),
   max_dist = 0.1,
   language = "both"
 )
@@ -18,8 +18,9 @@ identify_from_names(
 
 \item{master_data}{Master data from build_master_table()}
 
-\item{possible_classifications}{Vector of classifications to try
-(default: all supported)}
+\item{possible_classifications}{Vector of classifications to try, in
+priority order: when several give the same distance (postal labels are
+commune names), the first one wins. The NIS communes come first by default.}
 
 \item{max_dist}{Maximum distance threshold}
 

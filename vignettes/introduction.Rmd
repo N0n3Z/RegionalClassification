@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
 ```
 
 ## Overview
@@ -20,11 +20,11 @@ Belgian administrative data references geography in many ways — NIS commune co
 NUTS regions, postal codes, internal arrondissement codes — and these change over
 time as communes merge or district borders shift. This package unifies all of them.
 
-All classification identifiers are strict uppercase strings (e.g. `"NIS_MUNICIPALITY_2019"`).
-See `?classification_reference` for the full list, or call:
+Classification identifiers are uppercase strings (e.g. `"NIS_MUNICIPALITY_2019"`;
+matching is case-insensitive). See `?classification_reference` for the full list, or call:
 
 ```{r}
-get_all_classification_nodes()
+nbbbenuts::get_all_classification_nodes()
 ```
 
 ---
@@ -382,7 +382,7 @@ fuzzy_match_names(
 get_all_classification_nodes()
 
 # Detailed help page with conversion table
-?classification_reference
+# ?classification_reference
 ```
 
 Key identifiers:
