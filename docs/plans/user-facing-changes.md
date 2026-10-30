@@ -91,4 +91,10 @@ Objectif : **aucune ligne**. Signatures, arguments, colonnes de sortie et valeur
   `list_available_conversions()` / `get_conversion_matrix()`, `fuzzy_match_names()` /
   `identify_from_names()`, jeux d'exemple) et le retrait des tables larges de
   `load_master_data()` (3.0.0). Ce sont eux qui toucheront le plus les utilisateurs
-  existants ; ils peuvent être adoucis (compatibilité) avant fusion dans `main`.
+  existants.
+- **Décision utilisateur (2026-10-30)** : ces changements non nécessaires sont **conservés
+  tels quels** (pas de rétablissement des anciens noms, pas d'option de compatibilité, pas
+  de réexposition des tables larges). La migration des utilisateurs passe par la NEWS
+  (tables de correspondance 2.0.0 et 3.0.0) et `wide_view()`. Cette décision vaut pour les
+  branches existantes ; tout **nouveau** changement reste soumis à la règle « seulement si
+  nécessaire ».
