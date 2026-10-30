@@ -150,8 +150,27 @@ que pour les aretes primitives).
   quelques-uns (ceux contenant les 3 communes ayant change de province entre 2019 et 2025, ex.
   `BE211 -> {BE261, BE276}`) -> 2 cibles, d'ou `allow_ambiguous = TRUE` + splitting pondere
   (`register_split_weights()`). Pour des donnees **au niveau commune**, convertir les communes
-  directement vers `NUTS_DISTRICT_2027` (exact, sans poids). Le sens inverse 2027->2021 n'a pas
-  d'arete directe (passer par NIS).
+  directement vers `NUTS_DISTRICT_2027` (exact, sans poids). Le sens inverse 2027->2021 est
+  une arete `M:N` distincte (3.0.0), derivee des communes.
+- **Niveaux agreges entre versions et NIS <-> NUTS** (3.0.0) : derives au build des liens
+  communaux (deux unites sont liees si une commune appartient aux deux), sans code moteur :
+  districts et provinces NIS 2025 <-> 2019 et BEFORE_2019 <-> 2019 (`M:N` ; 46000 (2025) ->
+  11000 + 44000 + 46000, 71000 -> 71000 + 73000, province 40000 -> 10000 + 40000, reforme du
+  Hainaut 2019), regions NIS entre versions (`1:1`), provinces / regions NIS <-> NUTS2 / NUTS1
+  (2019 <-> 2021, 2025 <-> 2027), `NIS_COUNTRY <-> NUTS_COUNTRY`, `NUTS_DISTRICT_2027 <->
+  NIS_DISTRICT_2025`, NUTS2 / NUTS1 2021 <-> 2027. Nature `UNCHANGED` si le territoire est
+  identique dans les deux versions, sinon `CHANGE_DSTR` / `CHANGE_PROV`.
+  **Precision** : toute conversion d'une version communale vers un niveau agrege d'une autre
+  est stockee en lien direct (verite communale), car un chemin par une arete agregee `M:N`
+  serait plus grossier (commune 2025 -> province 2025 -> provinces 2019 ajouterait 10000 a
+  toute la Flandre orientale). `test-invariants.R` verifie que chaque conversion entre
+  noeuds a base communale egale la verite communale. Seules les conversions vers les communes
+  BEFORE_2019 (de-fusion) restent sans route.
+  **Poids** : la population 2019 livree donne les poids 2025 <-> 2019 (ex. Moerbeke = 2,3 %
+  du district 46000). Pour BEFORE_2019 -> 2019, 71000 n'a pas de poids calculable
+  (Opglabbeek est fondue dans Oudsbergen 72042) : `split_weights_template()` lui donne
+  `weight = NA` (warning `rcl_weights_required`) et `split_ambiguous()` s'arrete avec la meme
+  classe tant que l'utilisateur ne fournit pas ses poids.
 - **`province -> region`** est `N:1` (emboitement). Depuis la scission du Brabant
   en 1995, la province unifiee 20000 n'existe plus : Vlaams-Brabant (20001) est en
   Flandre, le Brabant wallon (20002) en Wallonie, et Bruxelles-Capitale utilise une
@@ -813,6 +832,7 @@ une classe `rcl_*`. Interceptables avec `tryCatch(..., rcl_xxx = handler)`.
 | `rcl_missing_periods` | warning | `rebase_series()` : periodes non couvertes par `version_map` |
 | `rcl_no_weights` | erreur | `get_split_weights()` : aucun poids enregistre pour la paire |
 | `rcl_invalid_weights` | erreur | poids qui ne somment pas a 1, ou codes absents |
+| `rcl_weights_required` | warning / erreur | `split_weights_template()` : poids incalculable pour un code (warning, `weight = NA`) ; `split_ambiguous()` : un tel code est dans les donnees sans poids fourni (erreur) |
 | `rcl_schema_error` | erreur | table `communes` non conforme au schema attendu au build |
 
 ---
@@ -839,6 +859,10 @@ tests/testthat/
   test-diagnose.R              -- diagnose_classification()
   test-query.R                 -- validate_codes(), get_label(), get_crosswalk()
   test-misc.R                  -- alias, normalize_classification_id(), edge cases
+  test-invariants.R            -- invariants structurels + precision (verite communale) sur toutes les paires
+  test-references.R            -- faits officiels Statbel / Eurostat / bpost
+  test-cross-version-levels.R  -- districts / provinces / regions entre versions, NIS <-> NUTS, poids
+  test-multi-version.R         -- convert_multi_version()
   test-edge-cases.R            -- codes NA, vecteurs vides, from == to
   test-nomenclature.R          -- objet nomenclature, S3 methods, hierarchie
   test-fuzzy.R                 -- fuzzy_match_names() (skip si stringdist absent)

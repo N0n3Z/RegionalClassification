@@ -94,6 +94,11 @@ convert_codes("63000", "NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,
 convert_codes(c("21001", "46029"), "NIS_MUNICIPALITY_2025", "NUTS_DISTRICT_2021", master_data,
               allow_ambiguous = TRUE)
 
+# NIS districts / provinces also convert between versions (M:N), e.g. the 2025
+# district 46000 (Sint-Niklaas, + Moerbeke and Zwijndrecht) back to 2019:
+convert_codes("46000", "NIS_DISTRICT_2025", "NIS_DISTRICT_2019", master_data,
+              allow_ambiguous = TRUE)   # 11000, 44000, 46000
+
 # The package SHIPS population weights (NIS 2019 communes, 2011-2024), so
 # proportional splits work out of the box -- no registration needed.
 split_weights_template("NIS_DISTRICT_2019", "NUTS_DISTRICT_2021", master_data,

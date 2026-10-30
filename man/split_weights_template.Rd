@@ -46,6 +46,12 @@ period-consistent weights (e.g. historical retropolation). Ignored when
 A `data.table` with columns `code_from` (character), `code_to`
   (character), and `weight` (numeric, summing to 1 per `code_from`). Returns an
   empty table (with a message) when no ambiguous codes exist for the pair.
+  When a weighting commune cannot be attributed to a single `from` and `to`
+  code (e.g. 2019 Oudsbergen merges two BEFORE_2019 communes of different
+  districts), the `from` codes it touches get `weight = NA` and a warning of
+  class `rcl_weights_required` is signalled; fill those weights in before
+  using the template. [split_ambiguous()] aborts with the same class when the
+  data holds such a code and no weight was supplied for it.
 }
 \description{
 Returns a `data.table(code_from, code_to, weight)` for every ambiguous (1:N)

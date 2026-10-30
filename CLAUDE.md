@@ -37,6 +37,14 @@ properties checked over every crosswalk pair -- add an entry to
 official Statbel / Eurostat / bpost lists, never from package output). When a
 golden fixture changes, these say whether the new data is right.
 
+**Aggregated levels across versions (v3.0.0):** links between NIS districts /
+provinces / regions of different versions, NIS <-> NUTS at the same level and
+NUTS 2021 <-> 2027 are derived from the commune crosswalks in `build_crosswalks()`
+(`.derive_level_xw()`); never add an aggregated cross-version edge by hand. Every
+conversion from one commune version to an aggregated node of another is stored
+as a direct crosswalk (exact): composing through an aggregated M:N edge is
+coarser, and the precision invariant in `test-invariants.R` fails if it happens.
+
 ## Architecture (where things live)
 
 - `R/00_config.R` — `CONVERSION_GRAPH_EDGES` (conversion topology),

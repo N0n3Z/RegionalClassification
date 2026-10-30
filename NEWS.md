@@ -46,7 +46,43 @@
   `1:N` (several sources also share a target); both were already ambiguous,
   so conversion results are unchanged.
 
+* **Population split weights no longer fall back to equal weights for a
+  whole pair because of one unattributable commune.** `split_weights_template()`
+  used to fail (and `split_ambiguous(weights = "population")` to use equal
+  weights for every code) as soon as one weighting commune mapped to several
+  source codes. Such codes now get `weight = NA` with a warning of class
+  `rcl_weights_required`, the others get their real shares, and
+  `split_ambiguous()` aborts with `rcl_weights_required` only when the data
+  holds one of them and no weight was supplied. Shipped case: district 71000
+  (BEFORE_2019) -> 71000 + 72000, since Opglabbeek is merged into Oudsbergen
+  (72042) in the 2019 population.
+
 ## New features
+
+* **Aggregated NIS levels convert between versions, and NIS <-> NUTS at the
+  same level.** Derived from the commune links (two units are linked when a
+  commune belongs to both):
+  - NIS districts and provinces 2025 <-> 2019 and BEFORE_2019 <-> 2019 (`M:N`):
+    district 46000 (2025) -> 11000 + 44000 + 46000 (Zwijndrecht, Moerbeke),
+    71000 -> 71000 + 73000 (Kortessem), province 40000 -> 10000 + 40000; the
+    2019 Hainaut reform (54000 -> 57000, 58000 <- 55000 + 56000, ...). Links
+    carry `nature` `UNCHANGED`, `CHANGE_DSTR` or `CHANGE_PROV`;
+  - NIS regions between versions (`1:1`);
+  - NIS provinces / regions <-> NUTS2 / NUTS1 (2019 <-> 2021, 2025 <-> 2027),
+    `NIS_COUNTRY` <-> `NUTS_COUNTRY`;
+  - `NUTS_DISTRICT_2027` <-> `NIS_DISTRICT_2025`, NUTS2 / NUTS1 2021 <-> 2027
+    (BE21 -> BE26 + BE27, BE23 -> BE27), and `NUTS_DISTRICT_2027 ->
+    NUTS_DISTRICT_2021` (`M:N`, it used to have no route).
+
+  Conversions that were already possible return the same codes. Conversions
+  from one commune version to an aggregated level of another are stored as
+  direct crosswalks so they stay exact; some of them now report a `nature`
+  (`RECODE` / `OVERLAP`) where the former multi-hop route reported `NA`.
+  Postal code 1020 (Laeken), which has no 2025 commune, now reaches its 2025
+  district / region (21000 / 4000) instead of `NA`. Only conversions towards
+  BEFORE_2019 communes (2019 -> BEFORE_2019 de-fusion) remain without route.
+  Population weights work out of the box for 2025 <-> 2019 (e.g. Moerbeke =
+  2.3 % of district 46000).
 
 * **`convert_multi_version(dt, code_col, to, master_data, from)`** converts a
   code column that mixes several versions (e.g. NIS municipality codes mostly
@@ -73,6 +109,10 @@
 * Tests: `test-wide-view.R` checks `wide_view()` against
   `fixtures/golden_wide.rds` (the 2.0.0 wide tables); the schema-convention
   tests also cover the wide views.
+* `crosswalks` grows from ~20 000 to ~38 000 rows (exact cross-version
+  shortcuts). New invariant: every conversion between commune-based nodes
+  equals the commune truth (`test-invariants.R`); `test-cross-version-levels.R`
+  checks the new conversions against official facts.
 
 
 # nbbbenuts 2.0.0

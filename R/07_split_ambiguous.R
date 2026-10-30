@@ -347,6 +347,12 @@ clear_split_weights <- function() {
 #' @return A `data.table` with columns `code_from` (character), `code_to`
 #'   (character), and `weight` (numeric, summing to 1 per `code_from`). Returns an
 #'   empty table (with a message) when no ambiguous codes exist for the pair.
+#'   When a weighting commune cannot be attributed to a single `from` and `to`
+#'   code (e.g. 2019 Oudsbergen merges two BEFORE_2019 communes of different
+#'   districts), the `from` codes it touches get `weight = NA` and a warning of
+#'   class `rcl_weights_required` is signalled; fill those weights in before
+#'   using the template. [split_ambiguous()] aborts with the same class when the
+#'   data holds such a code and no weight was supplied for it.
 #'
 #' @examples
 #' \donttest{
@@ -434,17 +440,24 @@ split_weights_template <- function(from, to, master_data,
   vals    <- .resolve_weight_values(variable, commune_values, vintage,
                                     weight_year, master_data)
 
-  # Map each weighting commune to its `from` and `to` code. Both legs must be
-  # simple (N:1) from a commune, so convert without allow_ambiguous (1 row each).
+  # Map each weighting commune to its `from` and `to` code. A commune whose leg
+  # is ambiguous (several `from` or `to` codes, e.g. 2019 Oudsbergen = two
+  # BEFORE_2019 communes from different districts) cannot be attributed: the
+  # `from` codes it touches get weight NA instead of making the whole template
+  # fail, and the caller must supply weights for them.
   comm <- vals$code
-  leg_from <- convert_codes(comm, vintage, from_norm, master_data)
-  leg_to   <- convert_codes(comm, vintage, to_norm,   master_data)
+  leg_from <- suppressWarnings(
+    convert_codes(comm, vintage, from_norm, master_data, allow_ambiguous = TRUE))
+  leg_to   <- suppressWarnings(
+    convert_codes(comm, vintage, to_norm, master_data, allow_ambiguous = TRUE))
+  leg_from <- unique(leg_from[!is.na(code_to), .(code = as.character(code_from),
+                                                  code_from = as.character(code_to))])
+  leg_to   <- unique(leg_to[!is.na(code_to), .(code = as.character(code_from),
+                                                code_to = as.character(code_to))])
+  multi <- unique(c(leg_from[duplicated(code), code], leg_to[duplicated(code), code]))
+  blocked <- intersect(unique(leg_from[code %in% multi, code_from]), ambig_codes)
 
-  link <- data.table(code = as.character(comm))
-  link[, code_from := as.character(
-    leg_from$code_to[match(code, as.character(leg_from$code_from))])]
-  link[, code_to := as.character(
-    leg_to$code_to[match(code, as.character(leg_to$code_from))])]
+  link <- merge(leg_from[!code %in% multi], leg_to[!code %in% multi], by = "code")
   link <- merge(link, vals, by = "code", all.x = TRUE)
 
   agg <- link[!is.na(code_from) & !is.na(code_to) & !is.na(value),
@@ -454,6 +467,19 @@ split_weights_template <- function(from, to, master_data,
   out <- merge(template, agg, by = c("code_from", "code_to"), all.x = TRUE)
   out[is.na(mass), mass := 0]
   out[, weight := if (sum(mass) > 0) mass / sum(mass) else 1 / .N, by = code_from]
+  if (length(blocked) > 0L) {
+    out[code_from %in% blocked, weight := NA_real_]
+    warn(sprintf(paste0(
+      "No weight can be computed from %s values for %s code(s) %s -> %s: commune(s) %s ",
+      "of %s merge units of several source codes. Their weight is NA; fill it in ",
+      "(this template, `weights =` or register_split_weights()), or pass ",
+      "`commune_values` at a finer `weight_vintage`."),
+      if (is.null(commune_values)) paste0("'", variable, "'") else "commune_values",
+      from_norm, paste(sort(blocked), collapse = ", "), to_norm,
+      paste(sort(multi[multi %in% leg_from[code_from %in% blocked, code]]), collapse = ", "),
+      vintage),
+      class = "rcl_weights_required", codes = sort(blocked))
+  }
   out[, .(code_from, code_to, weight)]
 }
 
@@ -584,8 +610,12 @@ split_weights_template <- function(from, to, master_data,
         # Not registered -> try the SHIPPED standard for this variable (e.g.
         # "population"), at the most recent shipped year. For a specific year,
         # build the template explicitly with split_weights_template(weight_year=).
+        # The rcl_weights_required warning is muffled here: .merge_weights()
+        # aborts instead when the data actually holds one of those codes.
         std_tpl <- tryCatch(
-          suppressMessages(split_weights_template(from, to, master_data, variable = weights)),
+          withCallingHandlers(
+            suppressMessages(split_weights_template(from, to, master_data, variable = weights)),
+            rcl_weights_required = function(w) invokeRestart("muffleWarning")),
           rcl_data_missing = function(e) NULL, error = function(e) NULL)
         if (!is.null(std_tpl) && nrow(std_tpl) > 0L) reg <- std_tpl
       }
@@ -641,6 +671,16 @@ split_weights_template <- function(from, to, master_data,
   reg <- reg[, .(code_from = as.character(code_from),
                  code_to   = as.character(code_to),
                  weight)]
+  # A weight explicitly set to NA (a template code whose weight cannot be
+  # computed, e.g. split_weights_template() for an unattributable commune) must
+  # not be silently replaced by an equal split.
+  na_codes <- intersect(reg[is.na(weight), unique(code_from)], sk$code_from)
+  if (length(na_codes) > 0L)
+    abort(sprintf(paste0(
+      "Missing split weight for code(s) %s: no weight could be computed for them. ",
+      "Supply weights (split_weights_template(), fill `weight`, then `weights =` ",
+      "or register_split_weights())."), paste(sort(na_codes), collapse = ", ")),
+      class = "rcl_weights_required", codes = sort(na_codes))
   result <- merge(sk, reg, by = c("code_from", "code_to"), all.x = TRUE)
   result[is.na(weight), weight := 1 / .N, by = code_from]
   result

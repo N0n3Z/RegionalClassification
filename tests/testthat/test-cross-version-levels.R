@@ -101,3 +101,36 @@ test_that("convert_multi_version() handles districts of several versions", {
   expect_identical(res$ambiguous, c(TRUE, FALSE, FALSE))
   expect_identical(res$conflict, c(TRUE, FALSE, FALSE))  # 46000 is 40000 in 2019 alone
 })
+
+test_that("BEFORE_2019 -> 2019 population weights: real shares, Oudsbergen blocked", {
+  expect_warning(
+    tpl <- split_weights_template(CLS_NIS_DISTRICT_BEFORE_2019, CLS_NIS_DISTRICT_2019, master_data,
+                                  variable = "population", weight_year = 2019L),
+    class = "rcl_weights_required")
+  # Hainaut communes moved 1:1: their 2019 population gives the shares
+  w55 <- tpl[code_from == "55000"]
+  expect_equal(sum(w55$weight), 1)
+  expect_gt(w55[code_to == "58000", weight], 0.4)     # La Louviere ~42 %
+  # 71000: Opglabbeek went to 72000 but is merged into Oudsbergen (72042) in 2019
+  expect_true(all(is.na(tpl[code_from == "71000", weight])))
+
+  dt <- data.table(arr = c("55000", "52000"), v = c(300, 100))
+  res <- split_ambiguous(dt, "arr", "v", CLS_NIS_DISTRICT_BEFORE_2019, CLS_NIS_DISTRICT_2019,
+                         master_data, weights = "population", verbose = FALSE)
+  expect_equal(sum(res$v), 400)
+  expect_equal(nrow(res), 5L)
+
+  dt71 <- data.table(arr = c("55000", "71000"), v = c(300, 100))
+  expect_error(split_ambiguous(dt71, "arr", "v", CLS_NIS_DISTRICT_BEFORE_2019, CLS_NIS_DISTRICT_2019,
+                               master_data, weights = "population", verbose = FALSE),
+               class = "rcl_weights_required", regexp = "71000")
+  own <- copy(tpl)[code_from == "71000", weight := c(0.97, 0.03)]
+  res <- split_ambiguous(dt71, "arr", "v", CLS_NIS_DISTRICT_BEFORE_2019, CLS_NIS_DISTRICT_2019,
+                         master_data, weights = own, verbose = FALSE)
+  expect_equal(res[arr == "71000" & code_nis_district_2019 == "72000", v], 3)
+})
+
+test_that("postal 1020 (Laeken) reaches its 2025 district though it has no 2025 commune", {
+  expect_true(is.na(convert_codes("1020", CLS_POSTAL, CLS_NIS_MUNICIPALITY_2025, master_data)$code_to))
+  expect_identical(convert_codes("1020", CLS_POSTAL, CLS_NIS_DISTRICT_2025, master_data)$code_to, "21000")
+})

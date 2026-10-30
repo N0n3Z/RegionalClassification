@@ -1,6 +1,6 @@
 # Plan — Conversions NIS district / province entre versions
 
-> **Statut** : validé par l'utilisateur (2026-10-30), complété des familles de la section 7. Remplace la proposition
+> **Statut** : implémenté sur `claude/nis-cross-version-levels` (2026-10-30). Écarts : raccourcis exacts généralisés à toute conversion d'une version communale vers un niveau agrégé d'une autre (12 paires perdaient en précision) ; Oudsbergen bloqué via `split_weights_template()` (poids NA + `rcl_weights_required`), seule fonction existante modifiée, avec accord. Remplace la proposition
 > `DISTRICT_CROSS_VERSION_EDGE.md` (branche `claude/add-regional-classification-fork-9e9yt`),
 > écrite pour la v1.2 (`.ROUTE_TABLE`, `nis_changes`, noms `cd_*`) et incomplète sur les
 > données. Branche : `claude/nis-cross-version-levels`, au-dessus de
